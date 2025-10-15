@@ -1,0 +1,80 @@
+-- Crear la base de datos si no existe
+CREATE DATABASE IF NOT EXISTS sgo_sapem;
+
+USE sgo_sapem;
+
+CREATE TABLE IF NOT EXISTS `Roles` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(255) NOT NULL UNIQUE,
+  PRIMARY KEY (`id`));
+
+INSERT INTO `Roles` (`nombre`) VALUES ('Administrador General'), ('Inspector') ON DUPLICATE KEY UPDATE nombre=nombre;
+
+CREATE TABLE IF NOT EXISTS `Usuarios` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `password` VARCHAR(255) NOT NULL,
+  `rol_id` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_usuarios_roles`
+    FOREIGN KEY (`rol_id`)
+    REFERENCES `Roles` (`id`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE);
+
+CREATE TABLE IF NOT EXISTS `Obras` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `titulo` VARCHAR(255) NOT NULL,
+  `descripcion` TEXT NULL,
+  `ubicacion` VARCHAR(255) NULL,
+  `numero_gestion` VARCHAR(100) NULL UNIQUE,
+  `categoria` ENUM('salud', 'educación', 'deporte', 'secretaría general', 'vialidad', 'obra pública', 'varios') NOT NULL,
+  `estado` ENUM('Solicitud', 'Proceso de compulsa', 'En ejecución', 'Finalizada', 'Anulada') NOT NULL DEFAULT 'Solicitud',
+  `fecha_inicio` DATE NULL,
+  `fecha_finalizacion_estimada` DATE NULL,
+  `plazo_dias` INT NULL,
+  `monto` DECIMAL(15, 2) NULL,
+  `contratista` VARCHAR(255) NULL,
+  `progreso` INT NOT NULL DEFAULT 0,
+  `motivo_anulacion` TEXT NULL,
+  `inspector_id` INT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_obras_usuarios`
+    FOREIGN KEY (`inspector_id`)
+    REFERENCES `Usuarios` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE);
+
+CREATE TABLE IF NOT EXISTS `Actividades` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(255) NOT NULL,
+  `orden` INT NOT NULL,
+  `estado` ENUM('pendiente', 'completada') NOT NULL DEFAULT 'pendiente',
+  `impacto` ENUM('alto', 'medio', 'bajo') NOT NULL DEFAULT 'medio',
+  `obra_id` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_actividades_obras`
+    FOREIGN KEY (`obra_id`)
+    REFERENCES `Obras` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
+
+CREATE TABLE IF NOT EXISTS `Documentos` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre_archivo` VARCHAR(255) NOT NULL,
+  `ruta_archivo` VARCHAR(255) NOT NULL,
+  `fecha_carga` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `obra_id` INT NULL,
+  `actividad_id` INT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_documentos_obras`
+    FOREIGN KEY (`obra_id`)
+    REFERENCES `Obras` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_documentos_actividades`
+    FOREIGN KEY (`actividad_id`)
+    REFERENCES `Actividades` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
