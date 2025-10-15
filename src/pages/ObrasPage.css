@@ -1,0 +1,131 @@
+/* --- Contenedor Principal --- */
+.obras-page-container { display: flex; flex-direction: column; min-height: 100vh; background-color: #0a192f; color: #ccd6f6; font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; }
+.loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 1.5rem; color: #64ffda; }
+
+/* --- Header --- */
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background-color: #1e2a47; border-bottom: 1px solid #303c55; position: relative; z-index: 100; }
+.dashboard-header h1 { color: #64ffda; font-size: 1.8rem; margin: 0; }
+
+/* --- User Menu --- */
+.user-menu-container { position: relative; }
+
+.user-menu-btn {
+  background-color: transparent;
+  border: 1px solid #303c55;
+  border-radius: 6px;
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.user-menu-btn:hover { background-color: #303c55; }
+
+.user-info-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.user-info-btn .username { font-weight: 600; color: #ccd6f6; font-size: 0.95rem; }
+.user-info-btn .user-role-btn { font-size: 0.8rem; color: #8892b0; }
+
+.arrow-icon {
+  border: solid #8892b0;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 3px;
+  transform: rotate(45deg); /* Flecha hacia abajo */
+  transition: transform 0.3s ease;
+}
+
+.arrow-icon.is-open {
+  transform: rotate(-135deg); /* Flecha hacia arriba */
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: #1e2a47;
+  border: 1px solid #303c55;
+  border-radius: 8px;
+  width: 220px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  overflow: hidden;
+  animation: scale-in 0.2s ease-out;
+  transform-origin: top right;
+}
+
+@keyframes scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.dropdown-menu ul { list-style: none; margin: 0; padding: 5px 0; }
+
+.dropdown-menu li button {
+  width: 100%;
+  text-align: left;
+  background: none; border: none; color: #ccd6f6;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-menu li button:hover { background-color: #303c55; }
+
+/* --- Contenido Principal --- */
+.dashboard-main-content { padding: 40px; flex-grow: 1; }
+.dashboard-title-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #303c55; padding-bottom: 15px; }
+.dashboard-title-bar h2 { margin: 0; font-size: 2.2rem; color: #ccd6f6; }
+
+/* --- Cuadrícula de Obras --- */
+.obras-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+
+/* --- Tarjeta de Obra --- */
+.obra-card { background-color: #1e2a47; border-radius: 8px; border: 1px solid #303c55; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.obra-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); }
+.card-header { padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #303c55; }
+.card-header h3 { margin: 0; font-size: 1.4rem; color: #ccd6f6; }
+.status-badge { padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+.status-solicitud { background-color: #4a69bd; color: white; }
+.status-en-ejecución { background-color: #f6b93b; color: #333; }
+.status-finalizada { background-color: #78e08f; color: #333; }
+.status-cancelada { background-color: #e55039; color: white; }
+.card-body { padding: 20px; flex-grow: 1; }
+.card-body p { margin: 0 0 10px 0; color: #8892b0; }
+.progress-bar-container { width: 100%; background-color: #0a192f; border-radius: 10px; height: 20px; display: flex; align-items: center; position: relative; }
+.progress-bar { height: 100%; background-color: #64ffda; border-radius: 10px; transition: width 0.5s ease-in-out; }
+.progress-bar-container span { position: absolute; right: 10px; color: #0a192f; font-weight: 600; font-size: 0.8rem; }
+.card-footer { padding: 15px 20px; background-color: #17223b; display: flex; justify-content: flex-end; gap: 10px; }
+.no-obras-message { color: #8892b0; font-size: 1.2rem; text-align: center; grid-column: 1 / -1; }
+
+/* --- Botones --- */
+.btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+.btn-primary { background-color: #64ffda; color: #0a192f; }
+.btn-primary:hover { background-color: #52d3b4; }
+.btn-details { background-color: transparent; border: 1px solid #64ffda; color: #64ffda; }
+.btn-details:hover { background-color: rgba(100, 255, 218, 0.1); }
+.btn-assign { background-color: #f6b93b; color: #333; }
+.btn-assign:hover { background-color: #e0a830; }
+
+/* --- Modal de Administración de Roles --- */
+.modal-content.roles-modal { width: 100%; max-width: 700px; }
+.user-list { list-style: none; padding: 0; margin: 25px 0; max-height: 400px; overflow-y: auto; }
+.user-list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-radius: 6px; transition: background-color 0.2s ease; }
+.user-list-item:nth-child(odd) { background-color: #17223b; }
+.user-list-item:hover { background-color: #303c55; }
+.user-details { display: flex; flex-direction: column; gap: 4px; }
+.user-name { font-weight: 600; color: #ccd6f6; }
+.user-role-tag { font-size: 0.8rem; font-weight: 600; padding: 4px 8px; border-radius: 10px; text-align: center; }
+.role-administrador-general { background-color: #ff79c6; color: #333; }
+.role-inspector { background-color: #8be9fd; color: #333; }
+.role-pendiente { background-color: #f1fa8c; color: #333; }
+.user-actions { display: flex; gap: 10px; }
+.btn-success { background-color: #78e08f; color: #333; }
+.btn-success:hover { background-color: #6ac97e; }
+.btn-promote { background-color: #bd93f9; color: #333; }
+.btn-promote:hover { background-color: #ab7ff5; }
+.modal-close-button { padding: 10px 25px; font-size: 1rem; font-weight: 500; color: #0a192f; background-color: #64ffda; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease; margin-top: 20px; }
+.modal-close-button:hover { background-color: #52d3b4; }

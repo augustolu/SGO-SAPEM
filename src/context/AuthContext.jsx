@@ -7,22 +7,26 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (token && userData) {
+      api.defaults.headers.common['x-access-token'] = token;
       setUser(JSON.parse(userData));
     }
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, keepLoggedIn = true) => {
     try {
       const response = await api.post('/auth/signin', {
         email,
         password,
       });
       const { accessToken, ...userData } = response.data;
-      localStorage.setItem('token', accessToken);
-      localStorage.setItem('user', JSON.stringify(userData));
+      const storage = keepLoggedIn ? localStorage : sessionStorage;
+      
+      storage.setItem('token', accessToken);
+      storage.setItem('user', JSON.stringify(userData));
+      api.defaults.headers.common['x-access-token'] = accessToken;
       setUser(userData);
     } catch (error) {
       console.error('Error during login:', error);
@@ -46,6 +50,9 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    delete api.defaults.headers.common['x-access-token'];
     setUser(null);
   };
 
