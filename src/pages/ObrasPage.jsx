@@ -20,7 +20,7 @@ const ObrasPage = () => {
     fetchObras();
   }, []);
 
-  const isAdmin = user && user.roles.includes('Administrador General');
+    const isAdmin = user && user.roles && user.roles.includes('Administrador General');
 
   return (
     <div>

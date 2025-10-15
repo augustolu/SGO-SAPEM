@@ -7,9 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:8080', // Apunta al puerto correcto del backend
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // Se elimina la opción 'rewrite' para que la ruta /api se mantenga
       },
     },
   },
