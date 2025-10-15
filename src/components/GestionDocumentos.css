@@ -1,0 +1,25 @@
+.gestion-documentos .drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+  transition: background-color 0.3s;
+}
+
+.gestion-documentos .drop-zone.drag-over {
+  background-color: #f0f0f0;
+}
+
+.gestion-documentos ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.gestion-documentos li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
