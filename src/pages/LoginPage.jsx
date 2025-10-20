@@ -25,12 +25,7 @@ const LoginPage = () => {
       await login(email, password, keepLoggedIn);
       navigate('/obras');
     } catch (err) {
-      console.error('Failed to login');
-      console.log('Caught error:', JSON.stringify(err));
-      if (err.response) {
-        console.log('Error response:', JSON.stringify(err.response));
-      }
-
+      console.error('Failed to login', err);
       if (err.response && err.response.data && err.response.data.message === 'Usted todavia no fue habilitado') {
         setShowNotEnabledModal(true);
       } else {
