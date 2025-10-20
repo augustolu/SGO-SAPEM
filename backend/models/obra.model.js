@@ -38,8 +38,20 @@ module.exports = (sequelize, Sequelize) => {
     plazo_dias: {
       type: Sequelize.INTEGER
     },
-    monto: {
+    monto_sapem: {
       type: Sequelize.DECIMAL(15, 2)
+    },
+    monto_sub: {
+      type: Sequelize.DECIMAL(15, 2)
+    },
+    af: {
+      type: Sequelize.DECIMAL(15, 2)
+    },
+    rep_legal: {
+      type: Sequelize.STRING(255)
+    },
+    can: {
+      type: Sequelize.INTEGER
     },
     contratista: {
       type: Sequelize.STRING(255)

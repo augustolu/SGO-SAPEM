@@ -170,11 +170,31 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
   const [numero_gestion, setNumeroGestion] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [categoria, setCategoria] = useState('varios');
+  const [ubicacion, setUbicacion] = useState('');
+  const [contratista, setContratista] = useState('');
+  const [rep_legal, setRepLegal] = useState('');
+  const [monto_sapem, setMontoSapem] = useState('');
+  const [monto_sub, setMontoSub] = useState('');
+  const [af, setAf] = useState('');
+  const [plazo_dias, setPlazoDias] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/obras', { titulo, numero_gestion, descripcion, categoria });
+      const obraData = {
+        titulo,
+        numero_gestion,
+        descripcion,
+        categoria,
+        ubicacion,
+        contratista,
+        rep_legal,
+        monto_sapem: monto_sapem ? parseFloat(monto_sapem) : null,
+        monto_sub: monto_sub ? parseFloat(monto_sub) : null,
+        af: af ? parseFloat(af) : null,
+        plazo_dias: plazo_dias ? parseInt(plazo_dias, 10) : null,
+      };
+      const response = await api.post('/obras', obraData);
       onObraCreated(response.data);
       onClose();
     } catch (error) {
@@ -194,6 +214,34 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
           <div className="form-group">
             <label htmlFor="numero_gestion">Expediente</label>
             <input type="text" id="numero_gestion" value={numero_gestion} onChange={(e) => setNumeroGestion(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="ubicacion">Ubicación</label>
+            <input type="text" id="ubicacion" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="contratista">Contratista</label>
+            <input type="text" id="contratista" value={contratista} onChange={(e) => setContratista(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="rep_legal">Representante Legal</label>
+            <input type="text" id="rep_legal" value={rep_legal} onChange={(e) => setRepLegal(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="monto_sapem">Monto SAPEM</label>
+            <input type="number" id="monto_sapem" value={monto_sapem} onChange={(e) => setMontoSapem(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="monto_sub">Monto SUB</label>
+            <input type="number" id="monto_sub" value={monto_sub} onChange={(e) => setMontoSub(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="af">Adelanto Financiero (AF)</label>
+            <input type="number" id="af" value={af} onChange={(e) => setAf(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="plazo_dias">Plazo en días</label>
+            <input type="number" id="plazo_dias" value={plazo_dias} onChange={(e) => setPlazoDias(e.target.value)} />
           </div>
           <div className="form-group">
             <label htmlFor="categoria">Categoría</label>
