@@ -18,8 +18,6 @@ app.use(express.urlencoded({ extended: true }));
 const db = require("./models");
 const Role = db.Roles;
 
-// In development, you may need to drop existing tables and re-sync database.
-// Just use {force: true}
 // db.sequelize.sync({force: true}).then(() => {
 //   console.log('Drop and Resync Db');
 //   initial();
@@ -40,6 +38,11 @@ function initial() {
     where: { nombre: "Inspector" },
     defaults: { nombre: "Inspector" }
   });
+
+  Role.findOrCreate({
+    where: { nombre: "Pendiente" },
+    defaults: { nombre: "Pendiente" }
+  });
 }
 
 // simple route
@@ -50,9 +53,11 @@ app.get("/", (req, res) => {
 // routes
 const apiRouter = express.Router();
 require('./routes/auth.routes')(apiRouter);
+require('./routes/user.routes')(apiRouter);
 require('./routes/obra.routes')(apiRouter);
 require('./routes/actividad.routes')(apiRouter);
 require('./routes/documento.routes')(apiRouter);
+require('./routes/role.routes')(apiRouter);
 app.use('/api', apiRouter);
 
 // set port, listen for requests

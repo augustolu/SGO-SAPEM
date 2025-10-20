@@ -11,36 +11,50 @@ var bcrypt = require("bcryptjs");
 
 exports.signup = (req, res) => {
   // Save User to Database
-  User.create({
-    nombre: req.body.username,
-    email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 8)
-  })
+  Role.findOne({
+    where: {
+      nombre: "Pendiente"
+    }
+  }).then(role => {
+    if (!role) {
+      return res.status(500).send({ message: "Initial role not found." });
+    }
+
+    User.create({
+      nombre: req.body.username,
+      email: req.body.email,
+      password: bcrypt.hashSync(req.body.password, 8),
+      rol_id: role.id
+    })
     .then(user => {
-      Role.findOne({
-        where: {
-          nombre: "Inspector"
-        }
-      }).then(role => {
-        user.setRole(role).then(() => {
-          res.send({ message: "User was registered successfully!" });
-        });
-      });
+      res.send({ message: "User was registered successfully!" });
     })
     .catch(err => {
       res.status(500).send({ message: err.message });
     });
+  }).catch(err => {
+    res.status(500).send({ message: err.message });
+  });
 };
 
 exports.signin = (req, res) => {
+  console.log("signin request body:", req.body);
   User.findOne({
-    where: {
-      email: req.body.email
+    where: { email: req.body.email },
+    include: {
+      model: Role,
+      as: 'role',
+      attributes: ['nombre']
     }
   })
     .then(user => {
+      console.log("user found:", user);
       if (!user) {
         return res.status(404).send({ message: "User Not found." });
+      }
+
+      if (!user.activo) {
+        return res.status(401).send({ message: "Su cuenta ha sido suspendida." });
       }
 
       var passwordIsValid = bcrypt.compareSync(
@@ -48,6 +62,7 @@ exports.signin = (req, res) => {
         user.password
       );
 
+      console.log("password is valid:", passwordIsValid);
       if (!passwordIsValid) {
         return res.status(401).send({
           accessToken: null,
@@ -63,10 +78,12 @@ exports.signin = (req, res) => {
         id: user.id,
         nombre: user.nombre,
         email: user.email,
+        role: user.role ? user.role.nombre : null,
         accessToken: token
       });
     })
     .catch(err => {
+      console.log("error in signin:", err);
       res.status(500).send({ message: err.message });
     });
 };

@@ -4,43 +4,81 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './ObrasPage.css';
 
-// --- Roles Management Modal --- //
-const RolesManagementModal = ({ onClose }) => {
-  const [users, setUsers] = useState([
-    { id: 1, nombre: 'augusto', email: 'augustoluceropollio@gmail.com', role: 'Administrador General' },
-    { id: 2, nombre: 'juan.perez', email: 'juan.perez@example.com', role: 'Inspector' },
-    { id: 3, nombre: 'maria.gomez', email: 'maria.gomez@example.com', role: 'Pendiente' },
-    { id: 4, nombre: 'carlos.sanchez', email: 'carlos.sanchez@example.com', role: 'Inspector' },
-  ]);
+// --- User Management Modal --- //
+const UserManagementModal = ({ onClose }) => {
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleApprove = (userId) => {
-    console.log(`FRONTEND: Aprobando usuario con ID: ${userId}. (Llamada a API iría aquí)`);
-    setUsers(users.map(u => u.id === userId ? { ...u, role: 'Inspector' } : u));
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [usersResponse, rolesResponse] = await Promise.all([
+          api.get('/users'),
+          api.get('/roles')
+        ]);
+        setUsers(usersResponse.data);
+        setRoles(rolesResponse.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleRoleChange = async (userId, newRoleName) => {
+    try {
+      await api.put(`/users/${userId}/role`, { role: newRoleName });
+      setUsers(users.map(u => u.id === userId ? { ...u, role: { nombre: newRoleName } } : u));
+      console.log(`Rol del usuario con ID: ${userId} actualizado a ${newRoleName}.`);
+    } catch (error) {
+      console.error(`Error al actualizar el rol del usuario ${userId}:`, error);
+    }
   };
 
-  const handlePromote = (userId) => {
-    console.log(`FRONTEND: Promoviendo a Admin al usuario con ID: ${userId}. (Llamada a API iría aquí)`);
-    setUsers(users.map(u => u.id === userId ? { ...u, role: 'Administrador General' } : u));
+  const handleDelete = async (userId) => {
+    try {
+      await api.delete(`/users/${userId}`);
+      setUsers(users.filter(u => u.id !== userId));
+      console.log(`Usuario con ID: ${userId} eliminado exitosamente.`);
+    } catch (error) {
+      console.error(`Error al eliminar el usuario ${userId}:`, error);
+    }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content roles-modal">
-        <h2>Administrar Roles y Usuarios</h2>
-        <ul className="user-list">
-          {users.map(user => (
-            <li key={user.id} className="user-list-item">
-              <div className="user-details">
-                <span className="user-name">{user.nombre} ({user.email})</span>
-                <span className={`user-role-tag role-${user.role.toLowerCase().replace(/\s+/g, '-')}`}>{user.role}</span>
-              </div>
-              <div className="user-actions">
-                {user.role === 'Pendiente' && <button className="btn btn-success" onClick={() => handleApprove(user.id)}>Aprobar</button>}
-                {user.role === 'Inspector' && <button className="btn btn-promote" onClick={() => handlePromote(user.id)}>Promover a Admin</button>}
-              </div>
-            </li>
-          ))}
-        </ul>
+        <h2>Administrar Usuarios</h2>
+        {loading ? (
+          <p>Cargando...</p>
+        ) : (
+          <ul className="user-list">
+            {users.map(user => (
+              <li key={user.id} className="user-list-item">
+                <div className="user-details">
+                  <span className="user-name">{user.nombre} ({user.email})</span>
+                  <span className={`user-role-tag`}>{user.role ? user.role.nombre : 'Sin rol'}</span>
+                </div>
+                <div className="user-actions">
+                  <select 
+                    value={user.role ? user.role.nombre : ''} 
+                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                    className="role-select"
+                  >
+                    {roles.map(role => (
+                      <option key={role.id} value={role.nombre}>{role.nombre}</option>
+                    ))}
+                  </select>
+                  <button className="btn btn-danger" onClick={() => handleDelete(user.id)}>Eliminar</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
         <button className="modal-close-button" onClick={onClose}>Cerrar</button>
       </div>
     </div>
@@ -85,7 +123,7 @@ const DashboardHeader = ({ user, isAdmin, onManageRolesClick }) => {
           <div className="dropdown-menu">
             <ul>
               <li><button>Editar Perfil</button></li>
-              {isAdmin && <li><button onClick={() => { setMenuOpen(false); onManageRolesClick(); }}>Administrar Roles</button></li>}
+              {isAdmin && <li><button onClick={() => { setMenuOpen(false); onManageRolesClick(); }}>Administrar Usuarios</button></li>}
               <li><button onClick={handleLogout}>Cerrar Sesión</button></li>
             </ul>
           </div>
@@ -110,8 +148,8 @@ const ObraCard = ({ obra, isAdmin }) => (
     </div>
   </div>
 );
-const AdminDashboard = ({ obras }) => (
-  <div className="dashboard-view"><div className="dashboard-title-bar"><h2>Panel de Administrador</h2><button className="btn btn-primary">+ Crear Nueva Obra</button></div><div className="obras-grid">{obras && obras.length > 0 ? (obras.map(obra => <ObraCard key={obra.id} obra={obra} isAdmin={true} />)) : (<p className="no-obras-message">No hay obras para mostrar.</p>)}</div></div>
+const AdminDashboard = ({ obras, onCreateObraClick }) => (
+  <div className="dashboard-view"><div className="dashboard-title-bar"><h2>Panel de Administrador</h2><button className="btn btn-primary" onClick={onCreateObraClick}>+ Crear Nueva Obra</button></div><div className="obras-grid">{obras && obras.length > 0 ? (obras.map(obra => <ObraCard key={obra.id} obra={obra} isAdmin={true} />)) : (<p className="no-obras-message">No hay obras para mostrar.</p>)}</div></div>
 );
 const InspectorDashboard = ({ obras, user }) => {
   const misObras = user && user.id && obras ? obras.filter(obra => obra.inspectorId === user.id) : [];
@@ -120,12 +158,69 @@ const InspectorDashboard = ({ obras, user }) => {
   );
 };
 
+const CreateObraModal = ({ onClose, onObraCreated }) => {
+  const [titulo, setTitulo] = useState('');
+  const [numero_gestion, setNumeroGestion] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [categoria, setCategoria] = useState('varios');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await api.post('/obras', { titulo, numero_gestion, descripcion, categoria });
+      onObraCreated(response.data);
+      onClose();
+    } catch (error) {
+      console.error('Error creating obra:', error);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Crear Nueva Obra</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="titulo">Título</label>
+            <input type="text" id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="numero_gestion">Expediente</label>
+            <input type="text" id="numero_gestion" value={numero_gestion} onChange={(e) => setNumeroGestion(e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="categoria">Categoría</label>
+            <select id="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value)} required>
+              <option value="salud">Salud</option>
+              <option value="educación">Educación</option>
+              <option value="deporte">Deporte</option>
+              <option value="secretaría general">Secretaría General</option>
+              <option value="vialidad">Vialidad</option>
+              <option value="obra pública">Obra Pública</option>
+              <option value="varios">Varios</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="descripcion">Descripción</label>
+            <textarea id="descripcion" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}></textarea>
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">Crear</button>
+            <button type="button" className="btn" onClick={onClose}>Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 
 // --- Main Page Component --- //
 const ObrasPage = () => {
   const [obras, setObras] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [rolesModalOpen, setRolesModalOpen] = useState(false); // Estado para el nuevo modal
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [isCreateObraModalOpen, setCreateObraModalOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -152,19 +247,20 @@ const ObrasPage = () => {
     return <div className="loading-screen">Cargando...</div>;
   }
 
-  const isAdmin = user.email === 'augustoluceropollio@gmail.com';
+  const isAdmin = user.role === 'admin';
 
   return (
     <div className="obras-page-container">
-      <DashboardHeader user={user} isAdmin={isAdmin} onManageRolesClick={() => setRolesModalOpen(true)} />
+      <DashboardHeader user={user} isAdmin={isAdmin} onManageRolesClick={() => setUserModalOpen(true)} />
       <main className="dashboard-main-content">
         {isAdmin ? (
-          <AdminDashboard obras={obras} />
+          <AdminDashboard obras={obras} onCreateObraClick={() => setCreateObraModalOpen(true)} />
         ) : (
           <InspectorDashboard obras={obras} user={user} />
         )}
       </main>
-      {rolesModalOpen && <RolesManagementModal onClose={() => setRolesModalOpen(false)} />}
+      {userModalOpen && <UserManagementModal onClose={() => setUserModalOpen(false)} />}
+      {isCreateObraModalOpen && <CreateObraModal onClose={() => setCreateObraModalOpen(false)} onObraCreated={(newObra) => setObras([...obras, newObra])} />}
     </div>
   );
 };

@@ -18,6 +18,18 @@ module.exports = (sequelize, Sequelize) => {
     password: {
       type: Sequelize.STRING(255),
       allowNull: false
+    },
+    rol_id: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'Roles',
+        key: 'id'
+      }
+    },
+    activo: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
     }
   });
 
