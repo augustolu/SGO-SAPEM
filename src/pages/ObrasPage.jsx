@@ -42,12 +42,14 @@ const UserManagementModal = ({ onClose }) => {
   const handleDelete = async (userId) => {
     try {
       await api.delete(`/users/${userId}`);
-      setUsers(users.filter(u => u.id !== userId));
-      console.log(`Usuario con ID: ${userId} eliminado exitosamente.`);
+      setUsers(users.map(u => u.id === userId ? { ...u, role: { nombre: 'Pendiente' } } : u));
+      console.log(`Usuario con ID: ${userId} movido a pendiente.`);
     } catch (error) {
       console.error(`Error al eliminar el usuario ${userId}:`, error);
     }
   };
+
+  const selectableRoles = roles.filter(role => ['Inspector', 'Pendiente'].includes(role.nombre));
 
   return (
     <div className="modal-overlay">
@@ -67,11 +69,16 @@ const UserManagementModal = ({ onClose }) => {
                   <select 
                     value={user.role ? user.role.nombre : ''} 
                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                    disabled={user.role?.nombre === 'Administrador General'}
                     className="role-select"
                   >
-                    {roles.map(role => (
-                      <option key={role.id} value={role.nombre}>{role.nombre}</option>
-                    ))}
+                    {user.role?.nombre === 'Administrador General' ? (
+                      <option value="Administrador General">Administrador General</option>
+                    ) : (
+                      selectableRoles.map(role => (
+                        <option key={role.id} value={role.nombre}>{role.nombre}</option>
+                      ))
+                    )}
                   </select>
                   <button className="btn btn-danger" onClick={() => handleDelete(user.id)}>Eliminar</button>
                 </div>
@@ -247,7 +254,7 @@ const ObrasPage = () => {
     return <div className="loading-screen">Cargando...</div>;
   }
 
-  const isAdmin = user.role === 'admin';
+  const isAdmin = user.role === 'Administrador General';
 
   return (
     <div className="obras-page-container">

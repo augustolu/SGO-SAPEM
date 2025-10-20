@@ -9,6 +9,7 @@ const LoginPage = () => {
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false); // Estado para el modal
+  const [showNotEnabledModal, setShowNotEnabledModal] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -24,8 +25,17 @@ const LoginPage = () => {
       await login(email, password, keepLoggedIn);
       navigate('/obras');
     } catch (err) {
-      console.error('Failed to login', err);
-      setError('Credenciales incorrectas. Por favor, inténtalo de nuevo.');
+      console.error('Failed to login');
+      console.log('Caught error:', JSON.stringify(err));
+      if (err.response) {
+        console.log('Error response:', JSON.stringify(err.response));
+      }
+
+      if (err.response && err.response.data && err.response.data.message === 'Usted todavia no fue habilitado') {
+        setShowNotEnabledModal(true);
+      } else {
+        setError('Credenciales incorrectas. Por favor, inténtalo de nuevo.');
+      }
     }
   };
 
@@ -36,6 +46,17 @@ const LoginPage = () => {
           <div className="modal-content">
             <p>Contactarse con administrador, <strong>Maria Pia Pollio</strong></p>
             <button onClick={() => setShowModal(false)} className="modal-close-button">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showNotEnabledModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <p>Usted debe ser habilitado por el Administrador</p>
+            <button onClick={() => setShowNotEnabledModal(false)} className="modal-close-button">
               Cerrar
             </button>
           </div>

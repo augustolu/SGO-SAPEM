@@ -64,15 +64,24 @@ exports.updateRole = (req, res) => {
 
 
 exports.delete = (req, res) => {
-  User.findByPk(req.params.id)
-    .then(user => {
-      if (!user) {
-        return res.status(404).send({ message: "User Not found." });
+  Role.findOne({ where: { nombre: "Pendiente" } })
+    .then(role => {
+      if (!role) {
+        return res.status(500).send({ message: "Default role not found." });
       }
+      User.findByPk(req.params.id)
+        .then(user => {
+          if (!user) {
+            return res.status(404).send({ message: "User Not found." });
+          }
 
-      user.update({ activo: false })
-        .then(() => {
-          res.send({ message: "User deleted successfully!" });
+          user.update({ rol_id: role.id })
+            .then(() => {
+              res.send({ message: "User was demoted to a pending state successfully!" });
+            })
+            .catch(err => {
+              res.status(500).send({ message: err.message });
+            });
         })
         .catch(err => {
           res.status(500).send({ message: err.message });

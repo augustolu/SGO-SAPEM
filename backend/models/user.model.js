@@ -25,11 +25,6 @@ module.exports = (sequelize, Sequelize) => {
         model: 'Roles',
         key: 'id'
       }
-    },
-    activo: {
-      type: Sequelize.BOOLEAN,
-      allowNull: false,
-      defaultValue: true
     }
   });
 

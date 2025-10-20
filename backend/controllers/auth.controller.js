@@ -53,8 +53,8 @@ exports.signin = (req, res) => {
         return res.status(404).send({ message: "User Not found." });
       }
 
-      if (!user.activo) {
-        return res.status(401).send({ message: "Su cuenta ha sido suspendida." });
+      if (user.role && user.role.nombre === 'Pendiente') {
+        return res.status(401).send({ message: "Usted todavia no fue habilitado" });
       }
 
       var passwordIsValid = bcrypt.compareSync(
