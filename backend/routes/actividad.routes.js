@@ -12,20 +12,20 @@ module.exports = function(app) {
   });
 
   // Create a new Actividad
-  app.post("/api/actividades", [authJwt.verifyToken], actividades.create);
+  app.post("/actividades", [authJwt.verifyToken], actividades.create);
 
   // Retrieve all Actividades
-  app.get("/api/actividades", [authJwt.verifyToken], actividades.findAll);
+  app.get("/actividades", [authJwt.verifyToken], actividades.findAll);
 
   // Retrieve a single Actividad with id
-  app.get("/api/actividades/:id", [authJwt.verifyToken], actividades.findOne);
+  app.get("/actividades/:id", [authJwt.verifyToken], actividades.findOne);
 
   // Update a Actividad with id
-  app.put("/api/actividades/:id", [authJwt.verifyToken], actividades.update);
+  app.put("/actividades/:id", [authJwt.verifyToken], actividades.update);
 
   // Delete a Actividad with id
-  app.delete("/api/actividades/:id", [authJwt.verifyToken], actividades.delete);
+  app.delete("/actividades/:id", [authJwt.verifyToken], actividades.delete);
 
   // Delete all Actividades
-  app.delete("/api/actividades", [authJwt.verifyToken], actividades.deleteAll);
+  app.delete("/actividades", [authJwt.verifyToken], actividades.deleteAll);
 };

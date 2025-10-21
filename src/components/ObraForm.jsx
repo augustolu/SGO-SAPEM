@@ -14,16 +14,15 @@ L.Icon.Default.mergeOptions({
 });
 
 const obraSchema = {
-  nro: '',
-  establecimiento: '',
+  titulo: '', // Cambiado de 'establecimiento' a 'titulo'
+  descripcion: '', // Cambiado de 'detalle' a 'descripcion'
   localidad: '',
-  detalle: '',
   contratista: '',
   monto_sapem: '',
   monto_sub: '',
   af: '',
-  plazo: '',
-  representante_legal_id: '',
+  plazo_dias: '', // Cambiado de 'plazo' a 'plazo_dias'
+  rep_legal: '', // Cambiado de 'representante_legal_id' a 'rep_legal'
   numero_gestion: '',
   categoria: 'varios',
   estado: 'Solicitud',
@@ -132,8 +131,8 @@ function ObraForm({ obra, onSubmit }) {
             <input type="text" id="numero_gestion" name="numero_gestion" value={formData.numero_gestion} onChange={handleChange} placeholder="Ej: 2024-001-A" />
           </div>
           <div className="form-group">
-            <label htmlFor="establecimiento">Establecimiento *</label>
-            <input type="text" id="establecimiento" name="establecimiento" value={formData.establecimiento} onChange={handleChange} required placeholder="Nombre del lugar" />
+            <label htmlFor="titulo">Título / Establecimiento *</label>
+            <input type="text" id="titulo" name="titulo" value={formData.titulo} onChange={handleChange} required placeholder="Nombre del lugar o título de la obra" />
           </div>
           <div className="form-group">
             <label htmlFor="nro">Nro de Obra (opcional)</label>
@@ -152,8 +151,8 @@ function ObraForm({ obra, onSubmit }) {
             </select>
           </div>
           <div className="form-group form-group-full">
-            <label htmlFor="detalle">Detalle de la Obra</label>
-            <textarea id="detalle" name="detalle" value={formData.detalle} onChange={handleChange} rows="4" placeholder="Descripción de los trabajos a realizar..."></textarea>
+            <label htmlFor="descripcion">Descripción de la Obra</label>
+            <textarea id="descripcion" name="descripcion" value={formData.descripcion} onChange={handleChange} rows="4" placeholder="Descripción de los trabajos a realizar..."></textarea>
           </div>
         </div>
       </fieldset>
@@ -174,8 +173,8 @@ function ObraForm({ obra, onSubmit }) {
             <input type="number" step="0.01" id="af" name="af" value={formData.af} onChange={handleChange} placeholder="Ej: 50000.00" />
           </div>
            <div className="form-group">
-            <label htmlFor="plazo">Plazo de Ejecución (días)</label>
-            <input type="number" id="plazo" name="plazo" value={formData.plazo} onChange={handleChange} placeholder="Ej: 90" />
+            <label htmlFor="plazo_dias">Plazo de Ejecución (días)</label>
+            <input type="number" id="plazo_dias" name="plazo_dias" value={formData.plazo_dias} onChange={handleChange} placeholder="Ej: 90" />
           </div>
           <div className="form-group">
             <label htmlFor="fecha_inicio">Fecha de Inicio</label>
@@ -217,8 +216,8 @@ function ObraForm({ obra, onSubmit }) {
             </select>
           </div>
           <div className="form-group">
-            <label htmlFor="representante_legal_id">Representante Legal</label>
-            <select id="representante_legal_id" name="representante_legal_id" value={formData.representante_legal_id} onChange={handleChange}>
+            <label htmlFor="rep_legal">Representante Legal</label>
+            <select id="rep_legal" name="rep_legal" value={formData.rep_legal} onChange={handleChange}>
                 <option value="">-- Sin Asignar --</option>
                 {representantes.map(rep => <option key={rep.id} value={rep.id}>{rep.nombre}</option>)}
             </select>

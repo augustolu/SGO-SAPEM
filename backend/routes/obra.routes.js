@@ -12,20 +12,20 @@ module.exports = function(app) {
   });
 
   // Create a new Obra
-  app.post("/api/obras", [authJwt.verifyToken], obras.create);
+  app.post("/obras", [authJwt.verifyToken], obras.create);
 
   // Retrieve all Obras
-  app.get("/api/obras", [authJwt.verifyToken], obras.findAll);
+  app.get("/obras", [authJwt.verifyToken], obras.findAll);
 
   // Retrieve a single Obra with id
-  app.get("/api/obras/:id", [authJwt.verifyToken], obras.findOne);
+  app.get("/obras/:id", [authJwt.verifyToken], obras.findOne);
 
   // Update a Obra with id
-  app.put("/api/obras/:id", [authJwt.verifyToken], obras.update);
+  app.put("/obras/:id", [authJwt.verifyToken], obras.update);
 
   // Delete a Obra with id
-  app.delete("/api/obras/:id", [authJwt.verifyToken], obras.delete);
+  app.delete("/obras/:id", [authJwt.verifyToken], obras.delete);
 
   // Delete all Obras
-  app.delete("/api/obras", [authJwt.verifyToken], obras.deleteAll);
+  app.delete("/obras", [authJwt.verifyToken], obras.deleteAll);
 };

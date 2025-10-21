@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './ObraWizardForm.css';
+import api from '../services/api'; // Importamos el cliente de API
 
 // --- Arreglo para el ícono de Leaflet en React ---
 delete L.Icon.Default.prototype._getIconUrl;
@@ -19,24 +20,52 @@ const STEPS = [
 ];
 
 const obraSchema = {
-  establecimiento: '',
+  titulo: '', // Cambiado para coincidir con el backend
   numero_gestion: '',
   categoria: 'varios',
-  detalle: '',
+  descripcion: '', // Cambiado para coincidir con el backend
   nro: '',
   latitude: -27.7833,
   longitude: -59.2667,
   localidad: '',
   contratista: '',
   inspector_id: '',
-  representante_legal_id: '',
+  rep_legal: '', // Cambiado para coincidir con el backend
   monto_sapem: '',
   monto_sub: '',
   af: '',
-  plazo: '',
+  plazo_dias: '', // Cambiado para coincidir con el backend
   fecha_inicio: '',
   fecha_finalizacion_estimada: '',
   estado: 'Solicitud',
+};
+
+// --- NUEVO: Componente para Input de Moneda ---
+const CurrencyInput = ({ name, value, onChange, placeholder }) => {
+  const formatCurrency = (numStr) => {
+    if (!numStr) return '';
+    const [integerPart, decimalPart] = numStr.split(',');
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return decimalPart !== undefined ? `${formattedInteger},${decimalPart}` : formattedInteger;
+  };
+
+  const handleInputChange = (e) => {
+    const rawValue = e.target.value;
+    // Permitir solo números, comas y puntos
+    const sanitizedValue = rawValue.replace(/[^0-9,.]/g, '');
+    const parts = sanitizedValue.split(',');
+    // Reemplazar puntos por nada (para limpiar) y luego la primera coma por un punto decimal
+    const numericValue = parts.join('.').replace(/\.(?=[^.]*\.)/g, '');
+
+    onChange({ target: { name, value: numericValue } });
+  };
+
+  return (
+    <div className="input-with-prefix">
+      <span className="input-prefix">ARS</span>
+      <input type="text" name={name} value={formatCurrency(String(value).replace('.', ','))} onChange={handleInputChange} placeholder={placeholder} style={{ border: 'none', boxShadow: 'none', paddingLeft: '0.5rem' }} />
+    </div>
+  );
 };
 
 // --- Componente Stepper (Indicador de Progreso) ---
@@ -63,9 +92,9 @@ const Step1 = ({ data, handleChange, errors }) => (
     <div className="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
       {/* Columna 1 */}
       <div className="form-group">
-        <label htmlFor="establecimiento">Establecimiento *</label>
-        <input type="text" id="establecimiento" name="establecimiento" value={data.establecimiento} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
-        {errors.establecimiento && <span className="error-message">{errors.establecimiento}</span>}
+        <label htmlFor="titulo">Título / Establecimiento *</label>
+        <input type="text" id="titulo" name="titulo" value={data.titulo} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
+        {errors.titulo && <span className="error-message">{errors.titulo}</span>}
       </div>
 
       {/* Columna 2 */}
@@ -97,14 +126,14 @@ const Step1 = ({ data, handleChange, errors }) => (
 
       {/* Ocupa ambas columnas */}
       <div className="form-group grid-col-span-2">
-        <label htmlFor="detalle">Detalle de la Obra</label>
-        <textarea id="detalle" name="detalle" value={data.detalle} onChange={handleChange} rows="4" placeholder="Descripción de los trabajos a realizar..."></textarea>
+        <label htmlFor="descripcion">Descripción de la Obra</label>
+        <textarea id="descripcion" name="descripcion" value={data.descripcion} onChange={handleChange} rows="4" placeholder="Descripción de los trabajos a realizar..."></textarea>
       </div>
     </div>
   </div>
 );
 
-const Step2 = ({ data, handleChange, setFormData, inspectores, representantes }) => {
+const Step2 = ({ data, handleChange, setFormData, inspectores }) => {
     const [markerPosition, setMarkerPosition] = useState({ lat: data.latitude, lng: data.longitude });
 
     useEffect(() => {
@@ -160,11 +189,8 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, representantes })
                         </select>
                     </div>
                     <div className="form-group">
-                        <label htmlFor="representante_legal_id">Representante Legal</label>
-                        <select id="representante_legal_id" name="representante_legal_id" value={data.representante_legal_id} onChange={handleChange}>
-                            <option value="">-- Sin Asignar --</option>
-                            {representantes.map(rep => <option key={rep.id} value={rep.id}>{rep.nombre}</option>)}
-                        </select>
+                        <label htmlFor="rep_legal">Representante Legal</label>
+                        <input type="text" id="rep_legal" name="rep_legal" value={data.rep_legal} onChange={handleChange} placeholder="Nombre del representante" />
                     </div>
                 </div>
             </div>
@@ -178,22 +204,22 @@ const Step3 = ({ data, handleChange }) => (
             {/* Col 1 */}
             <div className="form-group">
                 <label htmlFor="monto_sapem">Monto SAPEM ($)</label>
-                <input type="number" step="0.01" id="monto_sapem" name="monto_sapem" value={data.monto_sapem} onChange={handleChange} placeholder="150000.00" />
+                <CurrencyInput name="monto_sapem" value={data.monto_sapem} onChange={handleChange} placeholder="150.000,00" />
             </div>
             {/* Col 2 */}
             <div className="form-group">
                 <label htmlFor="monto_sub">Monto Subcontrato ($)</label>
-                <input type="number" step="0.01" id="monto_sub" name="monto_sub" value={data.monto_sub} onChange={handleChange} placeholder="75000.00" />
+                <CurrencyInput name="monto_sub" value={data.monto_sub} onChange={handleChange} placeholder="75.000,00" />
             </div>
             {/* Col 1 */}
             <div className="form-group">
                 <label htmlFor="af">Aporte Financiero ($)</label>
-                <input type="number" step="0.01" id="af" name="af" value={data.af} onChange={handleChange} placeholder="50000.00" />
+                <CurrencyInput name="af" value={data.af} onChange={handleChange} placeholder="50.000,00" />
             </div>
             {/* Col 2 */}
             <div className="form-group">
-                <label htmlFor="plazo">Plazo de Ejecución (días)</label>
-                <input type="number" id="plazo" name="plazo" value={data.plazo} onChange={handleChange} placeholder="90" />
+                <label htmlFor="plazo_dias">Plazo de Ejecución (días)</label>
+                <input type="number" id="plazo_dias" name="plazo_dias" value={data.plazo_dias} onChange={handleChange} placeholder="90" />
             </div>
             {/* Col 1 */}
             <div className="form-group">
@@ -243,10 +269,19 @@ function ObraWizardForm({ onSubmit }) {
 
   // --- Simulación de carga de datos para desplegables ---
   const [inspectores, setInspectores] = useState([]);
-  const [representantes, setRepresentantes] = useState([]);
+
   useEffect(() => {
-    setInspectores([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'Ana Gómez' }]);
-    setRepresentantes([{ id: 1, nombre: 'Representante Legal A' }, { id: 2, nombre: 'Representante Legal B' }]);
+    const fetchDropdownData = async () => {
+      try {
+        // Usamos el endpoint que ya existe para traer solo inspectores
+        const inspectoresResponse = await api.get('/usuarios/inspectores');
+        console.log('DEBUG: Inspectores recibidos del backend:', inspectoresResponse.data); // Añadido para depuración
+        setInspectores(inspectoresResponse.data);
+      } catch (error) {
+        console.error("Error al cargar datos para los desplegables:", error);
+      }
+    };
+    fetchDropdownData();
   }, []);
 
   const handleChange = (e) => {
@@ -256,11 +291,22 @@ function ObraWizardForm({ onSubmit }) {
 
   const validateStep = () => {
     const newErrors = {};
-    if (currentStep === 1) {
-      if (!formData.establecimiento) newErrors.establecimiento = 'El establecimiento es requerido.';
-      if (!formData.numero_gestion) newErrors.numero_gestion = 'El número de gestión es requerido.';
+    switch (currentStep) {
+      case 1:
+        if (!formData.titulo) newErrors.titulo = 'El título es requerido.';
+        if (!formData.numero_gestion) newErrors.numero_gestion = 'El número de gestión es requerido.';
+        break;
+      case 2:
+        if (!formData.localidad) newErrors.localidad = 'La localidad es requerida.';
+        if (!formData.inspector_id) newErrors.inspector_id = 'Debe asignar un inspector.';
+        break;
+      case 3:
+        if (!formData.plazo_dias) newErrors.plazo_dias = 'El plazo es requerido.';
+        if (!formData.fecha_inicio) newErrors.fecha_inicio = 'La fecha de inicio es requerida.';
+        break;
+      default:
+        break;
     }
-    // Se pueden agregar más validaciones para otros pasos aquí
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -291,7 +337,7 @@ function ObraWizardForm({ onSubmit }) {
       </div>
       <div className="wizard-body">
         {currentStep === 1 && <Step1 data={formData} handleChange={handleChange} errors={errors} />}
-        {currentStep === 2 && <Step2 data={formData} handleChange={handleChange} setFormData={setFormData} inspectores={inspectores} representantes={representantes} />}
+        {currentStep === 2 && <Step2 data={formData} handleChange={handleChange} setFormData={setFormData} inspectores={inspectores} errors={errors} />}
         {currentStep === 3 && <Step3 data={formData} handleChange={handleChange} />}
       </div>
       <div className="wizard-footer">

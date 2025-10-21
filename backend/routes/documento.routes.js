@@ -12,20 +12,20 @@ module.exports = function(app) {
   });
 
   // Create a new Documento
-  app.post("/api/documentos", [authJwt.verifyToken], documentos.create);
+  app.post("/documentos", [authJwt.verifyToken], documentos.create);
 
   // Retrieve all Documentos
-  app.get("/api/documentos", [authJwt.verifyToken], documentos.findAll);
+  app.get("/documentos", [authJwt.verifyToken], documentos.findAll);
 
   // Retrieve a single Documento with id
-  app.get("/api/documentos/:id", [authJwt.verifyToken], documentos.findOne);
+  app.get("/documentos/:id", [authJwt.verifyToken], documentos.findOne);
 
   // Update a Documento with id
-  app.put("/api/documentos/:id", [authJwt.verifyToken], documentos.update);
+  app.put("/documentos/:id", [authJwt.verifyToken], documentos.update);
 
   // Delete a Documento with id
-  app.delete("/api/documentos/:id", [authJwt.verifyToken], documentos.delete);
+  app.delete("/documentos/:id", [authJwt.verifyToken], documentos.delete);
 
   // Delete all Documentos
-  app.delete("/api/documentos", [authJwt.verifyToken], documentos.deleteAll);
+  app.delete("/documentos", [authJwt.verifyToken], documentos.deleteAll);
 };
