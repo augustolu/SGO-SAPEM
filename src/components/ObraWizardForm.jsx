@@ -143,6 +143,7 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
     const suggestionsRef = useRef(null); // Ref para el contenedor de sugerencias
 
     useEffect(() => {
+        console.log('Frontend: markerPosition changed:', markerPosition);
         setFormData(prev => ({ ...prev, latitude: markerPosition.lat, longitude: markerPosition.lng }));
 
         // Evitar que la geocodificación inversa sobrescriba la entrada del usuario
@@ -153,14 +154,20 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
 
         // Geocodificación inversa: Coordenadas -> Dirección
         const fetchAddress = async () => {
+            const reverseGeocodeUrl = `/geocode/reverse?lat=${markerPosition.lat}&lon=${markerPosition.lng}`;
+            console.log('Frontend: Initiating reverse geocode for lat:', markerPosition.lat, 'lon:', markerPosition.lng);
+            console.log('Frontend: Sending reverse geocode request to backend:', reverseGeocodeUrl);
             try {
-                const response = await api.get(`/geocode/reverse?lat=${markerPosition.lat}&lon=${markerPosition.lng}`);
+                const response = await api.get(reverseGeocodeUrl);
                 const result = response.data;
+                console.log('Frontend: Reverse geocode successful, result:', result);
                 if (result && result.display_name) {
                     setFormData(prev => ({ ...prev, ubicacion: result.display_name }));
                 }
             } catch (error) {
                 console.error("Error en geocodificación inversa:", error);
+                console.error('Frontend: Reverse geocode error response status:', error.response?.status);
+                console.error('Frontend: Reverse geocode error response data:', error.response?.data);
             }
         };
         fetchAddress();
@@ -208,15 +215,19 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
                 return;
             }
             timeoutId = setTimeout(async () => {
+                console.log('Frontend: Debounced search initiated for query:', query);
                 try {
-                    console.log('DEBUG: Searching for suggestions with query:', query);
-                    const response = await api.get(`/geocode/search?q=${encodeURIComponent(query)}&country=Argentina&limit=5`);
+                    const searchUrl = `/geocode/search?q=${encodeURIComponent(query)}&country=Argentina&limit=5`;
+                    console.log('Frontend: Sending debounced search request to backend:', searchUrl);
+                    const response = await api.get(searchUrl);
                     const result = response.data;
-                    console.log('DEBUG: Nominatim suggestions result:', result);
+                    console.log('Frontend: Nominatim suggestions result:', result);
                     setSuggestions(result);
                     setShowSuggestions(true);
                 } catch (error) {
                     console.error("Error en geocodificación (sugerencias):", error);
+                    console.error('Frontend: Suggestions error response status:', error.response?.status);
+                    console.error('Frontend: Suggestions error response data:', error.response?.data);
                     setSuggestions([]);
                     setShowSuggestions(false);
                 }
@@ -227,6 +238,7 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
     // Manejador para el cambio en el input de ubicación (con autocompletado)
     const handleUbicacionChange = (e) => {
         const { value } = e.target;
+        console.log('Frontend: ubicacion input changed to:', value);
         handleChange(e); // Actualiza el formData.ubicacion
         debouncedSearch(value); // Inicia la búsqueda debounced
     };
@@ -234,6 +246,7 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
     // Manejador para cuando se selecciona una sugerencia
     const handleSuggestionClick = (suggestion) => {
         ignoreReverseGeocodeRef.current = true; // Establece el flag para evitar sobrescritura
+        console.log('Frontend: Suggestion selected:', suggestion);
         setFormData(prev => ({ ...prev, ubicacion: suggestion.display_name }));
         setMarkerPosition({ lat: parseFloat(suggestion.lat), lng: parseFloat(suggestion.lon) });
         setSuggestions([]);
@@ -244,10 +257,12 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
     const handleAddressSearch = async () => {
         if (!data.ubicacion) return;
         try {
-            console.log('DEBUG: Explicit search for address:', data.ubicacion);
-            const response = await api.get(`/geocode/search?q=${encodeURIComponent(data.ubicacion)}&country=Argentina&limit=1`);
+            console.log('Frontend: Explicit search for address:', data.ubicacion);
+            const searchUrl = `/geocode/search?q=${encodeURIComponent(data.ubicacion)}&country=Argentina&limit=1`;
+            console.log('Frontend: Sending explicit search request to backend:', searchUrl);
+            const response = await api.get(searchUrl);
             const result = response.data;
-            console.log('DEBUG: Nominatim explicit search result:', result);
+            console.log('Frontend: Nominatim explicit search result:', result);
             if (result && result.length > 0) {
                 const { lat, lon } = result[0];
                 const newPos = { lat: parseFloat(lat), lng: parseFloat(lon) };
@@ -260,6 +275,8 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
             }
         } catch (error) {
             console.error("Error en geocodificación:", error);
+            console.error('Frontend: Explicit search error response status:', error.response?.status);
+            console.error('Frontend: Explicit search error response data:', error.response?.data);
         }
     };
 
