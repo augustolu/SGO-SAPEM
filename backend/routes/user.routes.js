@@ -11,6 +11,9 @@ module.exports = function(app) {
     next();
   });
 
+  // --- AÑADE ESTA LÍNEA ---
+  app.get("/usuarios/inspectores", [authJwt.verifyToken, authJwt.isAdmin], controller.findAllInspectores);
+  // -------------------------
   app.get("/users", [authJwt.verifyToken, authJwt.isAdmin], controller.findAll);
   app.put("/users/:id/role", [authJwt.verifyToken, authJwt.isAdmin], controller.updateRole);
   app.delete("/users/:id", [authJwt.verifyToken, authJwt.isAdmin], controller.delete);

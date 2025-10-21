@@ -22,6 +22,34 @@ exports.findAll = (req, res) => {
     });
 };
 
+// --- AÑADE ESTA NUEVA FUNCIÓN ---
+exports.findAllInspectores = (req, res) => {
+  Role.findOne({
+    where: { nombre: "Inspector" }
+  })
+  .then(role => {
+    if (!role) {
+      return res.status(404).send({ message: "Rol 'Inspector' no encontrado." });
+    }
+
+    User.findAll({
+      where: { rol_id: role.id },
+      attributes: ['id', 'nombre'], // Solo enviamos los datos que el formulario necesita
+      order: [['nombre', 'ASC']] // Opcional: ordenar alfabéticamente
+    })
+    .then(users => {
+      res.status(200).send(users);
+    })
+    .catch(err => {
+      res.status(500).send({ message: err.message });
+    });
+  })
+  .catch(err => {
+    res.status(500).send({ message: err.message });
+  });
+};
+// ----------------------------------
+
 exports.updateRole = (req, res) => {
   User.findByPk(req.params.id)
     .then(user => {

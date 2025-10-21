@@ -25,9 +25,10 @@ const obraSchema = {
   categoria: 'varios',
   descripcion: '', // Cambiado para coincidir con el backend
   nro: '',
-  latitude: -27.7833,
-  longitude: -59.2667,
+  latitude: -33.2986, // San Luis, Argentina
+  longitude: -66.3377, // San Luis, Argentina
   localidad: '',
+  ubicacion: '', // Campo para la dirección textual
   contratista: '',
   inspector_id: '',
   rep_legal: '', // Cambiado para coincidir con el backend
@@ -133,13 +134,52 @@ const Step1 = ({ data, handleChange, errors }) => (
   </div>
 );
 
-const Step2 = ({ data, handleChange, setFormData, inspectores }) => {
+const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
     const [markerPosition, setMarkerPosition] = useState({ lat: data.latitude, lng: data.longitude });
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchTimeoutRef = useRef(null);
+    const ignoreReverseGeocodeRef = useRef(false); // Flag para evitar que la geocodificación inversa sobrescriba la entrada del usuario
+    const suggestionsRef = useRef(null); // Ref para el contenedor de sugerencias
 
     useEffect(() => {
         setFormData(prev => ({ ...prev, latitude: markerPosition.lat, longitude: markerPosition.lng }));
+
+        // Evitar que la geocodificación inversa sobrescriba la entrada del usuario
+        if (ignoreReverseGeocodeRef.current) {
+            ignoreReverseGeocodeRef.current = false; // Resetear el flag
+            return;
+        }
+
+        // Geocodificación inversa: Coordenadas -> Dirección
+        const fetchAddress = async () => {
+            try {
+                const response = await api.get(`/geocode/reverse?lat=${markerPosition.lat}&lon=${markerPosition.lng}`);
+                const result = response.data;
+                if (result && result.display_name) {
+                    setFormData(prev => ({ ...prev, ubicacion: result.display_name }));
+                }
+            } catch (error) {
+                console.error("Error en geocodificación inversa:", error);
+            }
+        };
+        fetchAddress();
     }, [markerPosition, setFormData]);
 
+    // Manejador para ocultar sugerencias al hacer clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Componente para el marcador arrastrable
     function DraggableMarker() {
         const markerRef = useRef(null);
         const eventHandlers = useMemo(() => ({
@@ -147,14 +187,81 @@ const Step2 = ({ data, handleChange, setFormData, inspectores }) => {
                 const marker = markerRef.current;
                 if (marker != null) setMarkerPosition(marker.getLatLng());
             },
-        }), []);
+        }), [setMarkerPosition]);
         return <Marker draggable={true} eventHandlers={eventHandlers} position={markerPosition} ref={markerRef} />;
     }
 
+    // Componente para manejar eventos del mapa (clic)
     function MapEvents() {
         useMapEvents({ click(e) { setMarkerPosition(e.latlng); } });
         return null;
     }
+
+    // Función de búsqueda debounced para sugerencias
+    const debouncedSearch = useMemo(() => {
+        let timeoutId;
+        return async (query) => {
+            clearTimeout(timeoutId);
+            if (query.length < 3) { // Solo buscar si la consulta tiene al menos 3 caracteres
+                setSuggestions([]);
+                setShowSuggestions(false);
+                return;
+            }
+            timeoutId = setTimeout(async () => {
+                try {
+                    console.log('DEBUG: Searching for suggestions with query:', query);
+                    const response = await api.get(`/geocode/search?q=${encodeURIComponent(query)}&country=Argentina&limit=5`);
+                    const result = response.data;
+                    console.log('DEBUG: Nominatim suggestions result:', result);
+                    setSuggestions(result);
+                    setShowSuggestions(true);
+                } catch (error) {
+                    console.error("Error en geocodificación (sugerencias):", error);
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                }
+            }, 500); // Debounce de 500ms
+        };
+    }, []);
+
+    // Manejador para el cambio en el input de ubicación (con autocompletado)
+    const handleUbicacionChange = (e) => {
+        const { value } = e.target;
+        handleChange(e); // Actualiza el formData.ubicacion
+        debouncedSearch(value); // Inicia la búsqueda debounced
+    };
+
+    // Manejador para cuando se selecciona una sugerencia
+    const handleSuggestionClick = (suggestion) => {
+        ignoreReverseGeocodeRef.current = true; // Establece el flag para evitar sobrescritura
+        setFormData(prev => ({ ...prev, ubicacion: suggestion.display_name }));
+        setMarkerPosition({ lat: parseFloat(suggestion.lat), lng: parseFloat(suggestion.lon) });
+        setSuggestions([]);
+        setShowSuggestions(false);
+    };
+
+    // Manejador para el botón "Buscar" (búsqueda explícita)
+    const handleAddressSearch = async () => {
+        if (!data.ubicacion) return;
+        try {
+            console.log('DEBUG: Explicit search for address:', data.ubicacion);
+            const response = await api.get(`/geocode/search?q=${encodeURIComponent(data.ubicacion)}&country=Argentina&limit=1`);
+            const result = response.data;
+            console.log('DEBUG: Nominatim explicit search result:', result);
+            if (result && result.length > 0) {
+                const { lat, lon } = result[0];
+                const newPos = { lat: parseFloat(lat), lng: parseFloat(lon) };
+                ignoreReverseGeocodeRef.current = true; // Establece el flag
+                setMarkerPosition(newPos);
+                setSuggestions([]); // Limpiar sugerencias
+                setShowSuggestions(false);
+            } else {
+                alert("Dirección no encontrada.");
+            }
+        } catch (error) {
+            console.error("Error en geocodificación:", error);
+        }
+    };
 
     return (
         <div className="form-step">
@@ -174,8 +281,34 @@ const Step2 = ({ data, handleChange, setFormData, inspectores }) => {
                 {/* Columna 2: Campos apilados */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div className="form-group">
-                        <label htmlFor="localidad">Localidad / Dirección</label>
-                        <input type="text" id="localidad" name="localidad" value={data.localidad} onChange={handleChange} placeholder="Ej: Barrio San Martín, Calle Falsa 123" />
+                        <label htmlFor="localidad">Localidad *</label>
+                        <input type="text" id="localidad" name="localidad" value={data.localidad} onChange={handleChange} placeholder="Ej: Goya, Corrientes" />
+                        {errors.localidad && <span className="error-message">{errors.localidad}</span>}
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="ubicacion">Dirección (para el mapa)</label>
+                        <div className="suggestions-container" ref={suggestionsRef}>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input
+                                    type="text"
+                                    id="ubicacion"
+                                    name="ubicacion"
+                                    value={data.ubicacion}
+                                    onChange={handleUbicacionChange} // Usar el nuevo manejador
+                                    placeholder="Calle Falsa 123, Barrio..." style={{ flexGrow: 1 }}
+                                />
+                            <button type="button" className="btn-secondary" onClick={handleAddressSearch} style={{ flexShrink: 0, padding: '0 1rem' }}>Buscar</button>
+                            </div>
+                            {showSuggestions && suggestions.length > 0 && (
+                                <ul className="suggestions-list">
+                                    {suggestions.map((sug, index) => (
+                                        <li key={index} onClick={() => handleSuggestionClick(sug)}>
+                                            {sug.display_name}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </div>
                     <div className="form-group">
                         <label htmlFor="contratista">Contratista</label>
@@ -187,6 +320,7 @@ const Step2 = ({ data, handleChange, setFormData, inspectores }) => {
                             <option value="">-- Sin Asignar --</option>
                             {inspectores.map(insp => <option key={insp.id} value={insp.id}>{insp.nombre}</option>)}
                         </select>
+                        {errors.inspector_id && <span className="error-message">{errors.inspector_id}</span>}
                     </div>
                     <div className="form-group">
                         <label htmlFor="rep_legal">Representante Legal</label>

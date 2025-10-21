@@ -32,7 +32,9 @@ exports.create = (req, res) => {
     contratista: req.body.contratista,
     progreso: req.body.progreso,
     motivo_anulacion: req.body.motivo_anulacion,
-    inspector_id: req.body.inspector_id
+    inspector_id: req.body.inspector_id,
+    latitude: req.body.latitude,
+    longitude: req.body.longitude
   };
 
   // Save Obra in the database
