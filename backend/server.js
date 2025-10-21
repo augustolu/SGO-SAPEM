@@ -59,6 +59,8 @@ require('./routes/actividad.routes')(apiRouter);
 require('./routes/documento.routes')(apiRouter);
 require('./routes/role.routes')(apiRouter);
 require('./routes/geocode.routes')(apiRouter);
+require('./routes/contribuyente.routes')(apiRouter);
+require('./routes/representanteLegal.routes')(apiRouter);
 app.use('/api', apiRouter);
 
 // set port, listen for requests

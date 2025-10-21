@@ -46,8 +46,8 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
-    setInputValue(newValue);
-    onChange({ target: { name, value: newValue } }); // Actualizar el formulario principal en tiempo real
+    setInputValue(newValue); // CORRECCIÓN: Actualizar el estado interno del input
+    onChange({ target: { name, value: newValue } }); // Y también el estado del formulario principal
     debouncedFetch(newValue);
   };
 

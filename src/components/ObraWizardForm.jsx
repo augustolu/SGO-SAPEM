@@ -21,7 +21,7 @@ const STEPS = [
 ];
 
 const obraSchema = {
-  titulo: '', // Cambiado para coincidir con el backend
+  establecimiento: '', // Cambiado para coincidir con el backend
   numero_gestion: '',
   categoria: 'varios',
   descripcion: '', // Cambiado para coincidir con el backend
@@ -96,8 +96,8 @@ const Step1 = ({ data, handleChange, errors }) => (
       {/* Columna 1 */}
       <div className="form-group">
         <label htmlFor="titulo">Título / Establecimiento *</label>
-        <input type="text" id="titulo" name="titulo" value={data.titulo} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
-        {errors.titulo && <span className="error-message">{errors.titulo}</span>}
+        <input type="text" id="establecimiento" name="establecimiento" value={data.establecimiento} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
+        {errors.establecimiento && <span className="error-message">{errors.establecimiento}</span>}
       </div>
 
       {/* Columna 2 */}
@@ -494,7 +494,7 @@ function ObraWizardForm({ onSubmit }) {
     const newErrors = {};
     switch (currentStep) {
       case 1:
-        if (!formData.titulo) newErrors.titulo = 'El título es requerido.';
+        if (!formData.establecimiento) newErrors.establecimiento = 'El título es requerido.';
         if (!formData.numero_gestion) newErrors.numero_gestion = 'El número de gestión es requerido.';
         break;
       case 2:

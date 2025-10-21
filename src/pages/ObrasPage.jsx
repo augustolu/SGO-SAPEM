@@ -176,7 +176,21 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
       onObraCreated(response.data);
       onClose();
     } catch (error) {
-      console.error('Error creating obra:', error);
+      console.error('Error creating obra:', error); // Log genérico
+      if (error.response) {
+        // El servidor respondió con un código de estado fuera del rango 2xx
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+        alert(`Error del servidor: ${error.response.data.message || 'Error desconocido'}`);
+      } else if (error.request) {
+        // La solicitud se hizo pero no se recibió respuesta
+        console.error('Error request:', error.request);
+        alert('No se pudo conectar con el servidor. Revisa tu conexión de red.');
+      } else {
+        // Algo sucedió al configurar la solicitud que provocó un error
+        console.error('Error message:', error.message);
+        alert(`Error al crear la solicitud: ${error.message}`);
+      }
     }
   };
 

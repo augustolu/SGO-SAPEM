@@ -1,16 +1,20 @@
 
 const db = require("../models");
+
+// DEBUG: Imprime todos los modelos disponibles en el objeto db. Revisa la consola de tu servidor.
+console.log("Modelos disponibles en DB:", Object.keys(db));
+
 const Obra = db.Obras;
-const RepresentanteLegal = db.RepresentantesLegales;
-const Contribuyente = db.Contribuyentes;
+const RepresentanteLegal = db.RepresentanteLegal; // SOLUCIÓN: Usar singular, que es el nombre de definición del modelo.
+const Contribuyente = db.Contribuyente;             // SOLUCIÓN: Usar singular, que es el nombre de definición del modelo.
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Obra
 exports.create = async (req, res) => {
   // Validate request
-  if (!req.body.titulo) {
+  if (!req.body.establecimiento) {
     return res.status(400).send({
-      message: "Content can not be empty!"
+      message: "El campo 'establecimiento' (título) no puede estar vacío."
     });
   }
 
@@ -38,13 +42,13 @@ exports.create = async (req, res) => {
 
     // Mapeo final para la creación de la obra
     const obra = {
-      establecimiento: req.body.titulo,
+      establecimiento: req.body.establecimiento,
       numero_gestion: req.body.numero_gestion,
       categoria: req.body.categoria,
       detalle: req.body.descripcion,
       latitude: req.body.latitude,
       longitude: req.body.longitude,
-      localidad: req.body.localidad,
+      localidad: req.body.localidad, // Este campo ya existe en tu modelo
       contribuyente_id: contribuyenteId,
       inspector_id: req.body.inspector_id || null,
       representante_legal_id: representanteId,
@@ -143,9 +147,9 @@ exports.findOne = (req, res) => {
     include: [
       { model: db.Actividades, as: 'Actividades' }, // Asegúrate que el 'as' coincida si lo tienes definido
       { model: db.Documentos, as: 'Documentos' },
-      { model: db.Usuarios, as: 'Usuario' }, // Para obtener el nombre del inspector
-      { model: db.RepresentantesLegales, as: 'RepresentanteLegal' },
-      { model: db.Contribuyentes, as: 'Contribuyente' }
+      { model: db.Usuario, as: 'Usuario' }, // Usar singular
+      { model: db.RepresentanteLegal, as: 'RepresentanteLegal' }, // Usar singular
+      { model: db.Contribuyente, as: 'Contribuyente' } // Usar singular
     ]
   })
     .then(data => {
