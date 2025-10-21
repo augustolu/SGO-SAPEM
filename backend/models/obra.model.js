@@ -5,14 +5,14 @@ module.exports = (sequelize, Sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    titulo: {
+    establecimiento: { // Cambiado de 'titulo'
       type: Sequelize.STRING(255),
       allowNull: false
     },
-    descripcion: {
+    detalle: { // Cambiado de 'descripcion'
       type: Sequelize.TEXT
     },
-    ubicacion: {
+    localidad: { // Cambiado de 'ubicacion'
       type: Sequelize.STRING(255)
     },
     numero_gestion: {
@@ -34,7 +34,7 @@ module.exports = (sequelize, Sequelize) => {
     fecha_finalizacion_estimada: {
       type: Sequelize.DATE
     },
-    plazo_dias: {
+    plazo: { // Cambiado de 'plazo_dias'
       type: Sequelize.INTEGER
     },
     monto_sapem: {
@@ -46,8 +46,9 @@ module.exports = (sequelize, Sequelize) => {
     af: {
       type: Sequelize.DECIMAL(15, 2)
     },
-    rep_legal: {
-      type: Sequelize.STRING(255)
+    representante_legal_id: { // Cambiado de 'rep_legal'
+      type: Sequelize.INTEGER, // CORRECCIÓN: Debe ser INTEGER para coincidir con la FK de la BD
+      allowNull: true
     },
     contratista: {
       type: Sequelize.STRING(255)

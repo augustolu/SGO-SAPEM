@@ -12,7 +12,7 @@ const axiosOptions = {
 exports.search = async (req, res) => {
   try {
     console.log('Backend: Received geocode search request from frontend.');
-    console.log('Backend: Frontend query parameters:', req.query);
+    console.log('Backend: Frontend query parameters for search:', req.query);
     const { q, state, country, limit } = req.query;
 
     // Construir los parámetros dinámicamente para evitar enviar 'undefined'
@@ -55,7 +55,7 @@ exports.search = async (req, res) => {
 exports.reverse = async (req, res) => {
   try {
     console.log('Backend: Received geocode reverse request from frontend.');
-    console.log('Backend: Frontend query parameters:', req.query);
+    console.log('Backend: Frontend query parameters for reverse:', req.query);
     const { lat, lon } = req.query;
 
     // Construir los parámetros dinámicamente

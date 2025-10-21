@@ -24,29 +24,30 @@ exports.findAll = (req, res) => {
 
 // --- AÑADE ESTA NUEVA FUNCIÓN ---
 exports.findAllInspectores = (req, res) => {
-  Role.findOne({
-    where: { nombre: "Inspector" }
-  })
-  .then(role => {
-    if (!role) {
-      return res.status(404).send({ message: "Rol 'Inspector' no encontrado." });
-    }
-
-    User.findAll({
-      where: { rol_id: role.id },
-      attributes: ['id', 'nombre'], // Solo enviamos los datos que el formulario necesita
-      order: [['nombre', 'ASC']] // Opcional: ordenar alfabéticamente
-    })
-    .then(users => {
-      res.status(200).send(users);
+  // Primero, encontramos el ID del rol "Inspector"
+  Role.findOne({ where: { nombre: 'Inspector' } })
+    .then(role => {
+      if (!role) {
+        return res.status(404).send({ message: "Rol 'Inspector' no encontrado." });
+      }
+      // Luego, buscamos todos los usuarios con ese rol_id
+      User.findAll({
+        where: { rol_id: role.id },
+        attributes: ['id', 'nombre'], // Solo enviamos los datos que el formulario necesita
+        order: [['nombre', 'ASC']] // Opcional: ordenar alfabéticamente
+      })
+      .then(users => {
+        res.status(200).send(users);
+      })
+      .catch(err => {
+        console.error(`Error al buscar inspectores por rol_id=${role.id}:`, err);
+        res.status(500).send({ message: err.message });
+      });
     })
     .catch(err => {
+      console.error("Error al buscar el rol 'Inspector':", err);
       res.status(500).send({ message: err.message });
     });
-  })
-  .catch(err => {
-    res.status(500).send({ message: err.message });
-  });
 };
 // ----------------------------------
 

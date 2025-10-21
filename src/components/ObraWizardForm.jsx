@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './ObraWizardForm.css';
 import api from '../services/api'; // Importamos el cliente de API
+import CreatableAutocomplete from './CreatableAutocomplete.jsx'; // ¡Importamos el nuevo componente!
 
 // --- Arreglo para el ícono de Leaflet en React ---
 delete L.Icon.Default.prototype._getIconUrl;
@@ -30,7 +31,7 @@ const obraSchema = {
   localidad: '',
   ubicacion: '', // Campo para la dirección textual
   contratista: '',
-  inspector_id: '',
+  inspector_id: '', // Cambiado para coincidir con el backend
   rep_legal: '', // Cambiado para coincidir con el backend
   monto_sapem: '',
   monto_sub: '',
@@ -39,6 +40,7 @@ const obraSchema = {
   fecha_inicio: '',
   fecha_finalizacion_estimada: '',
   estado: 'Solicitud',
+  progreso: 0,
 };
 
 // --- NUEVO: Componente para Input de Moneda ---
@@ -134,7 +136,7 @@ const Step1 = ({ data, handleChange, errors }) => (
   </div>
 );
 
-const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
+const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, errors }) => {
     const [markerPosition, setMarkerPosition] = useState({ lat: data.latitude, lng: data.longitude });
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -334,8 +336,13 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
                     </div>
                     <div className="form-group">
                         <label htmlFor="contratista">Contratista</label>
-                        <input type="text" id="contratista" name="contratista" value={data.contratista} onChange={handleChange} placeholder="Nombre de la empresa o persona" />
-                    </div>
+                        <CreatableAutocomplete
+                            name="contratista"
+                            value={data.contratista}
+                            onChange={handleChange}
+                            placeholder="Buscar o crear contratista..."
+                            apiEndpoint="/contribuyentes"
+                        />                    </div>
                     <div className="form-group">
                         <label htmlFor="inspector_id">Inspector Asignado</label>
                         <select id="inspector_id" name="inspector_id" value={data.inspector_id} onChange={handleChange}>
@@ -346,7 +353,13 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
                     </div>
                     <div className="form-group">
                         <label htmlFor="rep_legal">Representante Legal</label>
-                        <input type="text" id="rep_legal" name="rep_legal" value={data.rep_legal} onChange={handleChange} placeholder="Nombre del representante" />
+                        <CreatableAutocomplete
+                            name="rep_legal"
+                            value={data.rep_legal}
+                            onChange={handleChange}
+                            placeholder="Buscar o crear representante..."
+                            apiEndpoint="/representantes-legales"
+                        />
                     </div>
                 </div>
             </div>
@@ -381,11 +394,6 @@ const Step3 = ({ data, handleChange }) => (
             <div className="form-group">
                 <label htmlFor="fecha_inicio">Fecha de Inicio</label>
                 <input type="date" id="fecha_inicio" name="fecha_inicio" value={data.fecha_inicio} onChange={handleChange} />
-            </div>
-            {/* Col 2 */}
-            <div className="form-group">
-                <label htmlFor="fecha_finalizacion_estimada">Finalización Estimada</label>
-                <input type="date" id="fecha_finalizacion_estimada" name="fecha_finalizacion_estimada" value={data.fecha_finalizacion_estimada} onChange={handleChange} />
             </div>
             
             <div className="form-group grid-col-span-2">
@@ -425,20 +433,57 @@ function ObraWizardForm({ onSubmit }) {
 
   // --- Simulación de carga de datos para desplegables ---
   const [inspectores, setInspectores] = useState([]);
+  const [representantes, setRepresentantes] = useState([]); // NUEVO ESTADO
 
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        // Usamos el endpoint que ya existe para traer solo inspectores
-        const inspectoresResponse = await api.get('/usuarios/inspectores');
-        console.log('DEBUG: Inspectores recibidos del backend:', inspectoresResponse.data); // Añadido para depuración
-        setInspectores(inspectoresResponse.data);
+        // Solo necesitamos cargar los inspectores para el dropdown
+        const inspectoresRes = await api.get('/usuarios/inspectores');
+        setInspectores(inspectoresRes.data);
+
+        // Ya no necesitamos cargar representantes ni contribuyentes aquí,
+        // el componente CreatableAutocomplete lo hará por su cuenta.
+
       } catch (error) {
-        console.error("Error al cargar datos para los desplegables:", error);
+        console.error("Error al cargar inspectores:", error);
       }
     };
     fetchDropdownData();
   }, []);
+
+  // Efecto para calcular la fecha de finalización estimada
+  useEffect(() => {
+    const { fecha_inicio, plazo_dias } = formData;
+
+    if (fecha_inicio && plazo_dias) {
+      const startDate = new Date(fecha_inicio);
+      const days = parseInt(plazo_dias, 10);
+
+      // Validar que la fecha sea válida y los días sean un número positivo
+      if (!isNaN(startDate.getTime()) && !isNaN(days) && days >= 0) {
+        const endDate = new Date(startDate); // Crear una nueva instancia para no modificar la original
+        endDate.setDate(startDate.getDate() + days);
+
+        // Formatear la fecha a YYYY-MM-DD
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
+        const day = String(endDate.getDate()).padStart(2, '0');
+        const calculatedEndDate = `${year}-${month}-${day}`;
+
+        // Actualizar formData solo si la fecha calculada es diferente
+        if (formData.fecha_finalizacion_estimada !== calculatedEndDate) {
+          setFormData(prev => ({ ...prev, fecha_finalizacion_estimada: calculatedEndDate }));
+        }
+      } else if (formData.fecha_finalizacion_estimada !== '') {
+        // Si los valores son inválidos, limpiar la fecha estimada
+        setFormData(prev => ({ ...prev, fecha_finalizacion_estimada: '' }));
+      }
+    } else if (formData.fecha_finalizacion_estimada !== '') {
+      // Si falta fecha_inicio o plazo_dias, limpiar la fecha estimada
+      setFormData(prev => ({ ...prev, fecha_finalizacion_estimada: '' }));
+    }
+  }, [formData.fecha_inicio, formData.plazo_dias, formData.fecha_finalizacion_estimada, setFormData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -454,7 +499,7 @@ function ObraWizardForm({ onSubmit }) {
         break;
       case 2:
         if (!formData.localidad) newErrors.localidad = 'La localidad es requerida.';
-        if (!formData.inspector_id) newErrors.inspector_id = 'Debe asignar un inspector.';
+        // La asignación de inspector y otros puede ser opcional en la creación
         break;
       case 3:
         if (!formData.plazo_dias) newErrors.plazo_dias = 'El plazo es requerido.';
@@ -481,6 +526,7 @@ function ObraWizardForm({ onSubmit }) {
     e.preventDefault();
     if (validateStep()) {
         setIsSubmitting(true);
+        console.log('FRONTEND: Datos a enviar al backend:', formData);
         await onSubmit(formData);
         setIsSubmitting(false);
     }
