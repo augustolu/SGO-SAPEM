@@ -5,7 +5,7 @@ const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
 // Es importante enviar un User-Agent para cumplir con la política de uso de Nominatim.
 const axiosOptions = {
   headers: {
-    'User-Agent': 'SAPEM-App/1.0 (tu-email-de-contacto@example.com)'
+    'User-Agent': 'SGO-SAPEM-App/1.0 (augustoluceropollio@gmail..com)'
   }
 };
 
