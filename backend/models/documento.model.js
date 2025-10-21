@@ -1,4 +1,3 @@
-
 module.exports = (sequelize, Sequelize) => {
   const Documento = sequelize.define("Documentos", {
     id: {
@@ -19,6 +18,8 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       defaultValue: Sequelize.NOW
     }
+  }, {
+    timestamps: false
   });
 
   return Documento;

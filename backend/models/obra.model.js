@@ -1,4 +1,3 @@
-
 module.exports = (sequelize, Sequelize) => {
   const Obra = sequelize.define("Obras", {
     id: {
@@ -50,9 +49,6 @@ module.exports = (sequelize, Sequelize) => {
     rep_legal: {
       type: Sequelize.STRING(255)
     },
-    can: {
-      type: Sequelize.INTEGER
-    },
     contratista: {
       type: Sequelize.STRING(255)
     },
@@ -64,6 +60,8 @@ module.exports = (sequelize, Sequelize) => {
     motivo_anulacion: {
       type: Sequelize.TEXT
     }
+  }, {
+    timestamps: false
   });
 
   return Obra;

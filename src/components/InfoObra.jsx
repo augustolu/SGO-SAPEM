@@ -23,14 +23,6 @@ const InfoObra = ({ obra }) => {
           {obra.progreso || 0}%
         </div>
       </div>
-      <div className="progress-bar-container">
-        <div
-          className="progress-bar"
-          style={{ width: `${obra.progreso}%` }}
-        >
-          {obra.progreso}%
-        </div>
-      </div>
     </div>
   );
 };

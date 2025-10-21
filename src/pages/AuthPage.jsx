@@ -32,11 +32,11 @@ const LoginForm = ({ onSwitch, onForgotPassword }) => {
       <form onSubmit={handleSubmit} className="login-form">
         <div className="input-group">
           <label htmlFor="login-email">Dirección de Email</label>
-          <input type="email" id="login-email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="email@ejemplo.com" />
+          <input type="email" id="login-email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="email@ejemplo.com" autoComplete="email" />
         </div>
         <div className="input-group">
           <label htmlFor="login-password">Contraseña</label>
-          <input type="password" id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
+          <input type="password" id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" autoComplete="current-password" />
         </div>
         {error && <p className="error-message">{error}</p>}
         <div className="form-options">
@@ -84,15 +84,15 @@ const RegisterForm = ({ onSwitch }) => {
       <form onSubmit={handleSubmit} className="login-form">
         <div className="input-group">
           <label htmlFor="register-username">Nombre de Usuario</label>
-          <input type="text" id="register-username" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="nombre.apellido" />
+          <input type="text" id="register-username" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="nombre.apellido" autoComplete="name" />
         </div>
         <div className="input-group">
           <label htmlFor="register-email">Dirección de Email</label>
-          <input type="email" id="register-email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="email@ejemplo.com" />
+          <input type="email" id="register-email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="email@ejemplo.com" autoComplete="email" />
         </div>
         <div className="input-group">
           <label htmlFor="register-password">Contraseña</label>
-          <input type="password" id="register-password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
+          <input type="password" id="register-password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" autoComplete="new-password" />
         </div>
         {error && <p className="error-message">{error}</p>}
         <button type="submit" className="login-button">Registrarse</button>

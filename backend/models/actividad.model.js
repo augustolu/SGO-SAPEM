@@ -1,4 +1,3 @@
-
 module.exports = (sequelize, Sequelize) => {
   const Actividad = sequelize.define("Actividades", {
     id: {
@@ -24,6 +23,8 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       defaultValue: 'medio'
     }
+  }, {
+    timestamps: false
   });
 
   return Actividad;

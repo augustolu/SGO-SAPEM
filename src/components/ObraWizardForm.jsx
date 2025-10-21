@@ -1,0 +1,304 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import './ObraWizardForm.css';
+
+// --- Arreglo para el ícono de Leaflet en React ---
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
+const STEPS = [
+  { number: 1, title: 'Datos Principales' },
+  { number: 2, title: 'Ubicación y Responsables' },
+  { number: 3, title: 'Detalles Económicos y Plazos' },
+];
+
+const obraSchema = {
+  establecimiento: '',
+  numero_gestion: '',
+  categoria: 'varios',
+  detalle: '',
+  nro: '',
+  latitude: -27.7833,
+  longitude: -59.2667,
+  localidad: '',
+  contratista: '',
+  inspector_id: '',
+  representante_legal_id: '',
+  monto_sapem: '',
+  monto_sub: '',
+  af: '',
+  plazo: '',
+  fecha_inicio: '',
+  fecha_finalizacion_estimada: '',
+  estado: 'Solicitud',
+};
+
+// --- Componente Stepper (Indicador de Progreso) ---
+const Stepper = ({ currentStep }) => (
+  <div className="stepper-container">
+    {STEPS.map(({ number, title }) => {
+      const status = currentStep > number ? 'completed' : currentStep === number ? 'active' : 'pending';
+      return (
+        <React.Fragment key={number}>
+          <div className={`step-item ${status}`}>
+            <div className="step-circle">{status === 'completed' ? '✓' : number}</div>
+            <div className="step-title">{title}</div>
+          </div>
+          {number < STEPS.length && <div className="step-connector"></div>}
+        </React.Fragment>
+      );
+    })}
+  </div>
+);
+
+// --- Componentes de cada Paso ---
+const Step1 = ({ data, handleChange, errors }) => (
+  <div className="form-step">
+    <div className="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
+      {/* Columna 1 */}
+      <div className="form-group">
+        <label htmlFor="establecimiento">Establecimiento *</label>
+        <input type="text" id="establecimiento" name="establecimiento" value={data.establecimiento} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
+        {errors.establecimiento && <span className="error-message">{errors.establecimiento}</span>}
+      </div>
+
+      {/* Columna 2 */}
+      <div className="form-group">
+        <label htmlFor="numero_gestion">Número de Gestión *</label>
+        <input type="text" id="numero_gestion" name="numero_gestion" value={data.numero_gestion} onChange={handleChange} placeholder="Ej: 2024-001-A" />
+        {errors.numero_gestion && <span className="error-message">{errors.numero_gestion}</span>}
+      </div>
+
+      {/* Columna 1 */}
+      <div className="form-group">
+        <label htmlFor="categoria">Categoría *</label>
+        <select id="categoria" name="categoria" value={data.categoria} onChange={handleChange}>
+          <option value="salud">Salud</option>
+          <option value="educación">Educación</option>
+          <option value="deporte">Deporte</option>
+          <option value="secretaría general">Secretaría General</option>
+          <option value="vialidad">Vialidad</option>
+          <option value="obra pública">Obra Pública</option>
+          <option value="varios">Varios</option>
+        </select>
+      </div>
+
+      {/* Columna 2 */}
+      <div className="form-group">
+        <label htmlFor="nro">Nro de Obra (opcional)</label>
+        <input type="number" id="nro" name="nro" value={data.nro} onChange={handleChange} />
+      </div>
+
+      {/* Ocupa ambas columnas */}
+      <div className="form-group grid-col-span-2">
+        <label htmlFor="detalle">Detalle de la Obra</label>
+        <textarea id="detalle" name="detalle" value={data.detalle} onChange={handleChange} rows="4" placeholder="Descripción de los trabajos a realizar..."></textarea>
+      </div>
+    </div>
+  </div>
+);
+
+const Step2 = ({ data, handleChange, setFormData, inspectores, representantes }) => {
+    const [markerPosition, setMarkerPosition] = useState({ lat: data.latitude, lng: data.longitude });
+
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, latitude: markerPosition.lat, longitude: markerPosition.lng }));
+    }, [markerPosition, setFormData]);
+
+    function DraggableMarker() {
+        const markerRef = useRef(null);
+        const eventHandlers = useMemo(() => ({
+            dragend() {
+                const marker = markerRef.current;
+                if (marker != null) setMarkerPosition(marker.getLatLng());
+            },
+        }), []);
+        return <Marker draggable={true} eventHandlers={eventHandlers} position={markerPosition} ref={markerRef} />;
+    }
+
+    function MapEvents() {
+        useMapEvents({ click(e) { setMarkerPosition(e.latlng); } });
+        return null;
+    }
+
+    return (
+        <div className="form-step">
+            <div className="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
+                {/* Columna 1: Mapa */}
+                <div>
+                    <div className="map-container-wizard">
+                        <MapContainer center={markerPosition} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                            <DraggableMarker />
+                            <MapEvents />
+                        </MapContainer>
+                    </div>
+                    <p className="map-helper-text">Haga clic o arrastre el marcador para fijar la ubicación.</p>
+                </div>
+
+                {/* Columna 2: Campos apilados */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="form-group">
+                        <label htmlFor="localidad">Localidad / Dirección</label>
+                        <input type="text" id="localidad" name="localidad" value={data.localidad} onChange={handleChange} placeholder="Ej: Barrio San Martín, Calle Falsa 123" />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="contratista">Contratista</label>
+                        <input type="text" id="contratista" name="contratista" value={data.contratista} onChange={handleChange} placeholder="Nombre de la empresa o persona" />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="inspector_id">Inspector Asignado</label>
+                        <select id="inspector_id" name="inspector_id" value={data.inspector_id} onChange={handleChange}>
+                            <option value="">-- Sin Asignar --</option>
+                            {inspectores.map(insp => <option key={insp.id} value={insp.id}>{insp.nombre}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="representante_legal_id">Representante Legal</label>
+                        <select id="representante_legal_id" name="representante_legal_id" value={data.representante_legal_id} onChange={handleChange}>
+                            <option value="">-- Sin Asignar --</option>
+                            {representantes.map(rep => <option key={rep.id} value={rep.id}>{rep.nombre}</option>)}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Step3 = ({ data, handleChange }) => (
+    <div className="form-step">
+        <div className="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
+            {/* Col 1 */}
+            <div className="form-group">
+                <label htmlFor="monto_sapem">Monto SAPEM ($)</label>
+                <input type="number" step="0.01" id="monto_sapem" name="monto_sapem" value={data.monto_sapem} onChange={handleChange} placeholder="150000.00" />
+            </div>
+            {/* Col 2 */}
+            <div className="form-group">
+                <label htmlFor="monto_sub">Monto Subcontrato ($)</label>
+                <input type="number" step="0.01" id="monto_sub" name="monto_sub" value={data.monto_sub} onChange={handleChange} placeholder="75000.00" />
+            </div>
+            {/* Col 1 */}
+            <div className="form-group">
+                <label htmlFor="af">Aporte Financiero ($)</label>
+                <input type="number" step="0.01" id="af" name="af" value={data.af} onChange={handleChange} placeholder="50000.00" />
+            </div>
+            {/* Col 2 */}
+            <div className="form-group">
+                <label htmlFor="plazo">Plazo de Ejecución (días)</label>
+                <input type="number" id="plazo" name="plazo" value={data.plazo} onChange={handleChange} placeholder="90" />
+            </div>
+            {/* Col 1 */}
+            <div className="form-group">
+                <label htmlFor="fecha_inicio">Fecha de Inicio</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value={data.fecha_inicio} onChange={handleChange} />
+            </div>
+            {/* Col 2 */}
+            <div className="form-group">
+                <label htmlFor="fecha_finalizacion_estimada">Finalización Estimada</label>
+                <input type="date" id="fecha_finalizacion_estimada" name="fecha_finalizacion_estimada" value={data.fecha_finalizacion_estimada} onChange={handleChange} />
+            </div>
+            
+            <div className="form-group grid-col-span-2">
+                <label htmlFor="estado">Estado Inicial *</label>
+                <select id="estado" name="estado" value={data.estado} onChange={handleChange}>
+                    <option value="Solicitud">Solicitud</option>
+                    <option value="Proceso de compulsa">Proceso de compulsa</option>
+                </select>
+            </div>
+        </div>
+    </div>
+);
+
+
+// --- Componente de Navegación ---
+const Navigation = ({ currentStep, handlePrev, handleNext, isSubmitting }) => (
+  <>
+    {currentStep > 1 ? (
+        <button type="button" className="btn-secondary" onClick={handlePrev}>Anterior</button>
+    ) : (
+        <div></div> /* Placeholder para mantener el layout */
+    )}
+    {currentStep < STEPS.length ? (
+      <button type="button" className="btn-primary" onClick={handleNext}>Siguiente</button>
+    ) : (
+      <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Creando...' : 'Finalizar Creación'}</button>
+    )}
+  </>
+);
+
+// --- Componente Principal del Wizard ---
+function ObraWizardForm({ onSubmit }) {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState(obraSchema);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- Simulación de carga de datos para desplegables ---
+  const [inspectores, setInspectores] = useState([]);
+  const [representantes, setRepresentantes] = useState([]);
+  useEffect(() => {
+    setInspectores([{ id: 1, nombre: 'Juan Pérez' }, { id: 2, nombre: 'Ana Gómez' }]);
+    setRepresentantes([{ id: 1, nombre: 'Representante Legal A' }, { id: 2, nombre: 'Representante Legal B' }]);
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validateStep = () => {
+    const newErrors = {};
+    if (currentStep === 1) {
+      if (!formData.establecimiento) newErrors.establecimiento = 'El establecimiento es requerido.';
+      if (!formData.numero_gestion) newErrors.numero_gestion = 'El número de gestión es requerido.';
+    }
+    // Se pueden agregar más validaciones para otros pasos aquí
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validateStep()) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    setCurrentStep(prev => prev - 1);
+  };
+
+  const handleFinalSubmit = async (e) => {
+    e.preventDefault();
+    if (validateStep()) {
+        setIsSubmitting(true);
+        await onSubmit(formData);
+        setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form className="wizard-form-container" onSubmit={handleFinalSubmit}>
+      <div className="wizard-header">
+        <Stepper currentStep={currentStep} />
+      </div>
+      <div className="wizard-body">
+        {currentStep === 1 && <Step1 data={formData} handleChange={handleChange} errors={errors} />}
+        {currentStep === 2 && <Step2 data={formData} handleChange={handleChange} setFormData={setFormData} inspectores={inspectores} representantes={representantes} />}
+        {currentStep === 3 && <Step3 data={formData} handleChange={handleChange} />}
+      </div>
+      <div className="wizard-footer">
+        <Navigation currentStep={currentStep} handlePrev={handlePrev} handleNext={handleNext} isSubmitting={isSubmitting} />
+      </div>
+    </form>
+  );
+}
+
+export default ObraWizardForm;

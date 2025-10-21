@@ -165,36 +165,14 @@ const InspectorDashboard = ({ obras, user }) => {
   );
 };
 
-const CreateObraModal = ({ onClose, onObraCreated }) => {
-  const [titulo, setTitulo] = useState('');
-  const [numero_gestion, setNumeroGestion] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [categoria, setCategoria] = useState('varios');
-  const [ubicacion, setUbicacion] = useState('');
-  const [contratista, setContratista] = useState('');
-  const [rep_legal, setRepLegal] = useState('');
-  const [monto_sapem, setMontoSapem] = useState('');
-  const [monto_sub, setMontoSub] = useState('');
-  const [af, setAf] = useState('');
-  const [plazo_dias, setPlazoDias] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+import ObraWizardForm from '../components/ObraWizardForm'; // ¡Importamos el nuevo WIZARD!
+
+const CreateObraModal = ({ onClose, onObraCreated }) => {
+
+  const handleSubmit = async (formData) => {
     try {
-      const obraData = {
-        titulo,
-        numero_gestion,
-        descripcion,
-        categoria,
-        ubicacion,
-        contratista,
-        rep_legal,
-        monto_sapem: monto_sapem ? parseFloat(monto_sapem) : null,
-        monto_sub: monto_sub ? parseFloat(monto_sub) : null,
-        af: af ? parseFloat(af) : null,
-        plazo_dias: plazo_dias ? parseInt(plazo_dias, 10) : null,
-      };
-      const response = await api.post('/obras', obraData);
+      const response = await api.post('/obras', formData);
       onObraCreated(response.data);
       onClose();
     } catch (error) {
@@ -203,71 +181,25 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2>Crear Nueva Obra</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="titulo">Título</label>
-            <input type="text" id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="numero_gestion">Expediente</label>
-            <input type="text" id="numero_gestion" value={numero_gestion} onChange={(e) => setNumeroGestion(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="ubicacion">Ubicación</label>
-            <input type="text" id="ubicacion" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="contratista">Contratista</label>
-            <input type="text" id="contratista" value={contratista} onChange={(e) => setContratista(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="rep_legal">Representante Legal</label>
-            <input type="text" id="rep_legal" value={rep_legal} onChange={(e) => setRepLegal(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="monto_sapem">Monto SAPEM</label>
-            <input type="number" id="monto_sapem" value={monto_sapem} onChange={(e) => setMontoSapem(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="monto_sub">Monto SUB</label>
-            <input type="number" id="monto_sub" value={monto_sub} onChange={(e) => setMontoSub(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="af">Adelanto Financiero (AF)</label>
-            <input type="number" id="af" value={af} onChange={(e) => setAf(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="plazo_dias">Plazo en días</label>
-            <input type="number" id="plazo_dias" value={plazo_dias} onChange={(e) => setPlazoDias(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="categoria">Categoría</label>
-            <select id="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value)} required>
-              <option value="salud">Salud</option>
-              <option value="educación">Educación</option>
-              <option value="deporte">Deporte</option>
-              <option value="secretaría general">Secretaría General</option>
-              <option value="vialidad">Vialidad</option>
-              <option value="obra pública">Obra Pública</option>
-              <option value="varios">Varios</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="descripcion">Descripción</label>
-            <textarea id="descripcion" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}></textarea>
-          </div>
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary">Crear</button>
-            <button type="button" className="btn" onClick={onClose}>Cancelar</button>
-          </div>
-        </form>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content-form" onClick={e => e.stopPropagation()}>
+         <div className="modal-header">
+            <h2>Crear Nueva Obra</h2>
+            <button onClick={onClose} className="wizard-close-button" aria-label="Cerrar modal">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" stroke="#E2E8F0" />
+              </svg>
+            </button>
+         </div>
+        <div className="modal-body">
+            {/* Aquí usamos el nuevo formulario wizard */}
+            <ObraWizardForm onSubmit={handleSubmit} />
+        </div>
       </div>
     </div>
   );
 };
+
 
 
 // --- Main Page Component --- //

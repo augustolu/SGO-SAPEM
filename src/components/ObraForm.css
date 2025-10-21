@@ -1,0 +1,149 @@
+
+:root {
+  --form-background: #ffffff;
+  --form-border-color: #e0e0e0;
+  --form-label-color: #333;
+  --form-input-background: #f9f9f9;
+  --form-input-border: #ccc;
+  --form-input-focus-border: #007bff;
+  --form-section-title-color: #0056b3;
+  --form-button-primary-bg: #007bff;
+  --form-button-primary-hover-bg: #0056b3;
+  --form-button-secondary-bg: #6c757d;
+  --form-button-secondary-hover-bg: #5a6268;
+  --form-text-color: #212529;
+}
+
+.obra-form {
+  background-color: var(--form-background);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 2rem auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.obra-form fieldset {
+  border: 1px solid var(--form-border-color);
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.obra-form legend {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--form-section-title-color);
+  padding: 0 0.5rem;
+  margin-left: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--form-label-color);
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--form-input-border);
+  border-radius: 4px;
+  background-color: var(--form-input-background);
+  font-size: 1rem;
+  color: var(--form-text-color);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--form-input-focus-border);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.map-container {
+    height: 350px;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--form-border-color);
+    margin-top: 1rem;
+}
+
+.map-helper-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.form-actions button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: white;
+}
+
+.btn-submit {
+  background-color: var(--form-button-primary-bg);
+}
+
+.btn-submit:hover {
+  background-color: var(--form-button-primary-hover-bg);
+}
+
+.btn-cancel {
+  background-color: var(--form-button-secondary-bg);
+}
+
+.btn-cancel:hover {
+  background-color: var(--form-button-secondary-hover-bg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .obra-form {
+    padding: 1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

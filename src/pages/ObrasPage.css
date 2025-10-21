@@ -129,3 +129,42 @@
 .btn-promote:hover { background-color: #ab7ff5; }
 .modal-close-button { padding: 10px 25px; font-size: 1rem; font-weight: 500; color: #0a192f; background-color: #64ffda; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease; margin-top: 20px; }
 .modal-close-button:hover { background-color: #52d3b4; }
+
+
+
+/* Estilos para el nuevo botón de cierre del Wizard */
+.wizard-close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--surface-color, #374151);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.wizard-close-button svg {
+  width: 24px;
+  height: 24px;
+  stroke: #E2E8F0; /* Color de trazo explícito y visible */
+  transition: stroke 0.2s ease;
+}
+
+.wizard-close-button:hover {
+  background-color: #3B82F6; /* Color de acento azul */
+}
+
+.wizard-close-button:hover svg {
+  stroke: #FFFFFF; /* El trazo se vuelve blanco en hover */
+}
+
+.modal-content-form {
+  background-color: transparent !important; /* El fondo ahora lo controla el wizard */
+  border: none !important; /* El borde ahora lo controla el wizard */
+  box-shadow: 0 5px 25px rgba(0,0,0,0.5) !important;
+  border-radius: 10px !important; /* Look más cuadrado */
+  /* La altura la controla el wizard, quitamos max-height */
+}

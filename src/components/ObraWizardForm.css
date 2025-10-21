@@ -1,0 +1,149 @@
+:root {
+  --primary-color: #3B82F6;
+  --primary-hover-color: #60A5FA;
+  --background-color: #1F2937;
+  --surface-color: #374151;
+  --border-color: #4B5563;
+  --text-primary-color: #F3F4F6;
+  --text-secondary-color: #9CA3AF;
+  --step-completed-color: #3B82F6;
+}
+
+.wizard-form-container {
+  display: flex;
+  flex-direction: column;
+  /* Eliminamos height y max-height para que el modal se ajuste al contenido */
+  background: var(--background-color);
+  border-radius: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-primary-color);
+  overflow: hidden;
+  width: 90vw; /* Ancho generoso para el layout de 2 columnas */
+  max-width: 900px; /* Un máximo razonable */
+}
+
+/* --- Zonas Fijas --- */
+.wizard-header {
+  padding: 2rem 3rem 1.5rem 3rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.wizard-body {
+  flex-grow: 1;
+  /* Eliminamos overflow-y: auto para quitar el scroll */
+  padding: 2rem 3rem;
+}
+
+.wizard-footer {
+  padding: 1.5rem 3rem;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--background-color);
+}
+
+/* --- Stepper (sin cambios) --- */
+.stepper-container { display: flex; align-items: flex-start; justify-content: space-between; }
+.step-item { display: flex; flex-direction: column; align-items: center; text-align: center; width: 140px; }
+.step-circle { width: 40px; height: 40px; border-radius: 50%; background-color: transparent; border: 2px solid var(--border-color); color: var(--text-secondary-color); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; transition: all 0.4s ease; }
+.step-title { margin-top: 0.75rem; font-size: 0.9rem; font-weight: 500; color: var(--text-secondary-color); transition: all 0.4s ease; }
+.step-item.active .step-circle { background-color: var(--primary-color); border-color: var(--primary-color); color: white; }
+.step-item.active .step-title { color: var(--primary-color); font-weight: 700; }
+.step-item.completed .step-circle { background-color: transparent; border-color: var(--step-completed-color); color: var(--step-completed-color); }
+.step-item.completed .step-title { color: var(--text-primary-color); }
+.step-connector { flex-grow: 1; height: 2px; background-color: var(--border-color); margin: 0 0.5rem; position: relative; top: 20px; }
+
+/* --- Contenido del Formulario --- */
+.form-step {
+  animation: fadeIn 0.5s;
+}
+
+/* NUEVO: Contenedor de la grilla de 2 columnas */
+.form-grid-2-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 2rem; /* Aumentado para más aire */
+  align-items: start;
+}
+
+/* NUEVO: Modificador para que un campo ocupe ambas columnas */
+.grid-col-span-2 {
+  grid-column: span 2 / span 2;
+}
+
+/* Se agrega un margen inferior para separar las filas de campos */
+.form-group {
+  margin-bottom: 1rem; 
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary-color);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-secondary-color);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* --- Botones de Navegación (sin cambios) --- */
+.navigation-buttons { display: flex; justify-content: space-between; align-items: center; }
+.navigation-buttons button { padding: 0.8rem 1.8rem; border: 1px solid transparent; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.btn-primary { background-color: var(--primary-color); color: white; }
+.btn-primary:hover { background-color: var(--primary-hover-color); }
+.btn-secondary { background-color: transparent; color: var(--primary-hover-color); border-color: var(--primary-color); }
+.btn-secondary:hover { background-color: rgba(59, 130, 246, 0.1); border-color: var(--primary-hover-color); }
+
+/* --- Otros estilos --- */
+.error-message { color: #FCA5A5; font-size: 0.85rem; margin-top: 0.5rem; }
+.map-container-wizard { height: 300px; width: 100%; border-radius: 8px; overflow: hidden; }
+.map-helper-text { font-size: 0.9rem; color: var(--text-secondary-color); text-align: center; margin-top: 0.5rem; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- Responsividad --- */
+@media (max-width: 768px) {
+  .wizard-form-container {
+    width: 95vw;
+    max-width: none;
+  }
+
+  .wizard-header, .wizard-body, .wizard-footer {
+    padding: 1.5rem;
+  }
+
+  /* La grilla colapsa a una sola columna en pantallas pequeñas */
+  .form-grid-2-cols {
+    grid-template-columns: 1fr;
+    gap: 1.5rem; /* Un solo valor de gap es suficiente */
+  }
+
+  /* El span de 2 columnas ya no es necesario, se resetea */
+  .grid-col-span-2 {
+    grid-column: auto;
+  }
+
+  .map-container-wizard {
+    height: 250px; /* Un poco menos de altura en móvil */
+  }
+}
