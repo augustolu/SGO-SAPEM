@@ -221,8 +221,13 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
                     console.log('Frontend: Sending debounced search request to backend:', searchUrl);
                     const response = await api.get(searchUrl);
                     const result = response.data;
-                    console.log('Frontend: Nominatim suggestions result:', result);
-                    setSuggestions(result);
+                    console.log('Frontend: Nominatim raw suggestions result:', result);
+                    
+                    // Filtramos las sugerencias para mostrar solo las de San Luis
+                    const filteredSuggestions = result.filter(s => 
+                        s.display_name.toLowerCase().includes('san luis')
+                    );
+                    setSuggestions(filteredSuggestions);
                     setShowSuggestions(true);
                 } catch (error) {
                     console.error("Error en geocodificación (sugerencias):", error);

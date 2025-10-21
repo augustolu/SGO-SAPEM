@@ -21,8 +21,15 @@ exports.search = async (req, res) => {
       format: 'json',
       limit: limit || 5
     };
+
+    let countryCode = null;
+    // Map 'Argentina' to 'ar' for Nominatim's 'countrycodes' parameter.
+    if (country && country.toLowerCase() === 'argentina') {
+      countryCode = 'ar';
+    }
+
     if (state) nominatimParams.state = state;
-    if (country) nominatimParams.country = country;
+    if (countryCode) nominatimParams.countrycodes = countryCode;
 
     const response = await axios.get(`${NOMINATIM_BASE_URL}/search`, {
       params: nominatimParams,
