@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './ObraWizardForm.css';
@@ -54,11 +54,19 @@ const CurrencyInput = ({ name, value, onChange, placeholder }) => {
 
   const handleInputChange = (e) => {
     const rawValue = e.target.value;
-    // Permitir solo números, comas y puntos
-    const sanitizedValue = rawValue.replace(/[^0-9,.]/g, '');
-    const parts = sanitizedValue.split(',');
-    // Reemplazar puntos por nada (para limpiar) y luego la primera coma por un punto decimal
-    const numericValue = parts.join('.').replace(/\.(?=[^.]*\.)/g, '');
+    // 1. Quitar los puntos de miles que son solo para formato visual.
+    const withoutThousandSeparators = rawValue.replace(/\./g, '');
+    // 2. Reemplazar la coma decimal (si existe) por un punto para el procesamiento numérico.
+    const withDecimalPoint = withoutThousandSeparators.replace(',', '.');
+    // 3. Permitir solo números y un único punto decimal.
+    const sanitizedValue = withDecimalPoint.replace(/[^0-9.]/g, '');
+    // 4. Asegurarse de que solo haya un punto decimal.
+    const parts = sanitizedValue.split('.');
+    // 5. Limitar a dos decimales.
+    const numericValue =
+      parts.length > 1
+        ? `${parts[0]}.${parts.slice(1).join('').substring(0, 2)}`
+        : parts[0];
 
     onChange({ target: { name, value: numericValue } });
   };
@@ -103,7 +111,7 @@ const Step1 = ({ data, handleChange, errors }) => (
       {/* Columna 2 */}
       <div className="form-group">
         <label htmlFor="numero_gestion">Número de Gestión *</label>
-        <input type="text" id="numero_gestion" name="numero_gestion" value={data.numero_gestion} onChange={handleChange} placeholder="Ej: 2024-001-A" />
+        <input type="text" id="numero_gestion" name="numero_gestion" value={data.numero_gestion} onChange={handleChange} placeholder="Ej: 2024-001-A" maxLength={12} />
         {errors.numero_gestion && <span className="error-message">{errors.numero_gestion}</span>}
       </div>
 
@@ -293,8 +301,21 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, e
                 {/* Columna 1: Mapa */}
                 <div>
                     <div className="map-container-wizard">
-                        <MapContainer center={markerPosition} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <MapContainer center={markerPosition} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+                            <LayersControl position="topright">
+                                <LayersControl.BaseLayer checked name="Mapa">
+                                    <TileLayer
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
+                                </LayersControl.BaseLayer>
+                                <LayersControl.BaseLayer name="Satélite">
+                                    <TileLayer
+                                        attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                                    />
+                                </LayersControl.BaseLayer>
+                            </LayersControl>
                             <DraggableMarker />
                             <MapEvents />
                         </MapContainer>
@@ -487,33 +508,76 @@ function ObraWizardForm({ onSubmit }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'numero_gestion') {
+      const rawValue = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      let formattedValue = rawValue;
+
+      if (rawValue.length > 3) {
+        formattedValue = `${rawValue.slice(0, 2)}-${rawValue.slice(2, 3)} - ${rawValue.slice(3, 7)}`;
+      } else if (rawValue.length > 2) {
+        formattedValue = `${rawValue.slice(0, 2)}-${rawValue.slice(2, 3)}`;
+      }
+
+      setFormData(prev => ({ ...prev, [name]: formattedValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
-  const validateStep = () => {
+  const validateStep = async () => {
     const newErrors = {};
+    let isValid = true;
+
     switch (currentStep) {
       case 1:
-        if (!formData.establecimiento) newErrors.establecimiento = 'El título es requerido.';
-        if (!formData.numero_gestion) newErrors.numero_gestion = 'El número de gestión es requerido.';
+        if (!formData.establecimiento) {
+          newErrors.establecimiento = 'El título es requerido.';
+          isValid = false;
+        }
+        if (!formData.numero_gestion) {
+          newErrors.numero_gestion = 'El número de gestión es requerido.';
+          isValid = false;
+        } else {
+          // --- NUEVA VALIDACIÓN ASÍNCRONA ---
+          try {
+            const response = await api.get(`/obras/check-gestion/${formData.numero_gestion}`);
+            if (response.data.exists) {
+              newErrors.numero_gestion = 'Este número de gestión ya está en uso.';
+              isValid = false;
+            }
+          } catch (error) {
+            console.error("Error al verificar número de gestión:", error);
+            // Opcional: manejar el error de la API, por ahora solo lo logueamos
+          }
+          // ---------------------------------
+        }
         break;
       case 2:
-        if (!formData.localidad) newErrors.localidad = 'La localidad es requerida.';
-        // La asignación de inspector y otros puede ser opcional en la creación
+        if (!formData.localidad) {
+          newErrors.localidad = 'La localidad es requerida.';
+        }
         break;
       case 3:
-        if (!formData.plazo_dias) newErrors.plazo_dias = 'El plazo es requerido.';
-        if (!formData.fecha_inicio) newErrors.fecha_inicio = 'La fecha de inicio es requerida.';
+        // No hay validaciones obligatorias en el paso 3 por ahora
         break;
       default:
+        // Para cualquier otro caso, no hacemos nada.
         break;
     }
     setErrors(newErrors);
+
+    // FORZAR COMPORTAMIENTO ASÍNCRONO:
+    // Esto evita un bug donde el evento de clic del botón "Siguiente"
+    // puede propagarse y disparar el submit del formulario antes de tiempo.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // La validación es exitosa si no se encontraron errores.
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
-    if (validateStep()) {
+  const handleNext = async () => {
+    if (await validateStep()) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -524,7 +588,7 @@ function ObraWizardForm({ onSubmit }) {
 
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    if (validateStep()) {
+    if (await validateStep()) {
         setIsSubmitting(true);
         console.log('FRONTEND: Datos a enviar al backend:', formData);
         await onSubmit(formData);

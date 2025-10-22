@@ -1,5 +1,6 @@
 const db = require("../models");
 const RepresentanteLegal = db.RepresentantesLegales;
+const { Op } = db.Sequelize;
 
 // Crear y guardar un nuevo Representante Legal
 exports.create = (req, res) => {
@@ -19,9 +20,12 @@ exports.create = (req, res) => {
     });
 };
 
-// Obtener todos los Representantes Legales
+// Obtener todos los Representantes Legales, con opción de búsqueda por nombre
 exports.findAll = (req, res) => {
-  RepresentanteLegal.findAll({ order: [['nombre', 'ASC']] })
+  const { nombre } = req.query;
+  const condition = nombre ? { nombre: { [Op.like]: `${nombre}%` } } : null;
+
+  RepresentanteLegal.findAll({ where: condition, order: [['nombre', 'ASC']] })
     .then(data => {
       res.send(data);
     })

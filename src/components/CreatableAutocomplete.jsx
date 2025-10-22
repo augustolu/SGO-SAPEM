@@ -16,18 +16,20 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
   }, [value]);
 
   const fetchSuggestions = useCallback(async (query) => {
-    if (query.length < 2) {
+    console.log('Fetching suggestions for query:', query);
+    if (query.length < 1) { // Cambiado a 1 para mostrar sugerencias desde la primera letra
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
     setIsLoading(true);
     try {
-      const response = await api.get(apiEndpoint);
-      const filtered = response.data.filter(item =>
-        item.nombre.toLowerCase().includes(query.toLowerCase())
-      );
-      setSuggestions(filtered);
+      // Pasamos la consulta al backend para que filtre
+      const url = `${apiEndpoint}?nombre=${query}`;
+      console.log('Requesting URL:', url);
+      const response = await api.get(url);
+      console.log('Received response:', response.data);
+      setSuggestions(response.data);
       setShowSuggestions(true);
     } catch (error) {
       console.error(`Error fetching suggestions from ${apiEndpoint}:`, error);

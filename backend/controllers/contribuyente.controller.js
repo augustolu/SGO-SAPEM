@@ -1,5 +1,6 @@
 const db = require("../models");
 const Contribuyente = db.Contribuyentes;
+const { Op } = db.Sequelize;
 
 // Crear y guardar un nuevo Contribuyente
 exports.create = (req, res) => {
@@ -19,9 +20,12 @@ exports.create = (req, res) => {
     });
 };
 
-// Obtener todos los Contribuyentes
+// Obtener todos los Contribuyentes, con opción de búsqueda por nombre
 exports.findAll = (req, res) => {
-  Contribuyente.findAll({ order: [['nombre', 'ASC']] })
+  const { nombre } = req.query;
+  const condition = nombre ? { nombre: { [Op.like]: `${nombre}%` } } : null;
+
+  Contribuyente.findAll({ where: condition, order: [['nombre', 'ASC']] })
     .then(data => {
       res.send(data);
     })

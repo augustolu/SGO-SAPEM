@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './ObraForm.css';
@@ -240,11 +240,21 @@ function ObraForm({ obra, onSubmit }) {
             </div>
         </div>
         <div className="map-container">
-            <MapContainer center={markerPosition} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
+            <MapContainer center={markerPosition} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+                <LayersControl position="topright">
+                    <LayersControl.BaseLayer checked name="Mapa">
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                    </LayersControl.BaseLayer>
+                    <LayersControl.BaseLayer name="Satélite">
+                        <TileLayer
+                            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                        />
+                    </LayersControl.BaseLayer>
+                </LayersControl>
                 <DraggableMarker position={markerPosition} setPosition={setMarkerPosition} />
                 <MapEvents setPosition={setMarkerPosition} />
             </MapContainer>

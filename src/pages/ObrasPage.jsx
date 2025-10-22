@@ -169,25 +169,33 @@ const InspectorDashboard = ({ obras, user }) => {
 import ObraWizardForm from '../components/ObraWizardForm'; // ¡Importamos el nuevo WIZARD!
 
 const CreateObraModal = ({ onClose, onObraCreated }) => {
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = () => {
+    setIsClosing(true);
+  };
+
+  const handleAnimationEnd = () => {
+    if (isClosing) {
+      onClose();
+    }
+  };
 
   const handleSubmit = async (formData) => {
     try {
       const response = await api.post('/obras', formData);
       onObraCreated(response.data);
-      onClose();
+      handleClose(); // Cierra el modal al crear la obra
     } catch (error) {
       console.error('Error creating obra:', error); // Log genérico
       if (error.response) {
-        // El servidor respondió con un código de estado fuera del rango 2xx
         console.error('Error response data:', error.response.data);
         console.error('Error response status:', error.response.status);
         alert(`Error del servidor: ${error.response.data.message || 'Error desconocido'}`);
       } else if (error.request) {
-        // La solicitud se hizo pero no se recibió respuesta
         console.error('Error request:', error.request);
         alert('No se pudo conectar con el servidor. Revisa tu conexión de red.');
       } else {
-        // Algo sucedió al configurar la solicitud que provocó un error
         console.error('Error message:', error.message);
         alert(`Error al crear la solicitud: ${error.message}`);
       }
@@ -195,19 +203,21 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content-form" onClick={e => e.stopPropagation()}>
-         <div className="modal-header">
-            <h2>Crear Nueva Obra</h2>
-            <button onClick={onClose} className="wizard-close-button" aria-label="Cerrar modal">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" stroke="#E2E8F0" />
-              </svg>
-            </button>
-         </div>
+    <div 
+      className={`modal-overlay ${isClosing ? 'closing' : ''}`} 
+      onAnimationEnd={handleAnimationEnd}
+    >
+      <div 
+        className={`modal-content-form ${isClosing ? 'closing' : ''}`} 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="modal-header">
+          <button onClick={handleClose} className="wizard-close-button" aria-label="Cerrar modal">
+            <span aria-hidden="true">( x )</span>
+          </button>
+        </div>
         <div className="modal-body">
-            {/* Aquí usamos el nuevo formulario wizard */}
-            <ObraWizardForm onSubmit={handleSubmit} />
+          <ObraWizardForm onSubmit={handleSubmit} />
         </div>
       </div>
     </div>

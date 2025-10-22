@@ -133,32 +133,64 @@
 
 
 /* Estilos para el nuevo botón de cierre del Wizard */
+.modal-header { position: relative; padding: 20px; } /* Añadido para posicionar el botón */
+
 .wizard-close-button {
+  position: absolute;
+  top: -5px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  /* Transición selectiva para evitar el "flash" de color */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: #FF5B5B;
+  font-size: 1rem;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background-color: var(--surface-color, #374151);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.wizard-close-button svg {
-  width: 24px;
-  height: 24px;
-  stroke: #E2E8F0; /* Color de trazo explícito y visible */
-  transition: stroke 0.2s ease;
+  padding: 0;
 }
 
 .wizard-close-button:hover {
-  background-color: #3B82F6; /* Color de acento azul */
+  background-color: rgba(255, 91, 91, 0.2); /* El fondo aparece al pasar el mouse */
+  transform: scale(1.1);
+  color: #FF5B5B;
+  box-shadow: 0 0 15px rgba(255, 91, 91, 0.7); /* El brillo aparece al pasar el mouse */
 }
 
-.wizard-close-button:hover svg {
-  stroke: #FFFFFF; /* El trazo se vuelve blanco en hover */
+/* --- Animaciones del Modal --- */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slide-in-bottom {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slide-out-bottom {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(50px); opacity: 0; }
+}
+
+.modal-overlay {
+  /* ... tus otros estilos de modal-overlay ... */
+  animation: fade-in 0.3s ease-out;
+}
+
+.modal-overlay.closing {
+  animation: fade-out 0.3s ease-in forwards; /* forwards mantiene el estado final */
 }
 
 .modal-content-form {
@@ -166,5 +198,9 @@
   border: none !important; /* El borde ahora lo controla el wizard */
   box-shadow: 0 5px 25px rgba(0,0,0,0.5) !important;
   border-radius: 10px !important; /* Look más cuadrado */
-  /* La altura la controla el wizard, quitamos max-height */
+  animation: slide-in-bottom 0.4s ease-out;
+}
+
+.modal-content-form.closing {
+  animation: slide-out-bottom 0.4s ease-in forwards;
 }

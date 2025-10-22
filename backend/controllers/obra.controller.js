@@ -5,8 +5,8 @@ const db = require("../models");
 console.log("Modelos disponibles en DB:", Object.keys(db));
 
 const Obra = db.Obras;
-const RepresentanteLegal = db.RepresentanteLegal; // SOLUCIÓN: Usar singular, que es el nombre de definición del modelo.
-const Contribuyente = db.Contribuyente;             // SOLUCIÓN: Usar singular, que es el nombre de definición del modelo.
+const RepresentanteLegal = db.RepresentantesLegales; // SOLUCIÓN FINAL: Usar plural, coincidiendo con el nombre de la tabla.
+const Contribuyente = db.Contribuyentes;             // SOLUCIÓN FINAL: Usar plural, coincidiendo con el nombre de la tabla.
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Obra
@@ -52,15 +52,15 @@ exports.create = async (req, res) => {
       contribuyente_id: contribuyenteId,
       inspector_id: req.body.inspector_id || null,
       representante_legal_id: representanteId,
-      monto_sapem: req.body.monto_sapem || null,
-      monto_sub: req.body.monto_sub || null,
-      af: req.body.af || null,
-      plazo: req.body.plazo_dias || null,
+      monto_sapem: req.body.monto_sapem ? Number(req.body.monto_sapem) : null,
+      monto_sub: req.body.monto_sub ? Number(req.body.monto_sub) : null,
+      af: req.body.af ? Number(req.body.af) : null,
+      plazo: req.body.plazo_dias ? Number(req.body.plazo_dias) : null,
       fecha_inicio: req.body.fecha_inicio || null,
       fecha_finalizacion_estimada: req.body.fecha_finalizacion_estimada || null,
       estado: req.body.estado,
       progreso: req.body.progreso || 0,
-      // El campo 'nro' se omite intencionadamente porque no existe en el modelo de la BD.
+      nro: req.body.nro ? Number(req.body.nro) : null
     };
 
     // LOG PARA VER QUÉ SE INTENTA GUARDAR EN LA BASE DE DATOS
@@ -70,9 +70,54 @@ exports.create = async (req, res) => {
     res.status(201).send(createdObra);
 
   } catch (err) {
-    console.error("Error al crear la Obra:", err);
+    // --- MEJORA DE LOGGING ---
+    console.error("--- ERROR DETALLADO AL CREAR LA OBRA ---");
+    console.error("Mensaje:", err.message);
+    
+    // Si es un error de validación de Sequelize, tendrá un array 'errors'
+    if (err.name === 'SequelizeValidationError') {
+      console.error("Errores de validación:");
+      err.errors.forEach(e => {
+        console.error(`- Campo: ${e.path}, Valor: '${e.value}', Error: ${e.message}`);
+      });
+    } else {
+      // Para otros tipos de errores, loguear el stack trace completo
+      console.error("Stack Trace:", err);
+    }
+    console.error("--- FIN DEL ERROR DETALLADO ---");
+    // -------------------------
+
+    // --- MEJORA DE RESPUESTA AL CLIENTE ---
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      const field = err.errors[0].path;
+      const value = err.errors[0].value;
+      return res.status(409).send({ // 409 Conflict
+        message: `El valor '${value}' para el campo '${field}' ya existe. Por favor, utilice uno diferente.`
+      });
+    }
+    // ------------------------------------
+
     res.status(500).send({
       message: err.message || "Ocurrió un error al crear la Obra."
+    });
+  }
+};
+
+// Check if a numero_gestion already exists
+exports.checkNumeroGestion = async (req, res) => {
+  try {
+    const obra = await Obra.findOne({
+      where: { numero_gestion: req.params.numero_gestion }
+    });
+
+    if (obra) {
+      return res.status(200).send({ exists: true });
+    } else {
+      return res.status(200).send({ exists: false });
+    }
+  } catch (err) {
+    res.status(500).send({
+      message: err.message || "Ocurrió un error al verificar el número de gestión."
     });
   }
 };
@@ -147,9 +192,9 @@ exports.findOne = (req, res) => {
     include: [
       { model: db.Actividades, as: 'Actividades' }, // Asegúrate que el 'as' coincida si lo tienes definido
       { model: db.Documentos, as: 'Documentos' },
-      { model: db.Usuario, as: 'Usuario' }, // Usar singular
-      { model: db.RepresentanteLegal, as: 'RepresentanteLegal' }, // Usar singular
-      { model: db.Contribuyente, as: 'Contribuyente' } // Usar singular
+      { model: db.Usuarios, as: 'Usuario' }, // Usar plural (asumiendo consistencia)
+      { model: db.RepresentantesLegales, as: 'RepresentanteLegal' }, // Usar plural
+      { model: db.Contribuyentes, as: 'Contribuyente' } // Usar plural
     ]
   })
     .then(data => {

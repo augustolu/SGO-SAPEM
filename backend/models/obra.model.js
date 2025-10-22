@@ -5,6 +5,10 @@ module.exports = (sequelize, Sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    nro: {
+      type: Sequelize.INTEGER,
+      allowNull: true
+    },
     establecimiento: { // Cambiado de 'titulo'
       type: Sequelize.STRING(255),
       allowNull: false
@@ -50,8 +54,13 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER, // CORRECCIÓN: Debe ser INTEGER para coincidir con la FK de la BD
       allowNull: true
     },
-    contratista: {
-      type: Sequelize.STRING(255)
+    contribuyente_id: { // CORRECCIÓN: El campo debe llamarse 'contribuyente_id' y ser INTEGER
+      type: Sequelize.INTEGER,
+      allowNull: true
+    },
+    inspector_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true
     },
     progreso: {
       type: Sequelize.INTEGER,

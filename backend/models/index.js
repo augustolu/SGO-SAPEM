@@ -25,6 +25,7 @@ db.Obras = require("./obra.model.js")(sequelize, Sequelize);
 db.Actividades = require("./actividad.model.js")(sequelize, Sequelize);
 db.Documentos = require("./documento.model.js")(sequelize, Sequelize);
 db.RepresentantesLegales = require("./representanteLegal.model.js")(sequelize, Sequelize); // NUEVO
+db.Contribuyentes = require("./contribuyente.model.js")(sequelize, Sequelize);
 
 // Relaciones
 db.Roles.hasMany(db.Usuarios, { as: "usuarios", foreignKey: 'rol_id' });
@@ -45,5 +46,9 @@ db.Documentos.belongsTo(db.Actividades, { foreignKey: 'actividad_id' });
 // NUEVA RELACIÓN: Obras <-> RepresentantesLegales
 db.RepresentantesLegales.hasMany(db.Obras, { foreignKey: 'representante_legal_id' });
 db.Obras.belongsTo(db.RepresentantesLegales, { as: 'RepresentanteLegal', foreignKey: 'representante_legal_id' });
+
+// NUEVA RELACIÓN: Obras <-> Contribuyentes
+db.Contribuyentes.hasMany(db.Obras, { foreignKey: 'contribuyente_id' });
+db.Obras.belongsTo(db.Contribuyentes, { as: 'Contribuyente', foreignKey: 'contribuyente_id' });
 
 module.exports = db;

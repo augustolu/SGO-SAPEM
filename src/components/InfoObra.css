@@ -1,22 +1,43 @@
 .info-obra {
   padding: 20px;
-  border: 1px solid #ccc;
+  background-color: #f9f9f9;
   border-radius: 8px;
+}
+
+.info-obra h2 {
+  margin-top: 0;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
   margin-bottom: 20px;
+}
+
+.info-obra-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.info-obra-details p {
+  margin: 10px 0;
 }
 
 .progress-bar-container {
   width: 100%;
-  background-color: #f3f3f3;
+  background-color: #e0e0e0;
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-bar {
   height: 20px;
+  background-color: #4caf50;
   color: white;
   text-align: center;
   line-height: 20px;
-  background-color: #4caf50;
   transition: width 0.5s ease-in-out;
+}
+
+.info-obra-map {
+  border-radius: 8px;
+  overflow: hidden;
 }
