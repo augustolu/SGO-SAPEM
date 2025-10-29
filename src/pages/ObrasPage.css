@@ -76,29 +76,189 @@
 .dropdown-menu li button:hover { background-color: #303c55; }
 
 /* --- Contenido Principal --- */
-.dashboard-main-content { padding: 40px; flex-grow: 1; }
-.dashboard-title-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #303c55; padding-bottom: 15px; }
-.dashboard-title-bar h2 { margin: 0; font-size: 2.2rem; color: #ccd6f6; }
+.dashboard-main-content {
+  position: relative;
+  display: flex;
+  flex: 1;
+  gap: 40px;
+  padding: 40px;
+  overflow: hidden;
+  transition: gap 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.obras-main-view {
+  flex: 1; /* Ocupa el espacio principal */
+  display: flex;
+  flex-direction: column; /* Apila los hijos verticalmente */
+  min-width: 0; /* Evita que el contenido flex se desborde */
+}
+
+.obras-content-area {
+  display: flex;
+  flex: 1; /* Ocupa el espacio restante */
+  gap: 40px; /* Mantiene el espacio entre la grilla y el panel derecho */
+  min-width: 0;
+}
+
+
+.obras-grid-container {
+  flex-grow: 1; /* Permite que el contenedor crezca */
+  overflow-y: auto; /* Mantiene el scroll si el contenido excede la altura */
+  padding-right: 15px;
+  margin-right: -15px;
+  padding-top: 10px;
+  align-content: flex-start; /* Alinea las líneas de la cuadrícula al inicio */
+}
+
+/* --- Barra de Controles Principal (Filtros, Búsqueda, Crear Obra) --- */
+.main-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px; /* Espacio antes de la grilla de obras */
+}
+
+.create-obra-btn {
+  white-space: nowrap; /* Evita que el texto del botón se parta */
+}
+
+.icon-btn { background-color: transparent; border: 1px solid #303c55; color: #8892b0; padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+.icon-btn:hover { background-color: #303c55; color: #ccd6f6; border-color: #64ffda; }
+.icon-btn svg { width: 20px; height: 20px; }
+
+.search-container { display: flex; align-items: center; background-color: #1e2a47; border: 1px solid #303c55; border-radius: 6px; padding-left: 10px; }
+.search-container input { background: transparent; border: none; color: #ccd6f6; padding: 8px; outline: none; width: 250px; }
+.search-container .icon-btn { border: none; }
+.filter-dropdown-container { position: relative; }
+.filter-bar {
+  /* El filter-bar ahora es un hijo flex, no necesita margen propio */
+}
+.filter-controls {
+  display: flex; /* Alinea el botón de filtro y la búsqueda en una línea */
+  align-items: center; /* Centra verticalmente los elementos */
+  gap: 15px; /* Añade un espacio entre el botón de filtro y la búsqueda */
+}
+.filter-dropdown { position: absolute; top: calc(100% + 10px); left: 0; width: 300px; background-color: #1e2a47; border: 1px solid #303c55; border-radius: 8px; padding: 20px; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: scale-in 0.2s ease-out; transform-origin: top left; }
+.filter-section { margin-bottom: 20px; }
+.filter-section h5 { margin: 0 0 10px 0; color: #64ffda; font-size: 1rem; }
+.options-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.filter-option-btn { background-color: transparent; border: 1px solid #303c55; color: #8892b0; padding: 6px 12px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+.filter-option-btn.active { background-color: #64ffda; color: #0a192f; border-color: #64ffda; font-weight: 600; }
+.apply-filters-btn { width: 100%; padding: 10px; border-radius: 6px; background-color: #64ffda; color: #0a192f; border: none; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease; }
+.apply-filters-btn:hover { background-color: #52d3b4; }
+.active-filters { display: flex; gap: 10px; margin-top: 15px; }
+.active-filter-tag { display: flex; align-items: center; gap: 8px; background-color: #303c55; color: #ccd6f6; padding: 5px 10px; border-radius: 15px; font-size: 0.9rem; }
+.active-filter-tag button { background: none; border: none; color: #8892b0; cursor: pointer; padding: 0; display: flex; align-items: center; }
+.active-filter-tag button:hover { color: #ff79c6; }
+.active-filter-tag button svg { width: 14px; height: 14px; }
+
+
+
+/* --- Right Column (Reminders Panel) --- */
+.right-column {
+  width: 320px;
+  flex-shrink: 0;
+  position: relative;
+  transition: width 0.42s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.42s ease;
+  opacity: 1;
+}
+
+.right-column-content-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #1e2a47;
+  border-radius: 8px;
+  border: 1px solid #303c55;
+  transition: clip-path 0.42s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  overflow: hidden;
+}
+
+.reminders-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.reminders-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #303c55; flex-shrink: 0; }
+.reminders-header h4 { margin: 0; color: #64ffda; font-size: 1.2rem; white-space: nowrap; }
+.collapse-btn { background: transparent; border: none; color: #8892b0; cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease; }
+.collapse-btn:hover { background-color: #303c55; color: #ccd6f6; }
+.reminders-content { padding: 20px; flex: 1; overflow-y: auto; }
+.reminders-panel h4 { display: none; }
+.reminders-list { list-style: none; padding: 0; margin: 0; }
+.reminders-list li { margin-bottom: 15px; }
+.reminder-link { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 6px; transition: background-color 0.3s ease; text-decoration: none; color: inherit; }
+.reminder-link:hover { background-color: #303c55; }
+.reminder-title { color: #ccd6f6; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 15px; }
+.reminder-date { color: #8892b0; font-size: 0.9rem; flex-shrink: 0; }
+.no-reminders { color: #8892b0; }
+
+.right-column-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  border-radius: 8px;
+}
+
+.right-column-handle svg { color: #64ffda; transform: rotate(180deg); }
+
+/* --- Collapsed State for Right Column --- */
+.right-column.collapsed {
+  width: 40px;
+}
+
+.right-column.collapsed .right-column-content-wrapper {
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+
+.right-column.collapsed .right-column-content-wrapper {
+  clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0);
+}
+
+.right-column.collapsed .right-column-handle {
+  opacity: 1;
+  pointer-events: all;
+}
+
 
 /* --- Cuadrícula de Obras --- */
-.obras-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+.obras-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+  gap: 25px; 
+}
 
 /* --- Tarjeta de Obra --- */
-.obra-card { background-color: #1e2a47; border-radius: 8px; border: 1px solid #303c55; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-.obra-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); }
-.card-header { padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #303c55; }
-.card-header h3 { margin: 0; font-size: 1.4rem; color: #ccd6f6; }
+.obra-card-link { text-decoration: none; color: inherit; display: block; height: 100%; }
+.obra-card-link:hover { text-decoration: none; }
+.obra-card { background-color: #1e2a47; border-radius: 12px; border: 1px solid #303c55; overflow: hidden; transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column; }
+.obra-card:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3); border-color: #64ffda; }
+.obra-card-image-container { width: 100%; height: 180px; overflow: hidden; }
+.obra-card-image { width: 100%; height: 100%; object-fit: contain; transition: transform 0.3s ease; }
+.obra-card:hover .obra-card-image { transform: scale(1.05); }
+.obra-card-content { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; text-align: center; }
+.obra-card-content h3 { margin: 0 0 15px 0; font-size: 1.5rem; color: #ccd6f6; }
+.card-body { flex-grow: 1; padding: 0; text-align: left; }
+.card-body p { margin: 0 0 8px 0; color: #8892b0; font-size: 0.9rem; }
+.card-footer { padding: 0; margin-top: 20px; display: flex; justify-content: center; }
 .status-badge { padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
 .status-solicitud { background-color: #4a69bd; color: white; }
 .status-en-ejecución { background-color: #f6b93b; color: #333; }
 .status-finalizada { background-color: #78e08f; color: #333; }
 .status-cancelada { background-color: #e55039; color: white; }
-.card-body { padding: 20px; flex-grow: 1; }
-.card-body p { margin: 0 0 10px 0; color: #8892b0; }
 .progress-bar-container { width: 100%; background-color: #0a192f; border-radius: 10px; height: 20px; display: flex; align-items: center; position: relative; }
 .progress-bar { height: 100%; background-color: #64ffda; border-radius: 10px; transition: width 0.5s ease-in-out; }
 .progress-bar-container span { position: absolute; right: 10px; color: #0a192f; font-weight: 600; font-size: 0.8rem; }
-.card-footer { padding: 15px 20px; background-color: #17223b; display: flex; justify-content: flex-end; gap: 10px; }
 .no-obras-message { color: #8892b0; font-size: 1.2rem; text-align: center; grid-column: 1 / -1; }
 
 /* --- Botones --- */
@@ -203,4 +363,15 @@
 
 .modal-content-form.closing {
   animation: slide-out-bottom 0.4s ease-in forwards;
+}
+
+/* --- Fix para Autofill del buscador --- */
+.search-container input:-webkit-autofill,
+.search-container input:-webkit-autofill:hover, 
+.search-container input:-webkit-autofill:focus, 
+.search-container input:-webkit-autofill:active {
+    -webkit-text-fill-color: #ccd6f6 !important;
+    -webkit-box-shadow: 0 0 0px 1000px #1e2a47 inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    font-family: var(--font-family);
 }

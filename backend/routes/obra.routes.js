@@ -12,7 +12,7 @@ module.exports = function(app) {
   });
 
   // Create a new Obra
-  app.post("/obras", [authJwt.verifyToken], obras.create);
+  app.post("/obras", [authJwt.verifyToken, authJwt.isSupervisorOrAdmin], obras.create);
 
   // Retrieve all Obras
   app.get("/obras", [authJwt.verifyToken], obras.findAll);

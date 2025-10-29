@@ -451,6 +451,7 @@ function ObraWizardForm({ onSubmit }) {
   const [formData, setFormData] = useState(obraSchema);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null); // Nuevo estado para la imagen
 
   // --- Simulación de carga de datos para desplegables ---
   const [inspectores, setInspectores] = useState([]);
@@ -589,10 +590,34 @@ function ObraWizardForm({ onSubmit }) {
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     if (await validateStep()) {
-        setIsSubmitting(true);
-        console.log('FRONTEND: Datos a enviar al backend:', formData);
-        await onSubmit(formData);
+      setIsSubmitting(true);
+      try {
+        let imageUrl = null;
+        // Si hay un archivo seleccionado, subirlo primero
+        if (selectedFile) {
+          const uploadFormData = new FormData();
+          uploadFormData.append('imagen', selectedFile);
+
+          const response = await api.post('/upload', uploadFormData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          imageUrl = response.data.imageUrl;
+        }
+
+        // Combinar los datos del formulario con la URL de la imagen (si existe)
+        const finalFormData = { ...formData, imagen_url: imageUrl };
+
+        console.log('FRONTEND: Datos finales a enviar al backend:', finalFormData);
+        await onSubmit(finalFormData); // Enviar los datos finales
+
+      } catch (error) {
+        console.error("Error en el proceso de subida o creación:", error);
+        // Aquí podrías mostrar un mensaje de error al usuario
+      } finally {
         setIsSubmitting(false);
+      }
     }
   };
 

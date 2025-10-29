@@ -75,6 +75,10 @@ module.exports = (sequelize, Sequelize) => {
     },
     longitude: {
       type: Sequelize.DECIMAL(11, 8)
+    },
+    imagen_url: {
+      type: Sequelize.STRING,
+      allowNull: true
     }
   }, {
     timestamps: false

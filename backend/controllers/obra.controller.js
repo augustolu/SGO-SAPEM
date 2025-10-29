@@ -60,7 +60,8 @@ exports.create = async (req, res) => {
       fecha_finalizacion_estimada: req.body.fecha_finalizacion_estimada || null,
       estado: req.body.estado,
       progreso: req.body.progreso || 0,
-      nro: req.body.nro ? Number(req.body.nro) : null
+      nro: req.body.nro ? Number(req.body.nro) : null,
+      imagen_url: req.body.imagen_url || null // Añadir imagen_url
     };
 
     // LOG PARA VER QUÉ SE INTENTA GUARDAR EN LA BASE DE DATOS
@@ -171,7 +172,14 @@ exports.findAll = (req, res) => {
   // CORRECCIÓN: Cambiar 'titulo' por 'establecimiento' para que coincida con el modelo
   var condition = titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : null;
   
-  Obra.findAll({ where: condition })
+  Obra.findAll({ 
+    where: condition,
+    include: [{
+      model: db.Contribuyentes,
+      as: 'Contribuyente',
+      attributes: ['nombre'] // Solo necesitamos el nombre
+    }]
+  })
     .then(data => {
       res.send(data);
     })

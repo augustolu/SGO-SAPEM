@@ -1,84 +1,229 @@
+/* --- Importación de Fuentes --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- Variables Globales (Root) --- */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* Paleta de Colores */
+  --background-color: #0a192f;
+  --surface-color: #1e293b; /* Color para fondos de cards e inputs */
+  --glass-color: rgba(30, 41, 59, 0.6); /* Color para el efecto "glassmorphism" */
+  --accent-color: #38bdf8; /* Azul claro vibrante */
+  --accent-hover: #7dd3fc;
+  --text-primary: #e2e8f0; /* Gris claro para texto principal */
+  --text-secondary: #94a3b8; /* Gris más suave para texto secundario */
+  --border-color: #334155;
+  --success-color: #22c55e;
+  --error-color: #ef4444;
+  --shadow-color: rgba(0, 0, 0, 0.5);
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Tipografía */
+  --font-family: 'Inter', sans-serif;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  /* Radios de Borde */
+  --border-radius-small: 6px;
+  --border-radius-medium: 12px;
+  --border-radius-large: 20px;
+
+  /* Sombras */
+  --box-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --box-shadow-glass: 0 8px 32px 0 var(--shadow-color);
+}
+
+/* --- Reseteo Básico y Estilos Globales --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 100%; /* 16px por defecto */
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* --- Tipografía --- */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: #f0f8ff; /* Un blanco ligeramente azulado para destacar */
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+
+p {
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
 }
+
 a:hover {
-  color: #535bf2;
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+/* --- Layout y Contenedores --- */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 0;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* --- Cards de Obras (Glassmorphism) --- */
+.card {
+  background: var(--glass-color);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  padding: 1.5rem;
+  box-shadow: var(--box-shadow-glass);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+.card-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* --- Botones --- */
+.btn {
+  display: inline-block;
+  font-family: var(--font-family);
+  font-size: 1rem;
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-small);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: var(--box-shadow-soft);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.btn-primary {
+  background-color: var(--accent-color);
+  color: var(--background-color);
+  font-weight: 600;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 12px;
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
-::-webkit-scrollbar-track {
-  background: #1F2937;
+.btn-secondary {
+  background-color: var(--surface-color);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #007bff;
-  border-radius: 6px;
+.btn-secondary:hover {
+  background-color: var(--border-color);
+  color: #fff;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #0056b3;
+/* --- Formularios e Inputs --- */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3);
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* --- Tablas --- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2rem;
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius-medium);
+  overflow: hidden; /* Para que el radius afecte a las celdas */
+  box-shadow: var(--box-shadow-soft);
+}
+
+th, td {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+thead th {
+  background-color: rgba(0,0,0,0.2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: var(--border-color);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
 }

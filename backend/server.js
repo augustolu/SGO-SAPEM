@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path"); // Añadir path
 
 const app = express();
 
@@ -8,6 +9,9 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Servir archivos estáticos desde la carpeta public
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -40,6 +44,11 @@ function initial() {
   });
 
   Role.findOrCreate({
+    where: { nombre: "Supervisor" },
+    defaults: { nombre: "Supervisor" }
+  });
+
+  Role.findOrCreate({
     where: { nombre: "Pendiente" },
     defaults: { nombre: "Pendiente" }
   });
@@ -61,6 +70,7 @@ require('./routes/role.routes')(apiRouter);
 require('./routes/geocode.routes')(apiRouter);
 require('./routes/contribuyente.routes')(apiRouter);
 require('./routes/representanteLegal.routes')(apiRouter);
+require('./routes/upload.routes')(apiRouter); // Nueva ruta de subida
 app.use('/api', apiRouter);
 
 // set port, listen for requests
