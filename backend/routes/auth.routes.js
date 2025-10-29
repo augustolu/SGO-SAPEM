@@ -7,7 +7,7 @@ module.exports = function(app) {
     next();
   });
 
-  app.post("/api/auth/signup", controller.signup);
-  app.post("/api/auth/signin", controller.signin);
-  app.get("/api/auth/me", [authJwt.verifyToken], controller.me); // <-- Nueva ruta
+  app.post("/auth/signup", controller.signup);
+  app.post("/auth/signin", controller.signin);
+  app.get("/auth/me", [authJwt.verifyToken], controller.me);
 };

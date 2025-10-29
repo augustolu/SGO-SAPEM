@@ -9,5 +9,5 @@ module.exports = app => {
     // Obtener todos los Representantes Legales
     router.get("/", representantes.findAll);
   
-    app.use('/api/representantes-legales', router);
+    app.use('/representantes-legales', router);
 };

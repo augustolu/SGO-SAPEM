@@ -31,4 +31,7 @@ module.exports = function(app) {
 
   // Delete all Obras
   app.delete("/obras", [authJwt.verifyToken], obras.deleteAll);
+
+  // Asignar un inspector a una obra
+  app.post("/obras/asignar-inspector", [authJwt.verifyToken, authJwt.isSupervisorOrAdmin], obras.asignarInspector);
 };

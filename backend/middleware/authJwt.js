@@ -23,30 +23,48 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-const isAdmin = (req, res, next) => {
-  User.findByPk(req.userId).then(user => {
+const isAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.userId, {
+      include: { model: db.Roles, as: 'role' } // Incluir el rol directamente
+    });
+
     if (!user) {
       return res.status(404).send({ message: "User Not found." });
     }
 
-    // Incluimos la relación para obtener el rol
-    user.getRole().then(role => {
-      if (role.nombre === "Administrador General") {
-        next();
-        return;
-      }
-
-      res.status(403).send({
-        message: "Require Admin Role!"
-      });
-    });
-  }).catch(err => {
+    if (user.role && user.role.nombre === "Administrador General") {
+      return next();
+    }
+    res.status(403).send({ message: "Require Admin Role!" });
+  } catch (err) {
     res.status(500).send({ message: err.message });
-  });
+  }
+};
+
+const isSupervisorOrAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.userId, {
+      include: { model: db.Roles, as: 'role' }
+    });
+
+    if (!user) {
+      return res.status(404).send({ message: "User Not found." });
+    }
+
+    if (user.role && (user.role.nombre === "Supervisor" || user.role.nombre === "Administrador General")) {
+      return next();
+    }
+
+    res.status(403).send({ message: "Require Supervisor or Admin Role!" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
 };
 
 const authJwt = {
   verifyToken: verifyToken,
-  isAdmin: isAdmin
+  isAdmin: isAdmin,
+  isSupervisorOrAdmin: isSupervisorOrAdmin
 };
 module.exports = authJwt;

@@ -281,3 +281,36 @@ exports.deleteAll = (req, res) => {
       });
     });
 };
+
+// Asignar un inspector a una obra
+exports.asignarInspector = async (req, res) => {
+  try {
+    const { obraId, inspectorId } = req.body;
+
+    if (!obraId || !inspectorId) {
+      return res.status(400).send({
+        message: "Los campos 'obraId' y 'inspectorId' son obligatorios."
+      });
+    }
+
+    const obra = await Obra.findByPk(obraId);
+
+    if (!obra) {
+      return res.status(404).send({
+        message: `No se encontró la Obra con id=${obraId}.`
+      });
+    }
+
+    obra.inspector_id = inspectorId;
+    await obra.save();
+
+    res.status(200).send({
+      message: `Inspector con id=${inspectorId} asignado correctamente a la Obra con id=${obraId}.`
+    });
+
+  } catch (err) {
+    res.status(500).send({
+      message: err.message || "Ocurrió un error al asignar el inspector."
+    });
+  }
+};

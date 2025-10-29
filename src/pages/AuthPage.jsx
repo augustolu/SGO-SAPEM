@@ -19,7 +19,9 @@ const LoginForm = ({ onSwitch, onForgotPassword }) => {
       await login(email, password, keepLoggedIn);
       navigate('/obras');
     } catch (err) {
-      setError('Credenciales incorrectas. Por favor, inténtalo de nuevo.');
+      // Mejorar el mensaje de error usando la respuesta del servidor
+      const errorMessage = err.response?.data?.message || 'Credenciales incorrectas. Por favor, inténtalo de nuevo.';
+      setError(errorMessage);
     }
   };
 

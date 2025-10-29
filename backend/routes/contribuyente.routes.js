@@ -9,5 +9,5 @@ module.exports = app => {
     // Obtener todos los Contribuyentes
     router.get("/", contribuyentes.findAll);
   
-    app.use('/api/contribuyentes', router);
+    app.use('/contribuyentes', router);
 };
