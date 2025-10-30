@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom'; // Importar useLocation
+import logo from '/uploads/logo.png'; // Importar el logo desde la subcarpeta
 import './AuthPage.css';
 
 // --- Login Form Component ---
@@ -28,7 +29,10 @@ const LoginForm = ({ onSwitch, onForgotPassword }) => {
   return (
     <div className="form-container login-form-container-inner">
       <div className="login-header">
-        <h2>SGO-SAPEM</h2>
+        <img src={logo} alt="SGO Sapem Logo" className="header-logo" />
+        <h2>
+          <span>SGO</span><span className="accent">Sapem</span>
+        </h2>
       </div>
       <h1>Iniciar Sesión</h1>
       <form onSubmit={handleSubmit} className="login-form">
@@ -80,7 +84,10 @@ const RegisterForm = ({ onSwitch }) => {
   return (
     <div className="form-container register-form-container-inner">
       <div className="login-header">
-        <h2>SGO-SAPEM</h2>
+        <img src={logo} alt="SGO Sapem Logo" className="header-logo" />
+        <h2>
+          <span>SGO</span><span className="accent">Sapem</span>
+        </h2>
       </div>
       <h1>Crear Cuenta</h1>
       <form onSubmit={handleSubmit} className="login-form">

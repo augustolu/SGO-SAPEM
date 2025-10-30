@@ -6,6 +6,7 @@ import './ObrasPage.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import notificationSound from '../assets/notification.mp3';
+import logo from '/uploads/logo.png'; // Importar el logo desde la subcarpeta
 import ObraWizardForm from '../components/ObraWizardForm';
 
 // --- Icons --- //
@@ -131,7 +132,12 @@ const DashboardHeader = ({ user, isAdmin, onManageRolesClick }) => {
 
   return (
     <header className="dashboard-header">
-      <h1>SGO-SAPEM</h1>
+      <div className="header-title-container">
+        <img src={logo} alt="SGO-SAPEM Logo" className="header-logo" />
+        <h1>
+          <span>SGO</span><span className="accent">Sapem</span>
+        </h1>
+      </div>
       <div className="user-menu-container" ref={menuRef}>
         <button className="user-menu-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menú">
           <div className="user-info-btn">

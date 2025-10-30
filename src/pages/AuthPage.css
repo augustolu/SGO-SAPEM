@@ -5,6 +5,7 @@
   align-items: center;
   min-height: 100vh;
   background-color: #0a192f;
+  font-family: 'Poppins', sans-serif;
   padding: 20px;
 }
 
@@ -63,13 +64,14 @@
 }
 
 /* --- General Form Styling --- */
-.login-header h2 {
-  color: #007bff;
-  font-weight: 600;
-  margin: 0 0 20px 0;
-  font-size: 1.8rem;
-  text-align: center;
+.login-header h2 { 
+  font-size: 1.8rem; 
+  margin: 0; 
+  letter-spacing: 0.5px;
+  text-align: center; 
 }
+.login-header h2 span { font-weight: 600; color: #ccd6f6; } /* SGO */
+.login-header h2 .accent { font-weight: 400; color: #ccd6f6; margin-left: 6px; } /* Sapem */
 
 .form-container h1 {
   font-size: 2rem;
@@ -106,8 +108,8 @@
 
 .input-group input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  border-color: #64ffda;
+  box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.2);
 }
 
 .form-options {
@@ -132,7 +134,7 @@
 .form-options a,
 .login-footer a,
 .forgot-password-link {
-  color: #007bff;
+  color: #64ffda;
   text-decoration: none;
   transition: color 0.3s ease;
   cursor: pointer;
@@ -149,8 +151,8 @@
   padding: 14px;
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  background-color: #007bff;
+  color: #0a192f;
+  background-color: #64ffda;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -158,7 +160,7 @@
 }
 
 .login-button:hover {
-  background-color: #0056b3;
+  background-color: #52d3b4;
   transform: translateY(-2px);
 }
 
@@ -214,7 +216,7 @@
 }
 
 .modal-content strong {
-  color: #007bff;
+  color: #64ffda;
   font-weight: 600;
 }
 
@@ -222,8 +224,8 @@
   padding: 10px 25px;
   font-size: 1rem;
   font-weight: 500;
-  color: #fff;
-  background-color: #007bff;
+  color: #0a192f;
+  background-color: #64ffda;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -231,5 +233,5 @@
 }
 
 .modal-close-button:hover {
-  background-color: #0056b3;
+  background-color: #52d3b4;
 }
