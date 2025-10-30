@@ -210,11 +210,111 @@
 .reminders-content { padding: 20px; flex: 1; overflow-y: auto; }
 .reminders-panel h4 { display: none; }
 .reminders-list { list-style: none; padding: 0; margin: 0; }
-.reminders-list li { margin-bottom: 15px; }
-.reminder-link { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 6px; transition: background-color 0.3s ease; text-decoration: none; color: inherit; }
-.reminder-link:hover { background-color: #303c55; }
-.reminder-title { color: #ccd6f6; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 15px; }
-.reminder-date { color: #8892b0; font-size: 0.9rem; flex-shrink: 0; }
+
+.reminder-link {
+    flex-grow: 1;
+    padding: 10px;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.3s ease;
+}
+.reminder-link:hover {
+    text-decoration: none !important;
+    background-color: transparent;
+}
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  transition: background-color 0.3s ease;
+  border-radius: 6px;
+}
+
+.reminder-item:hover {
+    background-color: #303c55;
+}
+
+.reminder-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.reminder-title {
+  color: #ccd6f6;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 8px;
+}
+
+.reminder-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reminder-date {
+  color: #8892b0; /* This will be overridden by inline style */
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  font-weight: bold;
+}
+
+.reminder-progress {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100px;
+}
+
+.progress-bar-reminder-container {
+    width: 100%;
+    background-color: #0a192f;
+    border-radius: 10px;
+    height: 10px;
+}
+
+.progress-bar-reminder {
+    height: 100%;
+    background-color: #007bff;
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    color: #8892b0;
+    font-weight: 600;
+}
+
+.delete-reminder-btn {
+  background: transparent;
+  border: none;
+  color: #8892b0;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  margin-right: 5px;
+}
+
+.delete-reminder-btn:hover {
+  background-color: rgba(255, 91, 91, 0.2);
+  color: #FF5B5B;
+}
+
+.delete-reminder-btn svg {
+    width: 18px;
+    height: 18px;
+}
 .no-reminders { color: #8892b0; }
 
 .right-column-handle {
@@ -401,4 +501,35 @@
     -webkit-box-shadow: 0 0 0px 1000px #1e2a47 inset !important;
     transition: background-color 5000s ease-in-out 0s;
     font-family: var(--font-family);
+}
+
+.time-chart-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+}
+
+.time-chart-label {
+    position: absolute;
+    top: -10px;
+    font-size: 0.6rem;
+    color: #8892b0;
+    white-space: nowrap;
+}
+
+.time-chart-svg {
+    transform: rotate(-90deg); /* Start from the top */
+}
+
+.time-chart-progress {
+    transition: stroke-dashoffset 0.5s ease-out;
+}
+
+.reminder-item .time-chart-container,
+.reminder-item .delete-reminder-btn {
+    position: relative;
+    top: 8px;
 }

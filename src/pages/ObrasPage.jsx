@@ -29,6 +29,15 @@ const CollapseIcon = (props) => (
   </svg>
 );
 
+const TrashIcon = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"></polyline>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      <line x1="10" y1="11" x2="10" y2="17"></line>
+      <line x1="14" y1="11" x2="14" y2="17"></line>
+    </svg>
+  );
+
 
 // --- User Management Modal --- //
 const UserManagementModal = ({ onClose }) => {
@@ -295,54 +304,151 @@ const FilterBar = ({ filterConfig, setFilterConfig, isAdmin }) => {
     );
 };
 
+const CircularTimeChart = ({ percentage, color, size = 40 }) => {
+    const strokeWidth = 4;
+    const radius = (size / 2) - (strokeWidth * 2);
+    const circumference = radius * 2 * Math.PI;
+    const offset = circumference - (percentage / 100) * circumference;
 
-// --- Reminders Panel --- //
-const RemindersPanel = ({ obras }) => {
-  const sortedObras = obras
-    .filter(obra => obra.fecha_finalizacion_estimada)
-    .sort((a, b) => new Date(a.fecha_finalizacion_estimada) - new Date(b.fecha_finalizacion_estimada))
-    .slice(0, 5); // Get top 5
-
-  return (
-    <div className="reminders-panel">
-      {sortedObras.length > 0 ? (
-        <ul className="reminders-list">
-          {sortedObras.map(obra => (
-            <li key={obra.id}>
-              <Link to={`/obras/${obra.id}`} className="reminder-link">
-                <span className="reminder-title">{obra.establecimiento}</span>
-                <span className="reminder-date">{new Date(obra.fecha_finalizacion_estimada).toLocaleDateString()}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="no-reminders">No hay recordatorios.</p>
-      )}
-    </div>
-  );
+    return (
+        <div className="time-chart-container">
+            <span className="time-chart-label">Tiempo restante</span>
+            <svg width={size} height={size} className="time-chart-svg">
+                <circle
+                    stroke="#303c55"
+                    fill="transparent"
+                    strokeWidth={strokeWidth}
+                    r={radius}
+                    cx={size / 2}
+                    cy={size / 2}
+                />
+                <circle
+                    stroke={color}
+                    fill="transparent"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    r={radius}
+                    cx={size / 2}
+                    cy={size / 2}
+                    className="time-chart-progress"
+                />
+            </svg>
+        </div>
+    );
 };
 
-const RightPanel = ({ obras, isCollapsed, onToggleCollapse }) => (
-  <div className={`right-column ${isCollapsed ? 'collapsed' : ''}`}>
-    <div className="right-column-content-wrapper">
-      <div className="reminders-container">
-        <div className="reminders-header">
-          <h4>Próximos Vencimientos</h4>
-          <button onClick={onToggleCollapse} className="collapse-btn" aria-label="Minimizar panel">
-            <CollapseIcon />
-          </button>
-        </div>
-        <div className="reminders-content">
-          <RemindersPanel obras={obras} />
+// --- Reminders Panel --- //
+const RemindersPanel = ({ obras, user, onUpdateObra }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+  
+    const sortedObras = obras
+      .filter(obra => {
+        if (!obra.fecha_finalizacion_estimada) return false;
+        const dueDate = new Date(obra.fecha_finalizacion_estimada);
+        return dueDate >= today;
+      })
+      .sort((a, b) => new Date(a.fecha_finalizacion_estimada) - new Date(b.fecha_finalizacion_estimada))
+      .slice(0, 10);
+  
+    const getDaysUntil = (date) => {
+      const diffTime = new Date(date).getTime() - today.getTime();
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    const MAX_DAYS_FOR_CHART = 30;
+  
+    const getDateColor = (date) => {
+        const daysUntil = getDaysUntil(date);
+        if (daysUntil < 0) return '#8892b0';
+        if (daysUntil <= 7) {
+            const green = Math.max(0, Math.floor((daysUntil / 7) * 146));
+            const blue = Math.max(0, Math.floor((daysUntil / 7) * 176));
+            return `rgb(255, ${green}, ${blue})`;
+        }
+        return '#8892b0';
+    };
+  
+    const handleDelete = async (obraId) => {
+      if (window.confirm('¿Está seguro de que desea eliminar el vencimiento de esta obra?')) {
+        try {
+          onUpdateObra(obraId, { fecha_finalizacion_estimada: null });
+          await api.put(`/obras/${obraId}`, { fecha_finalizacion_estimada: null });
+          toast.success('Vencimiento eliminado con éxito.');
+        } catch (error) {
+          console.error('Error deleting due date:', error);
+          toast.error('No se pudo eliminar el vencimiento.');
+        }
+      }
+    };
+  
+    const isAdmin = user.role === 'Administrador General';
+  
+    return (
+      <div className="reminders-panel">
+        {sortedObras.length > 0 ? (
+          <ul className="reminders-list">
+            {sortedObras.map(obra => {
+                const daysUntil = getDaysUntil(obra.fecha_finalizacion_estimada);
+                const timePercentage = Math.max(0, Math.min(100, (daysUntil / MAX_DAYS_FOR_CHART) * 100));
+                const color = getDateColor(obra.fecha_finalizacion_estimada);
+
+                return (
+                    <li key={obra.id} className="reminder-item">
+                        <Link to={`/obras/${obra.id}`} className="reminder-link">
+                            <div className="reminder-info">
+                                <span className="reminder-title">{obra.establecimiento}</span>
+                                <div className="reminder-details">
+                                    <span className="reminder-date" style={{ color }}>
+                                        {new Date(obra.fecha_finalizacion_estimada).toLocaleDateString('es-AR')}
+                                    </span>
+                                    <div className="reminder-progress">
+                                        <div className="progress-bar-reminder-container">
+                                            <div className="progress-bar-reminder" style={{ width: `${obra.progreso || 0}%` }}></div>
+                                        </div>
+                                        <span className="progress-text">{obra.progreso || 0}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+                        <CircularTimeChart percentage={timePercentage} color={color} />
+                        {isAdmin && (
+                            <button onClick={() => handleDelete(obra.id)} className="delete-reminder-btn" aria-label="Eliminar vencimiento">
+                            <TrashIcon />
+                            </button>
+                        )}
+                    </li>
+                )
+            })}
+          </ul>
+        ) : (
+          <p className="no-reminders">No hay próximos vencimientos.</p>
+        )}
+      </div>
+    );
+  };
+
+  const RightPanel = ({ obras, isCollapsed, onToggleCollapse, user, onUpdateObra }) => (
+    <div className={`right-column ${isCollapsed ? 'collapsed' : ''}`}>
+      <div className="right-column-content-wrapper">
+        <div className="reminders-container">
+          <div className="reminders-header">
+            <h4>Próximos Vencimientos</h4>
+            <button onClick={onToggleCollapse} className="collapse-btn" aria-label="Minimizar panel">
+              <CollapseIcon />
+            </button>
+          </div>
+          <div className="reminders-content">
+            <RemindersPanel obras={obras} user={user} onUpdateObra={onUpdateObra} />
+          </div>
         </div>
       </div>
+      <div className="right-column-handle" onClick={onToggleCollapse}>
+          <CollapseIcon />
+      </div>
     </div>
-    <div className="right-column-handle" onClick={onToggleCollapse}>
-        <CollapseIcon />
-    </div>
-  </div>
-);
+  );
 
 
 // --- Create Obra Modal --- //
@@ -419,6 +525,10 @@ const ObrasPage = () => {
     audio.play();
     toast.success(`Obra "${newObra.establecimiento}" creada con éxito!`);
     setObras([...obras, newObra]);
+  };
+
+  const handleUpdateObraInState = (obraId, updatedFields) => {
+    setObras(prevObras => prevObras.map(o => o.id === obraId ? { ...o, ...updatedFields } : o));
   };
 
   useEffect(() => {
@@ -512,6 +622,8 @@ const ObrasPage = () => {
               obras={obras} 
               isCollapsed={isRightPanelCollapsed}
               onToggleCollapse={() => setRightPanelCollapsed(!isRightPanelCollapsed)}
+              user={user}
+              onUpdateObra={handleUpdateObraInState}
             />
           </div>
         </div>
