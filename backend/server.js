@@ -70,6 +70,7 @@ require('./routes/role.routes')(apiRouter);
 require('./routes/geocode.routes')(apiRouter);
 require('./routes/contribuyente.routes')(apiRouter);
 require('./routes/representanteLegal.routes')(apiRouter);
+require('./routes/localidad.routes')(apiRouter);
 require('./routes/upload.routes')(apiRouter); // Nueva ruta de subida
 app.use('/api', apiRouter);
 

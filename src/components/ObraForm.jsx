@@ -135,7 +135,7 @@ function ObraForm({ obra, onSubmit }) {
             <input type="text" id="titulo" name="titulo" value={formData.titulo} onChange={handleChange} required placeholder="Nombre del lugar o título de la obra" />
           </div>
           <div className="form-group">
-            <label htmlFor="nro">Nro de Obra (opcional)</label>
+            <label htmlFor="nro">Numero de obra</label>
             <input type="number" id="nro" name="nro" value={formData.nro} onChange={handleChange} />
           </div>
           <div className="form-group">

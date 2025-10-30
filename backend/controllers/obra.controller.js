@@ -5,8 +5,9 @@ const db = require("../models");
 console.log("Modelos disponibles en DB:", Object.keys(db));
 
 const Obra = db.Obras;
-const RepresentanteLegal = db.RepresentantesLegales; // SOLUCIÓN FINAL: Usar plural, coincidiendo con el nombre de la tabla.
-const Contribuyente = db.Contribuyentes;             // SOLUCIÓN FINAL: Usar plural, coincidiendo con el nombre de la tabla.
+const RepresentanteLegal = db.RepresentantesLegales;
+const Contribuyente = db.Contribuyentes;
+const Localidad = db.Localidades; // Añadir Localidad
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Obra
@@ -40,6 +41,20 @@ exports.create = async (req, res) => {
       contribuyenteId = contribuyente.id;
     }
 
+    let localidadId = null;
+    if (req.body.localidad_id) {
+      // Si el valor es numérico, es un ID existente. Si no, es un nombre para crear.
+      if (isNaN(req.body.localidad_id)) {
+          const [localidad] = await Localidad.findOrCreate({
+              where: { nombre: req.body.localidad_id },
+              defaults: { nombre: req.body.localidad_id }
+          });
+          localidadId = localidad.id;
+      } else {
+          localidadId = req.body.localidad_id;
+      }
+    }
+
     // Mapeo final para la creación de la obra
     const obra = {
       establecimiento: req.body.establecimiento,
@@ -48,7 +63,7 @@ exports.create = async (req, res) => {
       detalle: req.body.descripcion,
       latitude: req.body.latitude,
       longitude: req.body.longitude,
-      localidad: req.body.localidad, // Este campo ya existe en tu modelo
+      localidad_id: localidadId, // Usar el ID de la localidad
       contribuyente_id: contribuyenteId,
       inspector_id: req.body.inspector_id || null,
       representante_legal_id: representanteId,
@@ -123,62 +138,40 @@ exports.checkNumeroGestion = async (req, res) => {
   }
 };
 
-/*
-  // Create a Obra
-  const obra = {
-    establecimiento: req.body.titulo, // from Step 1
-    numero_gestion: req.body.numero_gestion, // from Step 1
-    categoria: req.body.categoria, // from Step 1
-    detalle: req.body.descripcion, // from Step 1
-    // nro: req.body.nro, // ERROR: Este campo no existe en el modelo 'obra.model.js'
-    latitude: req.body.latitude, // from Step 2
-    longitude: req.body.longitude, // from Step 2
-    localidad: req.body.localidad, // from Step 2
-    // 'ubicacion' del form se usa para geocodificación, pero no se guarda directamente. 'localidad' sí.
-    contratista: req.body.contratista, // from Step 2
-    inspector_id: req.body.inspector_id || null, // from Step 2
-    representante_legal_id: req.body.rep_legal || null, // El frontend ahora envía el ID correcto
-    monto_sapem: req.body.monto_sapem || null, // from Step 3
-    monto_sub: req.body.monto_sub || null, // from Step 3
-    af: req.body.af || null, // from Step 3
-    plazo: req.body.plazo_dias || null, // from Step 3
-    fecha_inicio: req.body.fecha_inicio || null, // from Step 3
-    fecha_finalizacion_estimada: req.body.fecha_finalizacion_estimada || null, // from Step 3
-    estado: req.body.estado, // from Step 3
-    progreso: req.body.progreso || 0, // Default to 0
-    // 'can' y 'motivo_anulacion' no están en el formulario de creación, se manejarán en la actualización
-  };
-
-  // LOG PARA VER QUÉ SE INTENTA GUARDAR EN LA BASE DE DATOS
-  console.log('BACKEND: Objeto a crear en la BD:', obra);
-
-  // Save Obra in the database
-  Obra.create(obra)
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      // MEJORA: Loguear el error completo en el servidor para mejor depuración
-      console.error("Error al crear la Obra:", err); 
-      res.status(500).send({
-        message:
-          err.message || "Ocurrió un error al crear la Obra."
-      });
-    });*/
 
 // Retrieve all Obras from the database.
 exports.findAll = (req, res) => {
   const titulo = req.query.titulo;
-  // CORRECCIÓN: Cambiar 'titulo' por 'establecimiento' para que coincida con el modelo
   var condition = titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : null;
   
   Obra.findAll({ 
     where: condition,
-    include: [{
-      model: db.Contribuyentes,
-      as: 'Contribuyente',
-      attributes: ['nombre'] // Solo necesitamos el nombre
-    }]
+    include: [
+      {
+        model: db.Contribuyentes,
+        as: 'Contribuyente',
+        attributes: ['nombre'],
+        required: false // LEFT JOIN
+      },
+      {
+        model: db.Localidades,
+        as: 'Localidad',
+        attributes: ['nombre'],
+        required: false // LEFT JOIN
+      },
+      {
+        model: db.RepresentantesLegales,
+        as: 'RepresentanteLegal',
+        attributes: ['nombre'],
+        required: false // LEFT JOIN
+      },
+      {
+        model: db.Usuarios,
+        as: 'Usuario',
+        attributes: ['nombre'],
+        required: false // LEFT JOIN
+      }
+    ]
   })
     .then(data => {
       res.send(data);
@@ -202,7 +195,8 @@ exports.findOne = (req, res) => {
       { model: db.Documentos, as: 'Documentos' },
       { model: db.Usuarios, as: 'Usuario' }, // Usar plural (asumiendo consistencia)
       { model: db.RepresentantesLegales, as: 'RepresentanteLegal' }, // Usar plural
-      { model: db.Contribuyentes, as: 'Contribuyente' } // Usar plural
+      { model: db.Contribuyentes, as: 'Contribuyente' }, // Usar plural
+      { model: db.Localidades, as: 'Localidad'}
     ]
   })
     .then(data => {

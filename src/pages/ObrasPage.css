@@ -1,10 +1,11 @@
 /* --- Contenedor Principal --- */
 .obras-page-container { display: flex; flex-direction: column; min-height: 100vh; background-color: #0a192f; color: #ccd6f6; font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; }
-.loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 1.5rem; color: #64ffda; }
+.loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 1.5rem; color: #007bff; }
 
 /* --- Header --- */
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background-color: #1e2a47; border-bottom: 1px solid #303c55; position: relative; z-index: 100; }
-.dashboard-header h1 { color: #64ffda; font-size: 1.8rem; margin: 0; }
+.dashboard-header h1 { color: #007bff; font-size: 1.8rem; margin: 0; }
+.header-logo { height: 40px; width: auto; margin-right: 15px; }
 
 /* --- User Menu --- */
 .user-menu-container { position: relative; }
@@ -122,7 +123,7 @@
 }
 
 .icon-btn { background-color: transparent; border: 1px solid #303c55; color: #8892b0; padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
-.icon-btn:hover { background-color: #303c55; color: #ccd6f6; border-color: #64ffda; }
+.icon-btn:hover { background-color: #303c55; color: #ccd6f6; border-color: #007bff; }
 .icon-btn svg { width: 20px; height: 20px; }
 
 .search-container { display: flex; align-items: center; background-color: #1e2a47; border: 1px solid #303c55; border-radius: 6px; padding-left: 10px; }
@@ -139,12 +140,12 @@
 }
 .filter-dropdown { position: absolute; top: calc(100% + 10px); left: 0; width: 300px; background-color: #1e2a47; border: 1px solid #303c55; border-radius: 8px; padding: 20px; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: scale-in 0.2s ease-out; transform-origin: top left; }
 .filter-section { margin-bottom: 20px; }
-.filter-section h5 { margin: 0 0 10px 0; color: #64ffda; font-size: 1rem; }
+.filter-section h5 { margin: 0 0 10px 0; color: #007bff; font-size: 1rem; }
 .options-group { display: flex; flex-wrap: wrap; gap: 10px; }
 .filter-option-btn { background-color: transparent; border: 1px solid #303c55; color: #8892b0; padding: 6px 12px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
-.filter-option-btn.active { background-color: #64ffda; color: #0a192f; border-color: #64ffda; font-weight: 600; }
-.apply-filters-btn { width: 100%; padding: 10px; border-radius: 6px; background-color: #64ffda; color: #0a192f; border: none; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease; }
-.apply-filters-btn:hover { background-color: #52d3b4; }
+.filter-option-btn.active { background-color: #007bff; color: #0a192f; border-color: #007bff; font-weight: 600; }
+.apply-filters-btn { width: 100%; padding: 10px; border-radius: 6px; background-color: #007bff; color: #0a192f; border: none; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease; }
+.apply-filters-btn:hover { background-color: #0056b3; }
 .active-filters { display: flex; gap: 10px; margin-top: 15px; }
 .active-filter-tag { display: flex; align-items: center; gap: 8px; background-color: #303c55; color: #ccd6f6; padding: 5px 10px; border-radius: 15px; font-size: 0.9rem; }
 .active-filter-tag button { background: none; border: none; color: #8892b0; cursor: pointer; padding: 0; display: flex; align-items: center; }
@@ -177,7 +178,7 @@
 
 .reminders-container { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .reminders-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #303c55; flex-shrink: 0; }
-.reminders-header h4 { margin: 0; color: #64ffda; font-size: 1.2rem; white-space: nowrap; }
+.reminders-header h4 { margin: 0; color: #007bff; font-size: 1.2rem; white-space: nowrap; }
 .collapse-btn { background: transparent; border: none; color: #8892b0; cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease; }
 .collapse-btn:hover { background-color: #303c55; color: #ccd6f6; }
 .reminders-content { padding: 20px; flex: 1; overflow-y: auto; }
@@ -206,7 +207,7 @@
   border-radius: 8px;
 }
 
-.right-column-handle svg { color: #64ffda; transform: rotate(180deg); }
+.right-column-handle svg { color: #007bff; transform: rotate(180deg); }
 
 /* --- Collapsed State for Right Column --- */
 .right-column.collapsed {
@@ -233,18 +234,19 @@
 /* --- Cuadrícula de Obras --- */
 .obras-grid { 
   display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
   gap: 25px; 
+  align-items: start;
 }
 
 /* --- Tarjeta de Obra --- */
-.obra-card-link { text-decoration: none; color: inherit; display: block; height: 100%; }
+.obra-card-link { text-decoration: none; color: inherit; display: block; }
 .obra-card-link:hover { text-decoration: none; }
 .obra-card { background-color: #1e2a47; border-radius: 12px; border: 1px solid #303c55; overflow: hidden; transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column; }
-.obra-card:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3); border-color: #64ffda; }
+.obra-card:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3); border-color: #007bff; }
 .obra-card-image-container { width: 100%; height: 180px; overflow: hidden; }
 .obra-card-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-.obra-card:hover .obra-card-image { transform: scale(1.05); }
+.obra-card:hover .obra-card-image { transform: scale(1.02); }
 .obra-card-content { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; text-align: center; }
 .obra-card-content h3 { margin: 0 0 15px 0; font-size: 1.5rem; color: #ccd6f6; }
 .card-body { flex-grow: 1; padding: 0; text-align: left; }
@@ -256,16 +258,16 @@
 .status-finalizada { background-color: #78e08f; color: #333; }
 .status-cancelada { background-color: #e55039; color: white; }
 .progress-bar-container { width: 100%; background-color: #0a192f; border-radius: 10px; height: 20px; display: flex; align-items: center; position: relative; }
-.progress-bar { height: 100%; background-color: #64ffda; border-radius: 10px; transition: width 0.5s ease-in-out; }
+.progress-bar { height: 100%; background-color: #007bff; border-radius: 10px; transition: width 0.5s ease-in-out; }
 .progress-bar-container span { position: absolute; right: 10px; color: #0a192f; font-weight: 600; font-size: 0.8rem; }
 .no-obras-message { color: #8892b0; font-size: 1.2rem; text-align: center; grid-column: 1 / -1; }
 
 /* --- Botones --- */
 .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
-.btn-primary { background-color: #64ffda; color: #0a192f; }
-.btn-primary:hover { background-color: #52d3b4; }
-.btn-details { background-color: transparent; border: 1px solid #64ffda; color: #64ffda; }
-.btn-details:hover { background-color: rgba(100, 255, 218, 0.1); }
+.btn-primary { background-color: #007bff; color: #fff; }
+.btn-primary:hover { background-color: #0056b3; }
+.btn-details { background-color: transparent; border: 1px solid #007bff; color: #007bff; }
+.btn-details:hover { background-color: rgba(0, 123, 255, 0.1); }
 .btn-assign { background-color: #f6b93b; color: #333; }
 .btn-assign:hover { background-color: #e0a830; }
 
@@ -286,8 +288,8 @@
 .btn-success:hover { background-color: #6ac97e; }
 .btn-promote { background-color: #bd93f9; color: #333; }
 .btn-promote:hover { background-color: #ab7ff5; }
-.modal-close-button { padding: 10px 25px; font-size: 1rem; font-weight: 500; color: #0a192f; background-color: #64ffda; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease; margin-top: 20px; }
-.modal-close-button:hover { background-color: #52d3b4; }
+.modal-close-button { padding: 10px 25px; font-size: 1rem; font-weight: 500; color: #fff; background-color: #007bff; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease; margin-top: 20px; }
+.modal-close-button:hover { background-color: #0056b3; }
 
 
 

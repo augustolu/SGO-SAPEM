@@ -1,4 +1,3 @@
-
 const dbConfig = require("../config/db.config.js");
 
 const Sequelize = require("sequelize");
@@ -26,6 +25,7 @@ db.Actividades = require("./actividad.model.js")(sequelize, Sequelize);
 db.Documentos = require("./documento.model.js")(sequelize, Sequelize);
 db.RepresentantesLegales = require("./representanteLegal.model.js")(sequelize, Sequelize); // NUEVO
 db.Contribuyentes = require("./contribuyente.model.js")(sequelize, Sequelize);
+db.Localidades = require("./localidad.model.js")(sequelize, Sequelize);
 
 // Relaciones
 db.Roles.hasMany(db.Usuarios, { as: "usuarios", foreignKey: 'rol_id' });
@@ -50,5 +50,9 @@ db.Obras.belongsTo(db.RepresentantesLegales, { as: 'RepresentanteLegal', foreign
 // NUEVA RELACIÓN: Obras <-> Contribuyentes
 db.Contribuyentes.hasMany(db.Obras, { foreignKey: 'contribuyente_id' });
 db.Obras.belongsTo(db.Contribuyentes, { as: 'Contribuyente', foreignKey: 'contribuyente_id' });
+
+// NUEVA RELACIÓN: Obras <-> Localidades
+db.Localidades.hasMany(db.Obras, { foreignKey: 'localidad_id' });
+db.Obras.belongsTo(db.Localidades, { as: 'Localidad', foreignKey: 'localidad_id' });
 
 module.exports = db;

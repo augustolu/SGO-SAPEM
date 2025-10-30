@@ -7,6 +7,7 @@
   --text-primary-color: #F3F4F6;
   --text-secondary-color: #9CA3AF;
   --step-completed-color: #3B82F6;
+  --danger-color: #F87171;
 }
 
 .wizard-form-container {
@@ -62,7 +63,6 @@
   animation: fadeIn 0.5s;
 }
 
-/* NUEVO: Contenedor de la grilla de 2 columnas */
 .form-grid-2-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -70,12 +70,10 @@
   align-items: start;
 }
 
-/* NUEVO: Modificador para que un campo ocupe ambas columnas */
 .grid-col-span-2 {
   grid-column: span 2 / span 2;
 }
 
-/* Se agrega un margen inferior para separar las filas de campos */
 .form-group {
   margin-bottom: 1rem; 
 }
@@ -113,7 +111,6 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
-/* NUEVO: Estilos para el input con prefijo de moneda */
 .input-with-prefix {
   display: flex;
   align-items: center;
@@ -133,13 +130,62 @@
   color: var(--text-secondary-color);
 }
 
-/* --- Botones de Navegación (sin cambios) --- */
-.navigation-buttons { display: flex; justify-content: space-between; align-items: center; }
-.navigation-buttons button { padding: 0.8rem 1.8rem; border: 1px solid transparent; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
-.btn-primary { background-color: var(--primary-color); color: white; }
-.btn-primary:hover { background-color: var(--primary-hover-color); }
-.btn-secondary { background-color: transparent; color: var(--primary-hover-color); border-color: var(--primary-color); }
-.btn-secondary:hover { background-color: rgba(59, 130, 246, 0.1); border-color: var(--primary-hover-color); }
+/* --- Indicador de Campo Obligatorio --- */
+.mandatory-star {
+  color: var(--danger-color);
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.footer-notes {
+  font-size: 0.9rem;
+  color: var(--text-secondary-color);
+}
+
+/* --- Botones de Navegación --- */
+.navigation-buttons {
+  display: flex;
+  gap: 1rem; /* Espacio entre botones */
+}
+
+.navigation-buttons button {
+  padding: 0.8rem 1.8rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--primary-hover-color);
+  border-color: var(--primary-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-hover-color);
+  transform: translateY(-2px);
+}
+
+.navigation-buttons button:disabled {
+  background-color: var(--border-color);
+  color: var(--text-secondary-color);
+  cursor: not-allowed;
+}
 
 /* --- Otros estilos --- */
 .error-message { color: #FCA5A5; font-size: 0.85rem; margin-top: 0.5rem; }
@@ -158,18 +204,26 @@
     padding: 1.5rem;
   }
 
-  /* La grilla colapsa a una sola columna en pantallas pequeñas */
   .form-grid-2-cols {
     grid-template-columns: 1fr;
-    gap: 1.5rem; /* Un solo valor de gap es suficiente */
+    gap: 1.5rem;
   }
 
-  /* El span de 2 columnas ya no es necesario, se resetea */
   .grid-col-span-2 {
     grid-column: auto;
   }
 
   .map-container-wizard {
-    height: 250px; /* Un poco menos de altura en móvil */
+    height: 250px;
+  }
+
+  .wizard-footer {
+    flex-direction: column-reverse;
+    gap: 1.5rem;
+  }
+
+  .navigation-buttons {
+    width: 100%;
+    justify-content: space-between;
   }
 }

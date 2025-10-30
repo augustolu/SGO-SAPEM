@@ -16,8 +16,9 @@ module.exports = (sequelize, Sequelize) => {
     detalle: { // Cambiado de 'descripcion'
       type: Sequelize.TEXT
     },
-    localidad: { // Cambiado de 'ubicacion'
-      type: Sequelize.STRING(255)
+    localidad_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true
     },
     numero_gestion: {
       type: Sequelize.STRING(100)

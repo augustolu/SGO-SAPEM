@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import './ImageUpload.css';
@@ -33,14 +33,27 @@ function getCroppedImg(image, crop, fileName) {
   });
 }
 
-const ImageUpload = ({ onFileSelect, selectedFile }) => {
+const ImageUpload = ({ onFileSelect, selectedFile, setIsCropping }) => {
   const [source, setSource] = useState(null);
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState();
+  const [isCropValid, setIsCropValid] = useState(false);
   const imageRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const aspect = 16 / 9;
+
+  useEffect(() => {
+    setIsCropping(!!source);
+  }, [source, setIsCropping]);
+
+  useEffect(() => {
+    if (completedCrop?.width && completedCrop?.height) {
+      setIsCropValid(true);
+    } else {
+      setIsCropValid(false);
+    }
+  }, [completedCrop]);
 
   const onFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -62,10 +75,10 @@ const ImageUpload = ({ onFileSelect, selectedFile }) => {
   };
 
   const handleConfirmCrop = async () => {
-    if (imageRef.current && completedCrop) {
+    if (imageRef.current && completedCrop && isCropValid) {
       const croppedImageBlob = await getCroppedImg(imageRef.current, completedCrop, 'cropped_image.jpeg');
       onFileSelect(croppedImageBlob);
-      setSource(null); // Ocultar el cropper y mostrar la preview
+      setSource(null);
     }
   };
 
@@ -84,7 +97,6 @@ const ImageUpload = ({ onFileSelect, selectedFile }) => {
     }
   }
 
-  // Si hay una imagen fuente, mostramos el cropper
   if (source) {
     return (
       <div className="image-upload-widget">
@@ -99,13 +111,14 @@ const ImageUpload = ({ onFileSelect, selectedFile }) => {
         </ReactCrop>
         <div className="crop-actions">
           <button type="button" className="btn-secondary" onClick={handleCancel}>Cancelar</button>
-          <button type="button" className="btn-primary" onClick={handleConfirmCrop}>Confirmar Recorte</button>
+          <button type="button" className="btn-primary" onClick={handleConfirmCrop} disabled={!isCropValid}>
+            Confirmar Recorte
+          </button>
         </div>
       </div>
     );
   }
 
-  // Si hay un archivo seleccionado (ya recortado), mostramos la vista previa
   if (selectedFile) {
     return (
       <div className="image-upload-widget">
@@ -121,7 +134,6 @@ const ImageUpload = ({ onFileSelect, selectedFile }) => {
     );
   }
 
-  // Estado inicial: botón para seleccionar archivo
   return (
     <div className="image-upload-widget">
         <input 
