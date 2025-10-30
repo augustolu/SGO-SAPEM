@@ -20,8 +20,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING(255)
     },
     numero_gestion: {
-      type: Sequelize.STRING(100),
-      unique: true
+      type: Sequelize.STRING(100)
     },
     categoria: {
       type: Sequelize.ENUM('salud', 'educación', 'deporte', 'secretaría general', 'vialidad', 'obra pública', 'varios'),

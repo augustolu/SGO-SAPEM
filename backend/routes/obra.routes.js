@@ -17,9 +17,6 @@ module.exports = function(app) {
   // Retrieve all Obras
   app.get("/obras", [authJwt.verifyToken], obras.findAll);
 
-  // Check if a numero_gestion exists
-  app.get("/obras/check-gestion/:numero_gestion", [authJwt.verifyToken], obras.checkNumeroGestion);
-
   // Retrieve a single Obra with id
   app.get("/obras/:id", [authJwt.verifyToken], obras.findOne);
 

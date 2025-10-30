@@ -7,6 +7,7 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const suggestionsRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
 
@@ -17,22 +18,23 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
 
   const fetchSuggestions = useCallback(async (query) => {
     console.log('Fetching suggestions for query:', query);
-    if (query.length < 1) { // Cambiado a 1 para mostrar sugerencias desde la primera letra
+    if (query.length < 1) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
     setIsLoading(true);
+    setError(null);
     try {
-      // Pasamos la consulta al backend para que filtre
       const url = `${apiEndpoint}?nombre=${query}`;
       console.log('Requesting URL:', url);
       const response = await api.get(url);
       console.log('Received response:', response.data);
       setSuggestions(response.data);
       setShowSuggestions(true);
-    } catch (error) {
-      console.error(`Error fetching suggestions from ${apiEndpoint}:`, error);
+    } catch (err) {
+      console.error(`Error fetching suggestions from ${apiEndpoint}:`, err);
+      setError('Error al cargar datos. Verifique la consola.');
       setSuggestions([]);
     } finally {
       setIsLoading(false);
@@ -48,8 +50,8 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
-    setInputValue(newValue); // CORRECCIÓN: Actualizar el estado interno del input
-    onChange({ target: { name, value: newValue } }); // Y también el estado del formulario principal
+    setInputValue(newValue);
+    onChange({ target: { name, value: newValue } });
     debouncedFetch(newValue);
   };
 
@@ -60,11 +62,18 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
   };
 
   const handleBlur = () => {
-    // Pequeño delay para permitir que el clic en la sugerencia se registre antes de ocultar
     setTimeout(() => {
       setShowSuggestions(false);
     }, 150);
   };
+
+  const handleFocus = () => {
+    if (inputValue) {
+        debouncedFetch(inputValue);
+    } else {
+        setShowSuggestions(true); // Mostrar el menu para que el usuario sepa que puede escribir
+    }
+  }
 
   return (
     <div className="creatable-autocomplete-container" ref={suggestionsRef}>
@@ -74,7 +83,7 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
         value={inputValue}
         onChange={handleInputChange}
         onBlur={handleBlur}
-        onFocus={() => inputValue && fetchSuggestions(inputValue)}
+        onFocus={handleFocus}
         placeholder={placeholder}
         autoComplete="off"
       />
@@ -82,18 +91,22 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
         <ul className="suggestions-list">
           {isLoading ? (
             <li className="suggestion-item-info">Cargando...</li>
+          ) : error ? (
+            <li className="suggestion-item-error">{error}</li>
           ) : suggestions.length > 0 ? (
             suggestions.map((sug) => (
               <li
                 key={sug.id}
                 className="suggestion-item"
-                onMouseDown={() => handleSuggestionClick(sug)} // Usar onMouseDown para que se dispare antes del onBlur del input
+                onMouseDown={() => handleSuggestionClick(sug)}
               >
                 {sug.nombre}
               </li>
             ))
+          ) : inputValue ? (
+            <li className="suggestion-item-info">No se encontraron coincidencias para "{inputValue}".</li>
           ) : (
-            <li className="suggestion-item-info">No hay sugerencias. Puedes crear uno nuevo.</li>
+            <li className="suggestion-item-info">Escriba para buscar...</li>
           )}
         </ul>
       )}
