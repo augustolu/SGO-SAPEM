@@ -4,18 +4,26 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100%; /* Ocupa la altura del contenedor padre */
-    min-height: 220px; /* Altura mínima para el widget */
+    height: 100%;
+    min-height: 220px;
     background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.image-upload-widget:hover {
+    border-color: var(--primary-color);
+    background-color: #f7faff; /* Un azul muy claro */
 }
 
 .image-cropper {
     width: 100%;
-    max-height: 250px; /* Altura máxima para el cropper */
+    max-height: 300px;
     margin-bottom: 1rem;
+    border-radius: 8px;
+    overflow: hidden; /* Asegura que la imagen no se salga del borde redondeado */
 }
 
 .crop-actions {
@@ -23,15 +31,17 @@
     justify-content: flex-end;
     gap: 1rem;
     width: 100%;
+    margin-top: 1rem;
 }
 
 .image-preview-container {
     position: relative;
     width: 100%;
     padding-top: 56.25%; /* 16:9 Aspect Ratio */
-    background-color: #000;
+    background-color: #e9ecef;
     border-radius: 8px;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .image-preview {
@@ -45,27 +55,29 @@
 
 .remove-image-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(255, 77, 77, 0.8);
-    color: white;
-    border: none;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #e63946; /* Rojo oscuro */
+    border: 1px solid #e63946;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    font-size: 1.2rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1.4rem;
     font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease-in-out;
+    backdrop-filter: blur(3px);
 }
 
 .remove-image-btn:hover {
-    background: #ff4d4d;
-    transform: scale(1.1);
+    background: #e63946;
+    color: white;
+    transform: scale(1.1) rotate(90deg);
 }
 
 .hidden-input {
@@ -73,21 +85,30 @@
 }
 
 .btn-select-image {
-    /* Usando clases de botones globales si existen, o definiendo aquí */
-    padding: 0.8rem 1.8rem;
-    border: 1px solid var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 2rem;
+    border: none;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     background-color: transparent;
-    color: var(--primary-hover-color);
+    color: var(--primary-color);
 }
 
 .btn-select-image:hover {
-    background-color: rgba(59, 130, 246, 0.1);
-    border-color: var(--primary-hover-color);
+    transform: translateY(-3px);
+    color: var(--primary-hover-color);
+}
+
+.btn-select-image svg {
+    width: 48px;
+    height: 48px;
+    stroke-width: 1.5;
 }
 
 .upload-hint {
@@ -97,8 +118,19 @@
     text-align: center;
 }
 
-/* Estilos para los botones de acción del recorte */
-.crop-actions .btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.9rem;
+/* Heredan de los estilos globales .btn-primary y .btn-secondary */
+.crop-actions .btn-primary,
+.crop-actions .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.crop-actions .btn-primary:hover,
+.crop-actions .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }

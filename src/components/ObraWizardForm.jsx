@@ -98,25 +98,28 @@ const Stepper = ({ currentStep }) => (
 );
 
 // --- Componentes de cada Paso ---
-const Step1 = ({ data, handleChange, errors }) => (
-  <div className="form-step">
-    <div className="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
+import ImageUpload from './ImageUpload.jsx';
+import './ImageUpload.css';
+
+const Step1 = ({ data, handleChange, errors, selectedFile, setSelectedFile }) => (
+  <div class="form-step">
+    <div class="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
       {/* Columna 1 */}
-      <div className="form-group">
+      <div class="form-group">
         <label htmlFor="titulo">Título / Establecimiento *</label>
         <input type="text" id="establecimiento" name="establecimiento" value={data.establecimiento} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
-        {errors.establecimiento && <span className="error-message">{errors.establecimiento}</span>}
+        {errors.establecimiento && <span class="error-message">{errors.establecimiento}</span>}
       </div>
 
       {/* Columna 2 */}
-      <div className="form-group">
+      <div class="form-group">
         <label htmlFor="numero_gestion">Número de Gestión *</label>
         <input type="text" id="numero_gestion" name="numero_gestion" value={data.numero_gestion} onChange={handleChange} placeholder="Ej: 2024-001-A" maxLength={12} />
-        {errors.numero_gestion && <span className="error-message">{errors.numero_gestion}</span>}
+        {errors.numero_gestion && <span class="error-message">{errors.numero_gestion}</span>}
       </div>
 
       {/* Columna 1 */}
-      <div className="form-group">
+      <div class="form-group">
         <label htmlFor="categoria">Categoría *</label>
         <select id="categoria" name="categoria" value={data.categoria} onChange={handleChange}>
           <option value="salud">Salud</option>
@@ -130,15 +133,21 @@ const Step1 = ({ data, handleChange, errors }) => (
       </div>
 
       {/* Columna 2 */}
-      <div className="form-group">
+      <div class="form-group">
         <label htmlFor="nro">Nro de Obra (opcional)</label>
         <input type="number" id="nro" name="nro" value={data.nro} onChange={handleChange} />
       </div>
 
-      {/* Ocupa ambas columnas */}
-      <div className="form-group grid-col-span-2">
-        <label htmlFor="descripcion">Descripción de la Obra</label>
-        <textarea id="descripcion" name="descripcion" value={data.descripcion} onChange={handleChange} rows="4" placeholder="Descripción de los trabajos a realizar..."></textarea>
+      {/* Nueva sección de 2 columnas para Descripción e Imagen */}
+      <div class="form-group grid-col-span-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
+        <div className="form-group">
+          <label htmlFor="descripcion">Descripción de la Obra</label>
+          <textarea id="descripcion" name="descripcion" value={data.descripcion} onChange={handleChange} rows="10" placeholder="Descripción de los trabajos a realizar..."></textarea>
+        </div>
+        <div className="form-group">
+          <label>Imagen de Portada</label>
+          <ImageUpload onFileSelect={setSelectedFile} selectedFile={selectedFile} />
+        </div>
       </div>
     </div>
   </div>
@@ -627,7 +636,7 @@ function ObraWizardForm({ onSubmit }) {
         <Stepper currentStep={currentStep} />
       </div>
       <div className="wizard-body">
-        {currentStep === 1 && <Step1 data={formData} handleChange={handleChange} errors={errors} />}
+        {currentStep === 1 && <Step1 data={formData} handleChange={handleChange} errors={errors} selectedFile={selectedFile} setSelectedFile={setSelectedFile} />}
         {currentStep === 2 && <Step2 data={formData} handleChange={handleChange} setFormData={setFormData} inspectores={inspectores} errors={errors} />}
         {currentStep === 3 && <Step3 data={formData} handleChange={handleChange} />}
       </div>
