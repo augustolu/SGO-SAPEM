@@ -64,15 +64,41 @@
 }
 
 /* --- General Form Styling --- */
+.login-header {
+  display: flex;
+  flex-direction: column; /* Apilar logo y texto verticalmente */
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Espacio entre logo y texto */
+  margin-bottom: 30px; /* Aumentar espacio hasta "Iniciar Sesión" */
+}
+
+.header-logo {
+  height: 45px;
+  width: auto;
+}
+
 .login-header h2 { 
   font-size: 1.8rem; 
   margin: 0; 
   letter-spacing: 0.5px;
-  text-align: center; 
+  text-align: center;
+  font-weight: 600;
+  color: #ccd6f6;
 }
-.login-header h2 span { font-weight: 600; color: #ccd6f6; } /* SGO */
-.login-header h2 .accent { font-weight: 400; color: #ccd6f6; margin-left: 6px; } /* Sapem */
 
+.header-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.header-text .subtitle {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #8892b0;
+}
 .form-container h1 {
   font-size: 2rem;
   color: #ccd6f6;

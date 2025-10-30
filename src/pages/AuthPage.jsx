@@ -30,9 +30,12 @@ const LoginForm = ({ onSwitch, onForgotPassword }) => {
     <div className="form-container login-form-container-inner">
       <div className="login-header">
         <img src={logo} alt="SGO Sapem Logo" className="header-logo" />
-        <h2>
-          <span>SGO</span><span className="accent">Sapem</span>
-        </h2>
+        <div className="header-text">
+          <h2>SGO</h2>
+          <span className="subtitle">
+            Sapem
+          </span>
+        </div>
       </div>
       <h1>Iniciar Sesión</h1>
       <form onSubmit={handleSubmit} className="login-form">
@@ -85,9 +88,12 @@ const RegisterForm = ({ onSwitch }) => {
     <div className="form-container register-form-container-inner">
       <div className="login-header">
         <img src={logo} alt="SGO Sapem Logo" className="header-logo" />
-        <h2>
-          <span>SGO</span><span className="accent">Sapem</span>
-        </h2>
+        <div className="header-text">
+          <h2>SGO</h2>
+          <span className="subtitle">
+            Sapem
+          </span>
+        </div>
       </div>
       <h1>Crear Cuenta</h1>
       <form onSubmit={handleSubmit} className="login-form">

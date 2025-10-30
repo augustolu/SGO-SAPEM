@@ -134,9 +134,12 @@ const DashboardHeader = ({ user, isAdmin, onManageRolesClick }) => {
     <header className="dashboard-header">
       <div className="header-title-container">
         <img src={logo} alt="SGO-SAPEM Logo" className="header-logo" />
-        <h1>
-          <span>SGO</span><span className="accent">Sapem</span>
-        </h1>
+        <div className="header-text">
+          <h1>SGO</h1>
+          <span className="subtitle">
+            Sapem
+          </span>
+        </div>
       </div>
       <div className="user-menu-container" ref={menuRef}>
         <button className="user-menu-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menú">
