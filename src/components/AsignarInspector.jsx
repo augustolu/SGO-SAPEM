@@ -17,7 +17,7 @@ const AsignarInspector = ({ obraId }) => {
       }
     };
 
-    if (user && user.roles.includes('Administrador General')) {
+    if (user && user.role === 'Administrador General') {
       fetchInspectores();
     }
   }, [user]);
@@ -34,7 +34,7 @@ const AsignarInspector = ({ obraId }) => {
     }
   };
 
-  if (!user || !user.roles.includes('Administrador General')) {
+  if (!user || user.role !== 'Administrador General') {
     return null;
   }
 

@@ -1,25 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-const ListaActividades = ({ actividades: initialActividades, inspectorId }) => {
-  const [actividades, setActividades] = useState(initialActividades);
+const ListaActividades = ({ actividades = [], inspectorId, onComplete }) => {
   const { user } = useAuth();
-
-  useEffect(() => {
-    setActividades(initialActividades);
-  }, [initialActividades]);
 
   const handleComplete = async (actividadId) => {
     try {
       const response = await api.patch(`/actividades/${actividadId}/completar`);
       if (response.status === 200) {
-        setActividades(actividades.map(act => 
-          act.id === actividadId ? { ...act, completada: true } : act
-        ));
+        if (onComplete) {
+          onComplete(actividadId);
+        }
       }
     } catch (error) {
-      console.error(`Error completing actividad with id ${actividadId}:`, error);
+      console.error(`Error completingividad with id ${actividadId}:`, error);
     }
   };
 

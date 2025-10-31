@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import InfoObra from '../components/InfoObra';
-import ListaActividades from '../components/ListaActividades';
 import GestionDocumentos from '../components/GestionDocumentos';
-import AsignarInspector from '../components/AsignarInspector';
+import TarjetaDetalleObra from '../components/TarjetaDetalleObra';
+import './DetalleObraPage.css';
 
 const DetalleObraPage = () => {
   const { id } = useParams();
   const [obra, setObra] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchObra = async () => {
@@ -24,15 +24,13 @@ const DetalleObraPage = () => {
   }, [id]);
 
   if (!obra) {
-    return <div>Cargando...</div>;
+    return <div className="loading-screen">Cargando...</div>;
   }
 
   return (
-    <div>
-      <InfoObra obra={obra} />
-      <ListaActividades actividades={obra.actividades} inspectorId={obra.inspectorId} />
-      <GestionDocumentos obraId={obra.id} documentos={obra.documentos} />
-      <AsignarInspector obraId={obra.id} />
+    <div className="detalle-obra-page">
+      <TarjetaDetalleObra obra={obra} />
+      {/* <GestionDocumentos obraId={obra.id} documentos={obra.Documentos} /> */}
     </div>
   );
 };

@@ -1,0 +1,313 @@
+
+/* --- Contenedor Principal --- */
+.detalle-obra-container {
+  width: 100%;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background-color: var(--background-color);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.detalle-obra-content-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  position: relative;
+}
+
+/* --- Botones de Acción (Volver y Editar) --- */
+.back-button, .edit-button {
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  position: absolute;
+  top: 0;
+  z-index: 10;
+}
+
+.back-button {
+  background-color: var(--surface-color);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  left: 0;
+}
+
+.back-button:hover {
+  background-color: var(--border-color);
+  transform: translateX(-2px);
+}
+
+.edit-button {
+  background-color: var(--accent-color);
+  color: var(--background-color);
+  border: 1px solid var(--accent-color);
+  right: 0;
+}
+
+.edit-button:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+}
+
+.edit-button svg {
+  transition: transform 0.3s ease;
+}
+
+.edit-button:hover svg {
+  transform: rotate(5deg) scale(1.1);
+}
+
+
+/* --- Tarjeta Principal (Glassmorphism) --- */
+.detalle-obra-card {
+  background: var(--glass-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-large);
+  overflow: hidden;
+  box-shadow: var(--box-shadow-glass);
+  width: 100%;
+  margin-top: 4rem; /* Espacio para los botones de arriba */
+}
+
+/* --- Imagen de Cabecera --- */
+.detalle-header-image-container {
+  position: relative;
+  width: 100%;
+  height: 350px;
+  background-color: var(--surface-color);
+}
+
+.detalle-header-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.header-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(10, 25, 47, 0.8) 0%, rgba(10, 25, 47, 0) 60%);
+}
+
+/* --- Contenido de la Tarjeta --- */
+.detalle-obra-content {
+  padding: 2rem 2.5rem;
+}
+
+.detalle-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.detalle-title-section h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.25rem;
+  line-height: 1.1;
+}
+
+.numero-gestion {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* --- Badges de Estado y Categoría --- */
+.tags {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.status-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--border-radius-small);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.categoria-badge {
+  background-color: var(--surface-color);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+}
+
+/* Clases dinámicas para estados */
+.status-badge.iniciada { background-color: #2563eb; color: white; }
+.status-badge.en-progreso { background-color: #f59e0b; color: white; }
+.status-badge.finalizada { background-color: var(--success-color); color: white; }
+.status-badge.demorada { background-color: #f43f5e; color: white; }
+.status-badge.cancelada { background-color: var(--error-color); color: white; }
+
+
+/* --- Grid de Detalles --- */
+.detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+.info-section {
+  margin-bottom: 2rem;
+}
+
+.info-section h3 {
+  font-size: 1.4rem;
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.descripcion-obra {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.info-list p, .responsables-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  font-size: 0.95rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.info-list p:last-child, .responsables-list li:last-child {
+  border-bottom: none;
+}
+
+.info-list strong, .responsables-list strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.info-list span, .responsables-list {
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.responsables-list {
+  list-style: none;
+  padding: 0;
+}
+
+/* --- Sección de Progreso --- */
+.progreso-seccion .progress-bar-container {
+  background-color: var(--surface-color);
+  border-radius: 20px;
+  height: 28px;
+  width: 100%;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.progreso-seccion .progress-bar-fill {
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
+  height: 100%;
+  border-radius: 16px;
+  transition: width 0.5s ease-in-out;
+  box-shadow: 0 0 10px var(--accent-color);
+}
+
+.progreso-seccion span {
+  position: absolute;
+  right: 15px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--background-color);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+/* --- Mapa --- */
+.map-container-detalle {
+  height: 300px;
+  width: 100%;
+  border-radius: var(--border-radius-medium);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  margin-top: 1rem;
+  box-shadow: var(--box-shadow-soft);
+}
+
+.leaflet-container {
+  border-radius: var(--border-radius-medium);
+}
+
+/* --- Media Queries para Responsividad --- */
+@media (max-width: 992px) {
+  .detalle-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .detalle-obra-content {
+    padding: 1.5rem 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .detalle-main-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tags {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .detalle-title-section h1 {
+    font-size: 2.2rem;
+  }
+  .detalle-header-image-container {
+    height: 250px;
+  }
+  .back-button, .edit-button {
+    position: relative;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 1rem;
+    top: auto;
+    left: auto;
+    right: auto;
+  }
+  .detalle-obra-card {
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .detalle-obra-content {
+    padding: 1rem 1.5rem;
+  }
+  .detalle-title-section h1 {
+    font-size: 1.8rem;
+  }
+}

@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './InfoObra.css';
 
-// FIX: Icono por defecto de Leaflet en React
+// Fix Leaflet's default icon path issue with webpack
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -13,50 +13,79 @@ L.Icon.Default.mergeOptions({
 });
 
 const InfoObra = ({ obra }) => {
-  const position = [obra.latitude, obra.longitude];
+  const position = (obra.latitude && obra.longitude) ? [obra.latitude, obra.longitude] : null;
+
+  const formatCurrency = (value) => {
+    const number = parseFloat(value);
+    return !isNaN(number) ? number.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) : 'No disponible';
+  };
 
   return (
-    <div className="info-obra">
-      <h2>{obra.titulo}</h2>
-      <div className="info-obra-grid">
-        <div className="info-obra-details">
-          <p><strong>Descripción:</strong> {obra.descripcion || 'No especificada'}</p>
-          <p><strong>Ubicación:</strong> {obra.ubicacion || 'No especificada'}</p>
-          <p><strong>Contratista:</strong> {obra.contratista || 'No especificado'}</p>
-          <p><strong>Representante Legal:</strong> {obra.rep_legal || 'No especificado'}</p>
-          <p><strong>Monto SAPEM:</strong> ${obra.monto_sapem ? parseFloat(obra.monto_sapem).toLocaleString('es-AR') : 'N/A'}</p>
-          <p><strong>Monto SUB:</strong> ${obra.monto_sub ? parseFloat(obra.monto_sub).toLocaleString('es-AR') : 'N/A'}</p>
-          <p><strong>Adelanto Financiero (AF):</strong> ${obra.af ? parseFloat(obra.af).toLocaleString('es-AR') : 'N/A'}</p>
-          <p><strong>Plazo:</strong> {obra.plazo_dias ? `${obra.plazo_dias} días` : 'No especificado'}</p>
-          
-          <p><strong>Progreso:</strong></p>
-          <div className="progress-bar-container">
-            <div
-              className="progress-bar"
-              style={{ width: `${obra.progreso || 0}%` }}
-            >
-              {obra.progreso || 0}%
+    <div className="info-obra-container">
+      <div className="info-obra-card">
+        <div className="info-obra-header">
+          <h1>{obra.establecimiento || 'Nombre de Obra no disponible'}</h1>
+          <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado || 'Estado no disponible'}</span>
+        </div>
+
+        <div className="info-obra-body">
+          <div className="info-obra-left">
+            <div className="obra-image-container">
+              <img 
+                src={obra.imagen_url || '/uploads/default-obra.png'} 
+                alt={`Imagen de la obra ${obra.establecimiento}`}
+                className="obra-image"
+              />
+            </div>
+            <div className="progress-section">
+              <h3>Progreso de la Obra</h3>
+              <div className="progress-bar-wrapper">
+                <div className="progress-bar-track">
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ width: `${obra.progreso || 0}%` }}
+                  >
+                    <span>{obra.progreso || 0}%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="info-obra-map">
-          <MapContainer center={position} zoom={13} scrollWheelZoom={true} style={{ height: '400px', width: '100%' }}>
-            <LayersControl position="topright">
-              <LayersControl.BaseLayer checked name="Mapa">
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-              </LayersControl.BaseLayer>
-              <LayersControl.BaseLayer name="Satélite">
-                <TileLayer
-                  attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                />
-              </LayersControl.BaseLayer>
-            </LayersControl>
-            <Marker position={position} />
-          </MapContainer>
+
+          <div className="info-obra-right">
+            <div className="details-section">
+              <h3>Detalles</h3>
+              <div className="details-grid">
+                <p><strong>Descripción:</strong> {obra.detalle || 'No disponible'}</p>
+                <p><strong>Ubicación:</strong> {obra.Localidad?.nombre || 'No disponible'}</p>
+                <p><strong>Contratista:</strong> {obra.Contribuyente?.nombre || 'No disponible'}</p>
+                <p><strong>Representante Legal:</strong> {obra.RepresentanteLegal?.nombre || 'No disponible'}</p>
+                <p><strong>Plazo de Obra:</strong> {obra.plazo ? `${obra.plazo} días` : 'No disponible'}</p>
+              </div>
+            </div>
+            <div className="finance-section">
+              <h3>Información Financiera</h3>
+              <div className="finance-grid">
+                <p><strong>Monto SAPEM:</strong> {formatCurrency(obra.monto_sapem)}</p>
+                <p><strong>Monto SUB:</strong> {formatCurrency(obra.monto_sub)}</p>
+                <p><strong>Adelanto Financiero:</strong> {formatCurrency(obra.af)}</p>
+              </div>
+            </div>
+            {position && (
+              <div className="map-section">
+                <h3>Ubicación en Mapa</h3>
+                <div className="map-container">
+                  <MapContainer center={position} zoom={15} scrollWheelZoom={true} style={{ height: '300px', width: '100%' }}>
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <Marker position={position} />
+                  </MapContainer>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

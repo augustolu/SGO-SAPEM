@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import api from '../services/api';
 import './GestionDocumentos.css';
 
-const GestionDocumentos = ({ obraId, documentos: initialDocumentos }) => {
+const GestionDocumentos = ({ obraId, documentos: initialDocumentos = [] }) => {
   const [documentos, setDocumentos] = useState(initialDocumentos);
   const [dragOver, setDragOver] = useState(false);
 

@@ -142,14 +142,14 @@ exports.checkNumeroGestion = async (req, res) => {
 // Retrieve all Obras from the database.
 exports.findAll = (req, res) => {
   const titulo = req.query.titulo;
-  var condition = titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : null;
+  const condition = titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : null;
   
   Obra.findAll({ 
     where: condition,
     include: [
       {
         model: db.Contribuyentes,
-        as: 'Contribuyente',
+        as: 'Contribuyente', // Asegúrate que este 'as' coincida con tu definición en `db.js`
         attributes: ['nombre'],
         required: false // LEFT JOIN
       },
@@ -157,24 +157,36 @@ exports.findAll = (req, res) => {
         model: db.Localidades,
         as: 'Localidad',
         attributes: ['nombre'],
-        required: false // LEFT JOIN
+        required: false
       },
       {
         model: db.RepresentantesLegales,
         as: 'RepresentanteLegal',
         attributes: ['nombre'],
-        required: false // LEFT JOIN
+        required: false
       },
       {
         model: db.Usuarios,
         as: 'Usuario',
         attributes: ['nombre'],
-        required: false // LEFT JOIN
+        required: false
       }
-    ]
+    ],
+    raw: true, // Importante: Devuelve objetos planos
+    nest: true  // Ayuda a organizar los datos de las inclusiones
   })
     .then(data => {
-      res.send(data);
+      // Mapeamos los resultados para aplanar los nombres y hacerlos más amigables para el frontend
+      const obrasMapeadas = data.map(obra => ({
+        ...obra,
+        contratista_nombre: obra.Contribuyente?.nombre,
+        localidad_nombre: obra.Localidad?.nombre,
+        rep_legal_nombre: obra.RepresentanteLegal?.nombre,
+        inspector_nombre: obra.Usuario?.nombre,
+        // Eliminamos los objetos anidados que ya no necesitamos
+        Contribuyente: undefined, Localidad: undefined, RepresentanteLegal: undefined, Usuario: undefined
+      }));
+      res.send(obrasMapeadas);
     })
     .catch(err => {
       res.status(500).send({
@@ -190,17 +202,34 @@ exports.findOne = (req, res) => {
   
   // MEJORA: Incluir modelos relacionados para la página de detalles
   Obra.findByPk(id, {
-    include: [
-      { model: db.Actividades, as: 'Actividades' }, // Asegúrate que el 'as' coincida si lo tienes definido
-      { model: db.Documentos, as: 'Documentos' },
-      { model: db.Usuarios, as: 'Usuario' }, // Usar plural (asumiendo consistencia)
-      { model: db.RepresentantesLegales, as: 'RepresentanteLegal' }, // Usar plural
-      { model: db.Contribuyentes, as: 'Contribuyente' }, // Usar plural
-      { model: db.Localidades, as: 'Localidad'}
+    include: [ // Incluimos los mismos modelos que en findAll para consistencia
+      { model: db.Contribuyentes, as: 'Contribuyente', attributes: ['nombre'], required: false },
+      { model: db.Localidades, as: 'Localidad', attributes: ['nombre'], required: false },
+      { model: db.RepresentantesLegales, as: 'RepresentanteLegal', attributes: ['nombre'], required: false },
+      { model: db.Usuarios, as: 'Usuario', attributes: ['nombre'], required: false },
+      { model: db.Actividades, as: 'Actividades', required: false },
+      { model: db.Documentos, as: 'Documentos', required: false }
     ]
   })
     .then(data => {
-      res.send(data);
+      if (data) {
+        // Aplanamos los datos para que sean consistentes con findAll
+        const obraData = data.toJSON(); // Convertimos la instancia de Sequelize a un objeto plano
+        const obraMapeada = {
+          ...obraData,
+          contratista_nombre: obraData.Contribuyente?.nombre,
+          localidad_nombre: obraData.Localidad?.nombre,
+          descripcion: obraData.detalle, // Mapeo para el frontend
+          plazo_dias: obraData.plazo, // Mapeo para el frontend
+          rep_legal_nombre: obraData.RepresentanteLegal?.nombre,
+          inspector_nombre: obraData.Usuario?.nombre,
+        };
+        res.send(obraMapeada);
+      } else {
+        res.status(404).send({
+          message: `No se encontró la Obra con id=${id}.`
+        });
+      }
     })
     .catch(err => {
       res.status(500).send({

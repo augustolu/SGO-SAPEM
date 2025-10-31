@@ -1,0 +1,24 @@
+
+.detalle-obra-page {
+  background-color: #1e2a47;
+  min-height: 100vh;
+  padding: 40px;
+  color: #ccd6f6;
+  font-family: 'Poppins', sans-serif;
+}
+
+.back-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.back-button:hover {
+  background-color: #0056b3;
+}
