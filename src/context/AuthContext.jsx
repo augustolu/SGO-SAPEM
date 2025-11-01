@@ -5,14 +5,24 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Estado de carga
 
   useEffect(() => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (token && userData) {
-      api.defaults.headers.common['x-access-token'] = token;
-      setUser(JSON.parse(userData));
+      try {
+        const parsedData = JSON.parse(userData);
+        api.defaults.headers.common['x-access-token'] = token;
+        setUser(parsedData);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        // Opcional: Limpiar almacenamiento si los datos están corruptos
+        localStorage.clear();
+        sessionStorage.clear();
+      }
     }
+    setLoading(false); // Finaliza la carga
   }, []);
 
   const login = async (email, password, keepLoggedIn = true) => {
@@ -58,6 +68,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    loading, // Exponer el estado de carga
     login,
     register,
     logout,

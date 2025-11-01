@@ -1,4 +1,3 @@
-
 /* --- Contenedor Principal --- */
 .detalle-obra-container {
   width: 100%;
@@ -17,7 +16,7 @@
 }
 
 /* --- Botones de Acción (Volver y Editar) --- */
-.back-button, .edit-button {
+.back-button, .edit-button, .save-button, .cancel-button {
   font-family: var(--font-family);
   font-weight: 600;
   font-size: 0.9rem;
@@ -29,16 +28,12 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
-  position: absolute;
-  top: 0;
-  z-index: 10;
 }
 
 .back-button {
   background-color: var(--surface-color);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  left: 0;
 }
 
 .back-button:hover {
@@ -46,17 +41,35 @@
   transform: translateX(-2px);
 }
 
-.edit-button {
+.actions-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.edit-button, .save-button {
   background-color: var(--accent-color);
   color: var(--background-color);
   border: 1px solid var(--accent-color);
-  right: 0;
 }
 
-.edit-button:hover {
+.edit-button:hover, .save-button:hover {
   background-color: var(--accent-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+}
+
+.cancel-button {
+    background-color: var(--error-color);
+    color: white;
+    border: 1px solid var(--error-color);
+    margin-left: 1rem;
+}
+
+.cancel-button:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
 }
 
 .edit-button svg {
@@ -102,7 +115,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to top, rgba(10, 25, 47, 0.8) 0%, rgba(10, 25, 47, 0) 60%);
+  background: linear-gradient(to top, rgba(10, 25, 47, 0.8) 0%, rgba(10, 25, 47, .2) 60%);
 }
 
 /* --- Contenido de la Tarjeta --- */
@@ -263,6 +276,47 @@
   border-radius: var(--border-radius-medium);
 }
 
+/* --- Estilos para el Formulario de Edición --- */
+.edit-form-grid .info-section {
+  margin-bottom: 1.5rem;
+}
+
+.edit-form-grid .info-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-field label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.form-input-inline, .form-select-inline, .form-textarea-inline {
+  width: 100%;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  padding: 0.8rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-input-inline:focus, .form-select-inline:focus, .form-textarea-inline:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+
 /* --- Media Queries para Responsividad --- */
 @media (max-width: 992px) {
   .detalle-grid {
@@ -289,14 +343,15 @@
   .detalle-header-image-container {
     height: 250px;
   }
-  .back-button, .edit-button {
-    position: relative;
+  .back-button, .actions-container {
+    position: static;
     width: 100%;
+    display: flex;
     justify-content: center;
     margin-bottom: 1rem;
-    top: auto;
-    left: auto;
-    right: auto;
+  }
+  .actions-container {
+    order: -1; /* Mueve los botones de editar/guardar antes del de volver */
   }
   .detalle-obra-card {
     margin-top: 1rem;

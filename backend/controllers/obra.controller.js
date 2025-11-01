@@ -1,4 +1,3 @@
-
 const db = require("../models");
 
 // DEBUG: Imprime todos los modelos disponibles en el objeto db. Revisa la consola de tu servidor.
@@ -8,6 +7,7 @@ const Obra = db.Obras;
 const RepresentanteLegal = db.RepresentantesLegales;
 const Contribuyente = db.Contribuyentes;
 const Localidad = db.Localidades; // Añadir Localidad
+const Usuario = db.Usuarios;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Obra
@@ -140,60 +140,72 @@ exports.checkNumeroGestion = async (req, res) => {
 
 
 // Retrieve all Obras from the database.
-exports.findAll = (req, res) => {
-  const titulo = req.query.titulo;
-  const condition = titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : null;
-  
-  Obra.findAll({ 
-    where: condition,
-    include: [
-      {
-        model: db.Contribuyentes,
-        as: 'Contribuyente', // Asegúrate que este 'as' coincida con tu definición en `db.js`
-        attributes: ['nombre'],
-        required: false // LEFT JOIN
-      },
-      {
-        model: db.Localidades,
-        as: 'Localidad',
-        attributes: ['nombre'],
-        required: false
-      },
-      {
-        model: db.RepresentantesLegales,
-        as: 'RepresentanteLegal',
-        attributes: ['nombre'],
-        required: false
-      },
-      {
-        model: db.Usuarios,
-        as: 'Usuario',
-        attributes: ['nombre'],
-        required: false
-      }
-    ],
-    raw: true, // Importante: Devuelve objetos planos
-    nest: true  // Ayuda a organizar los datos de las inclusiones
-  })
-    .then(data => {
-      // Mapeamos los resultados para aplanar los nombres y hacerlos más amigables para el frontend
-      const obrasMapeadas = data.map(obra => ({
-        ...obra,
-        contratista_nombre: obra.Contribuyente?.nombre,
-        localidad_nombre: obra.Localidad?.nombre,
-        rep_legal_nombre: obra.RepresentanteLegal?.nombre,
-        inspector_nombre: obra.Usuario?.nombre,
-        // Eliminamos los objetos anidados que ya no necesitamos
-        Contribuyente: undefined, Localidad: undefined, RepresentanteLegal: undefined, Usuario: undefined
-      }));
-      res.send(obrasMapeadas);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving obras."
-      });
+exports.findAll = async (req, res) => {
+  try {
+    const titulo = req.query.titulo;
+    let condition = titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : {};
+
+    const user = await db.Usuarios.findByPk(req.userId, {
+      include: { model: db.Roles, as: 'role' }
     });
+
+    if (!user) {
+      return res.status(404).send({ message: "User Not found." });
+    }
+
+    const userRole = user.role.nombre;
+
+    if (userRole === 'Inspector') {
+      condition.inspector_id = req.userId;
+    }
+
+    const data = await Obra.findAll({ 
+      where: condition,
+      include: [
+        {
+          model: db.Contribuyentes,
+          as: 'Contribuyente',
+          attributes: ['nombre'],
+          required: false
+        },
+        {
+          model: db.Localidades,
+          as: 'Localidad',
+          attributes: ['nombre'],
+          required: false
+        },
+        {
+          model: db.RepresentantesLegales,
+          as: 'RepresentanteLegal',
+          attributes: ['nombre'],
+          required: false
+        },
+        {
+          model: db.Usuarios,
+          as: 'Usuario',
+          attributes: ['nombre'],
+          required: false
+        }
+      ],
+      raw: true,
+      nest: true
+    });
+
+    const obrasMapeadas = data.map(obra => ({
+      ...obra,
+      contratista_nombre: obra.Contribuyente?.nombre,
+      localidad_nombre: obra.Localidad?.nombre,
+      rep_legal_nombre: obra.RepresentanteLegal?.nombre,
+      inspector_nombre: obra.Usuario?.nombre,
+      Contribuyente: undefined, Localidad: undefined, RepresentanteLegal: undefined, Usuario: undefined
+    }));
+
+    res.send(obrasMapeadas);
+  } catch (err) {
+    res.status(500).send({
+      message: err.message || "Some error occurred while retrieving obras."
+    });
+  }
 };
 
 // Find a single Obra with an id
@@ -239,28 +251,60 @@ exports.findOne = (req, res) => {
 };
 
 // Update a Obra by the id in the request
-exports.update = (req, res) => {
+exports.update = async (req, res) => {
   const id = req.params.id;
 
-  Obra.update(req.body, {
-    where: { id: id }
-  })
-    .then(num => {
-      if (num == 1) {
-        res.send({
-          message: "Obra was updated successfully."
-        });
-      } else {
-        res.send({
-          message: `Cannot update Obra with id=${id}. Maybe Obra was not found or req.body is empty!`
+  try {
+    const user = await db.Usuarios.findByPk(req.userId, {
+      include: { model: db.Roles, as: 'role' }
+    });
+
+    if (!user) {
+      return res.status(404).send({ message: "User Not found." });
+    }
+
+    const userRole = user.role.nombre;
+
+    if (userRole === 'Inspector') {
+      const obra = await Obra.findByPk(id);
+      if (!obra) {
+        return res.status(404).send({ message: "Obra not found." });
+      }
+
+      const now = new Date();
+      const fechaInicio = new Date(obra.fecha_inicio);
+      const createdAt = new Date(obra.createdAt);
+      const twoDaysAgo = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000));
+
+      if (fechaInicio <= now || createdAt <= twoDaysAgo) {
+        return res.status(403).send({
+          message: "No tiene permiso para editar esta obra. La fecha de inicio ya ha pasado o han transcurrido más de 2 días desde su creación."
         });
       }
+    }
+
+    Obra.update(req.body, {
+      where: { id: id }
     })
-    .catch(err => {
-      res.status(500).send({
-        message: "Error updating Obra with id=" + id
+      .then(num => {
+        if (num == 1) {
+          res.send({
+            message: "Obra was updated successfully."
+          });
+        } else {
+          res.send({
+            message: `Cannot update Obra with id=${id}. Maybe Obra was not found or req.body is empty!`
+          });
+        }
+      })
+      .catch(err => {
+        res.status(500).send({
+          message: "Error updating Obra with id=" + id
+        });
       });
-    });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
 };
 
 // Delete a Obra with the specified id in the request

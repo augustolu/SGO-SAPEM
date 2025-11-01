@@ -520,11 +520,23 @@ const ObrasPage = () => {
     searchTerm: ''
   });
 
+  const fetchObras = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/obras');
+      setObras(response.data);
+    } catch (error) {
+      console.error('Error fetching obras:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleObraCreated = (newObra) => {
     const audio = new Audio(notificationSound);
     audio.play();
     toast.success(`Obra "${newObra.establecimiento}" creada con éxito!`);
-    setObras([...obras, newObra]);
+    fetchObras();
   };
 
   const handleUpdateObraInState = (obraId, updatedFields) => {
@@ -532,17 +544,6 @@ const ObrasPage = () => {
   };
 
   useEffect(() => {
-    const fetchObras = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get('/obras');
-        setObras(response.data);
-      } catch (error) {
-        console.error('Error fetching obras:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     if (user) fetchObras();
     else setLoading(false);
   }, [user]);
@@ -551,7 +552,7 @@ const ObrasPage = () => {
   const canCreateObra = isAdmin || user.role === 'Supervisor';
 
   const obrasToShow = useMemo(() => {
-    let filteredObras = isAdmin ? obras : obras.filter(obra => obra.inspectorId === user.id);
+    let filteredObras = isAdmin ? obras : obras.filter(obra => obra.inspector_id === user.id);
 
     if (filterConfig.searchTerm) {
         filteredObras = filteredObras.filter(obra =>
