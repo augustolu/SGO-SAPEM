@@ -8,6 +8,7 @@ const RepresentanteLegal = db.RepresentantesLegales;
 const Contribuyente = db.Contribuyentes;
 const Localidad = db.Localidades; // Añadir Localidad
 const Usuario = db.Usuarios;
+const Role = db.Roles;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Obra
@@ -255,8 +256,8 @@ exports.update = async (req, res) => {
   const id = req.params.id;
 
   try {
-    const user = await db.Usuarios.findByPk(req.userId, {
-      include: { model: db.Roles, as: 'role' }
+    const user = await Usuario.findByPk(req.userId, {
+      include: { model: Role, as: 'role' }
     });
 
     if (!user) {
