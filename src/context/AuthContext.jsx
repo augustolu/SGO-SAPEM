@@ -1,11 +1,37 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Estado de carga
+  const [loading, setLoading] = useState(true);
+  const [sessionTimeout, setSessionTimeout] = useState(null);
+
+  const logout = useCallback(() => {
+    setSessionTimeout(currentTimeout => {
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
+      }
+      return null;
+    });
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    delete api.defaults.headers.common['x-access-token'];
+    setUser(null);
+  }, []);
+
+  const resetSessionTimeout = useCallback(() => {
+    setSessionTimeout(currentTimeout => {
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
+      }
+      const newTimeout = setTimeout(logout, 30 * 60 * 1000); // 30 minutes
+      return newTimeout;
+    });
+  }, [logout]);
 
   useEffect(() => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -15,21 +41,24 @@ export const AuthProvider = ({ children }) => {
         const parsedData = JSON.parse(userData);
         api.defaults.headers.common['x-access-token'] = token;
         setUser(parsedData);
+        if (sessionStorage.getItem('token')) {
+          resetSessionTimeout();
+        }
       } catch (error) {
         console.error("Error parsing user data:", error);
-        // Opcional: Limpiar almacenamiento si los datos están corruptos
         localStorage.clear();
         sessionStorage.clear();
       }
     }
-    setLoading(false); // Finaliza la carga
-  }, []);
+    setLoading(false);
+  }, [resetSessionTimeout]);
 
-  const login = async (email, password, keepLoggedIn = true) => {
+  const login = useCallback(async (email, password, keepLoggedIn = true) => {
     try {
       const response = await api.post('/auth/signin', {
         email,
         password,
+        keepLoggedIn,
       });
       const { accessToken, ...userData } = response.data;
       const storage = keepLoggedIn ? localStorage : sessionStorage;
@@ -38,13 +67,17 @@ export const AuthProvider = ({ children }) => {
       storage.setItem('user', JSON.stringify(userData));
       api.defaults.headers.common['x-access-token'] = accessToken;
       setUser(userData);
+
+      if (!keepLoggedIn) {
+        resetSessionTimeout();
+      }
     } catch (error) {
       console.error('Error during login:', error);
       throw error;
     }
-  };
+  }, [resetSessionTimeout]);
 
-  const register = async (username, email, password) => {
+  const register = useCallback(async (username, email, password) => {
     try {
       await api.post('/auth/signup', {
         username,
@@ -55,23 +88,15 @@ export const AuthProvider = ({ children }) => {
       console.error('Error during registration:', error);
       throw error;
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    delete api.defaults.headers.common['x-access-token'];
-    setUser(null);
-  };
+  }, []);
 
   const value = {
     user,
-    loading, // Exponer el estado de carga
+    loading,
     login,
     register,
     logout,
+    resetSessionTimeout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

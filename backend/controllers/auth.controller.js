@@ -82,8 +82,11 @@ exports.signin = async (req, res) => {
       });
     }
 
+    const keepLoggedIn = req.body.keepLoggedIn;
+    const expiresIn = keepLoggedIn ? '7d' : '30m';
+
     const token = jwt.sign({ id: user.id }, config.secret, {
-      expiresIn: 86400 // 24 hours
+      expiresIn: expiresIn
     });
 
     res.status(200).send({
