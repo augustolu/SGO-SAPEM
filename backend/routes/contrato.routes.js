@@ -1,5 +1,6 @@
 const controller = require('../controllers/contrato.controller');
 const { authJwt } = require('../middleware');
+const upload = require('../middleware/upload'); // Importar el middleware de subida
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -10,7 +11,7 @@ module.exports = function(app) {
     next();
   });
 
-  app.post("/api/obras/:obraId/contratos/upload", [authJwt.verifyToken], controller.uploadContrato);
+  app.post("/api/obras/:obraId/contratos/upload", [authJwt.verifyToken, (req, res, next) => { console.log("Route: /api/obras/:obraId/contratos/upload reached."); next(); }, upload], controller.uploadContrato);
   app.get("/api/obras/:obraId/contratos", [authJwt.verifyToken], controller.getContratosByObra);
   app.delete("/api/contratos/:id", [authJwt.verifyToken], controller.deleteContrato);
 };

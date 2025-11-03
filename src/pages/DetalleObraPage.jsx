@@ -33,9 +33,7 @@ const DetalleObraPage = () => {
         <div className="columna-principal">
           <TarjetaDetalleObra obra={obra} />
         </div>
-        <div className="columna-secundaria">
-          {/* Futuro contenido de documentos y contratos */}
-        </div>
+
       </div>
     </div>
   );

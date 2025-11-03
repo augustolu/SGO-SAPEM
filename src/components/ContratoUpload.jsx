@@ -79,8 +79,8 @@ const ContratoUpload = ({ obraId, cantidadContratosMax }) => {
         <ul>
           {contratos.map((contrato) => (
             <li key={contrato.id}>
-              <a href={`http://localhost:8080/uploads/contratos/${contrato.nombre_archivo}`} target="_blank" rel="noopener noreferrer">
-                {contrato.nombre || contrato.nombre_archivo}
+              <a href={`http://localhost:8080${contrato.Archivo.ruta_archivo}`} target="_blank" rel="noopener noreferrer">
+                {contrato.Archivo.nombre_original || 'Archivo de Contrato'}
               </a>
             </li>
           ))}

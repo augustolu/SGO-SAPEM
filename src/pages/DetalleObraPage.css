@@ -8,7 +8,7 @@
 
 .detalle-obra-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Columna principal y secundaria con el mismo ancho */
+  grid-template-columns: 1fr; /* Columna principal y secundaria con el mismo ancho */
   gap: 2rem;
   max-width: 1600px;
   margin: 0 auto;

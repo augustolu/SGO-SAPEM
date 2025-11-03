@@ -5,20 +5,25 @@ const User = db.Usuarios; // Asegúrate que el modelo es 'Usuarios'
 
 const verifyToken = (req, res, next) => {
   let token = req.headers["x-access-token"];
+  console.log("Auth: Verifying token...");
 
   if (!token) {
+    console.log("Auth: No token provided.");
     return res.status(403).send({
       message: "No token provided!"
     });
   }
 
+  console.log("Auth: Token found, attempting to verify.");
   jwt.verify(token, config.secret, (err, decoded) => {
     if (err) {
+      console.error("Auth: Token verification failed:", err.message);
       return res.status(401).send({
         message: "Unauthorized!"
       });
     }
     req.userId = decoded.id;
+    console.log("Auth: Token verified, userId:", req.userId);
     next();
   });
 };

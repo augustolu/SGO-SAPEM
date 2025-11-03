@@ -24,4 +24,13 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage: storage, fileFilter: fileFilter }).single('contrato');
 
-module.exports = upload;
+module.exports = (req, res, next) => {
+  console.log("--- Entering upload middleware ---");
+  upload(req, res, (err) => {
+    if (err) {
+      console.error("Multer error:", err);
+      return res.status(400).send({ message: err.message });
+    }
+    next();
+  });
+};

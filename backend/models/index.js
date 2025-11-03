@@ -27,6 +27,7 @@ db.RepresentantesLegales = require("./representanteLegal.model.js")(sequelize, S
 db.Contribuyentes = require("./contribuyente.model.js")(sequelize, Sequelize);
 db.Localidades = require("./localidad.model.js")(sequelize, Sequelize);
 db.contratos = require("./contrato.model.js")(sequelize, Sequelize); // Nuevo modelo de Contratos
+db.Archivos = require("./archivo.model.js")(sequelize, Sequelize); // Nuevo modelo de Archivos
 
 // Relaciones
 db.Roles.hasMany(db.Usuarios, { as: "usuarios", foreignKey: 'rol_id' });
@@ -59,5 +60,9 @@ db.Obras.belongsTo(db.Localidades, { as: 'Localidad', foreignKey: 'localidad_id'
 // NUEVA RELACIÓN: Obras <-> Contratos
 db.Obras.hasMany(db.contratos, { as: 'Contratos', foreignKey: 'obra_id' });
 db.contratos.belongsTo(db.Obras, { foreignKey: 'obra_id' });
+
+// NUEVA RELACIÓN: Contratos <-> Archivos
+db.Archivos.hasMany(db.contratos, { foreignKey: 'archivo_id' });
+db.contratos.belongsTo(db.Archivos, { as: 'Archivo', foreignKey: 'archivo_id' });
 
 module.exports = db;
