@@ -8,15 +8,15 @@
 
 .detalle-obra-layout {
   display: grid;
-  grid-template-columns: 2fr 1fr; /* Columna principal más ancha */
+  grid-template-columns: 1fr 1fr; /* Columna principal y secundaria con el mismo ancho */
   gap: 2rem;
   max-width: 1600px;
   margin: 0 auto;
 }
 
 .columna-principal {
-  max-width: 900px; /* Ancho máximo para la tarjeta principal */
-  margin: 0 auto; /* Centrar la columna si el espacio lo permite */
+  /* max-width: 900px; */ /* Ancho máximo para la tarjeta principal */
+  /* margin: 0 auto; */ /* Centrar la columna si el espacio lo permite */
 }
 
 .columna-secundaria {
