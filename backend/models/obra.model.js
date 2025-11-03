@@ -41,6 +41,10 @@ module.exports = (sequelize, Sequelize) => {
     plazo: { // Cambiado de 'plazo_dias'
       type: Sequelize.INTEGER
     },
+    cantidad_contratos: {
+      type: Sequelize.INTEGER,
+      allowNull: true
+    },
     monto_sapem: {
       type: Sequelize.DECIMAL(15, 2)
     },

@@ -44,15 +44,14 @@ exports.create = async (req, res) => {
 
     let localidadId = null;
     if (req.body.localidad_id) {
-      // Si el valor es numérico, es un ID existente. Si no, es un nombre para crear.
       if (isNaN(req.body.localidad_id)) {
-          const [localidad] = await Localidad.findOrCreate({
-              where: { nombre: req.body.localidad_id },
-              defaults: { nombre: req.body.localidad_id }
-          });
-          localidadId = localidad.id;
+        const [localidad, created] = await Localidad.findOrCreate({
+          where: { nombre: req.body.localidad_id },
+          defaults: { nombre: req.body.localidad_id }
+        });
+        localidadId = localidad.id;
       } else {
-          localidadId = req.body.localidad_id;
+        localidadId = req.body.localidad_id;
       }
     }
 
@@ -72,6 +71,7 @@ exports.create = async (req, res) => {
       monto_sub: req.body.monto_sub ? Number(req.body.monto_sub) : null,
       af: req.body.af ? Number(req.body.af) : null,
       plazo: req.body.plazo_dias ? Number(req.body.plazo_dias) : null,
+      cantidad_contratos: req.body.cantidad_contratos ? Number(req.body.cantidad_contratos) : null, // Añadir cantidad_contratos
       fecha_inicio: req.body.fecha_inicio || null,
       fecha_finalizacion_estimada: req.body.fecha_finalizacion_estimada || null,
       estado: req.body.estado,

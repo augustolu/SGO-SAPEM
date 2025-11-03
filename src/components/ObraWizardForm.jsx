@@ -43,6 +43,7 @@ const obraSchema = {
   fecha_finalizacion_estimada: '',
   estado: 'En ejecución', // Estado inicial por defecto
   progreso: 0,
+  cantidad_contratos: '', // Nuevo campo para la cantidad de contratos
 };
 
 // --- NUEVO: Componente para Input de Moneda ---
@@ -438,6 +439,11 @@ const Step3 = ({ data, handleChange, errors }) => (
                 <input type="date" id="fecha_inicio" name="fecha_inicio" value={data.fecha_inicio} onChange={handleChange} />
                 {errors.fecha_inicio && <span className="error-message">{errors.fecha_inicio}</span>}
             </div>
+            {/* Col 2 - NUEVO */}
+            <div className="form-group">
+              <label htmlFor="cantidad_contratos">Cantidad de Contratos (meses)</label>
+              <input type="text" id="cantidad_contratos" name="cantidad_contratos" value={data.cantidad_contratos} onChange={handleChange} />
+            </div>
         </div>
     </div>
 );
@@ -467,6 +473,7 @@ function ObraWizardForm({ onSubmit }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null); // Nuevo estado para la imagen
   const [isCropping, setIsCropping] = useState(false); // ¡NUEVO ESTADO!
+  const [isContractCountManuallyEdited, setIsContractCountManuallyEdited] = useState(false);
 
   // --- Simulación de carga de datos para desplegables ---
   const [inspectores, setInspectores] = useState([]);
@@ -489,38 +496,47 @@ function ObraWizardForm({ onSubmit }) {
     fetchDropdownData();
   }, []);
 
-  // Efecto para calcular la fecha de finalización estimada
   useEffect(() => {
     const { fecha_inicio, plazo_dias } = formData;
 
+    // --- Cálculo de Fecha de Finalización ---
     if (fecha_inicio && plazo_dias) {
       const startDate = new Date(fecha_inicio);
       const days = parseInt(plazo_dias, 10);
 
-      // Validar que la fecha sea válida y los días sean un número positivo
       if (!isNaN(startDate.getTime()) && !isNaN(days) && days >= 0) {
-        const endDate = new Date(startDate); // Crear una nueva instancia para no modificar la original
+        const endDate = new Date(startDate);
         endDate.setDate(startDate.getDate() + days);
+        const calculatedEndDate = endDate.toISOString().split('T')[0];
 
-        // Formatear la fecha a YYYY-MM-DD
-        const year = endDate.getFullYear();
-        const month = String(endDate.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
-        const day = String(endDate.getDate()).padStart(2, '0');
-        const calculatedEndDate = `${year}-${month}-${day}`;
-
-        // Actualizar formData solo si la fecha calculada es diferente
         if (formData.fecha_finalizacion_estimada !== calculatedEndDate) {
           setFormData(prev => ({ ...prev, fecha_finalizacion_estimada: calculatedEndDate }));
         }
       } else if (formData.fecha_finalizacion_estimada !== '') {
-        // Si los valores son inválidos, limpiar la fecha estimada
         setFormData(prev => ({ ...prev, fecha_finalizacion_estimada: '' }));
       }
     } else if (formData.fecha_finalizacion_estimada !== '') {
-      // Si falta fecha_inicio o plazo_dias, limpiar la fecha estimada
       setFormData(prev => ({ ...prev, fecha_finalizacion_estimada: '' }));
     }
-  }, [formData.fecha_inicio, formData.plazo_dias, formData.fecha_finalizacion_estimada, setFormData]);
+
+    // --- Cálculo de Cantidad de Contratos (si no se ha editado manualmente) ---
+    if (formData.plazo_dias && !isContractCountManuallyEdited) {
+        const days = parseInt(formData.plazo_dias, 10);
+        if (!isNaN(days) && days > 0) {
+            const contractCount = Math.ceil(days / 30);
+            if (formData.cantidad_contratos !== contractCount) {
+                setFormData(prev => ({ ...prev, cantidad_contratos: contractCount }));
+            }
+        } else if (formData.cantidad_contratos !== '') {
+            setFormData(prev => ({ ...prev, cantidad_contratos: '' }));
+        }
+    } else if (!formData.plazo_dias) {
+        // Si se borra el plazo, y no se ha tocado el campo de contratos, se limpia
+        if (!isContractCountManuallyEdited) {
+            setFormData(prev => ({ ...prev, cantidad_contratos: '' }));
+        }
+    }
+  }, [formData.fecha_inicio, formData.plazo_dias, isContractCountManuallyEdited, setFormData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -538,6 +554,10 @@ function ObraWizardForm({ onSubmit }) {
       setFormData(prev => ({ ...prev, [name]: formattedValue }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+
+    if (name === 'cantidad_contratos') {
+        setIsContractCountManuallyEdited(true);
     }
   };
 

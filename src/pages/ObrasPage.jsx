@@ -38,6 +38,18 @@ const TrashIcon = (props) => (
     </svg>
   );
 
+const CloseIcon = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+
+const capitalize = (s) => {
+  if (typeof s !== 'string' || !s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
 // --- User Management Modal --- //
 const UserManagementModal = ({ onClose }) => {
@@ -172,43 +184,75 @@ const DashboardHeader = ({ user, isAdmin, onManageRolesClick }) => {
   );
 };
 
+const getPlazoStatus = (fechaFinEstimado) => {
+  if (!fechaFinEstimado) {
+    return { text: 'Plazo no asignado', className: 'status-plazo-no-asignado' };
+  }
+  const hoy = new Date();
+  const fechaFin = new Date(fechaFinEstimado);
+  hoy.setHours(0, 0, 0, 0);
+  fechaFin.setHours(0, 0, 0, 0);
+
+  if (fechaFin < hoy) {
+    return { text: 'Plazo Vencido', className: 'status-plazo-vencido' };
+  }
+  return null;
+};
+
 // --- Obra Card --- //
-const ObraCard = ({ obra }) => (
-  <Link to={`/obras/${obra.id}`} className="obra-card-link">
-    <div className="obra-card">
-      <div className="obra-card-image-container">
-        <img
-          src={obra.imagen_url || '/uploads/default-obra.png'}
-          alt={`Imagen de la obra ${obra.establecimiento}`}
-          className="obra-card-image"
-        />
-      </div>
-      <div className="obra-card-content">
-        <h3>{obra.establecimiento}</h3>
-        <div className="card-body">
-          <p>Progreso:</p>
-          <div className="progress-bar-container">
-            <div className="progress-bar" style={{ width: `${obra.progreso || 0}%` }}></div>
-            <span>{obra.progreso || 0}%</span>
+const ObraCard = ({ obra }) => {
+  const plazoStatus = getPlazoStatus(obra.fecha_finalizacion_estimada);
+
+  return (
+    <Link to={`/obras/${obra.id}`} className="obra-card-link">
+      <div className="obra-card">
+        <div className="obra-card-image-container">
+          <img
+            src={obra.imagen_url || '/uploads/default-obra.png'}
+            alt={`Imagen de la obra ${obra.establecimiento}`}
+            className="obra-card-image"
+          />
+        </div>
+        <div className="obra-card-content">
+          <span className="obra-gestion-number">#{obra.numero_gestion}</span>
+          <h3>{obra.establecimiento}</h3>
+          <div className="card-body">
+            <p>Progreso:</p>
+            <div className="progress-bar-container">
+              <div className="progress-bar" style={{ width: `${obra.progreso || 0}%` }}></div>
+              <span>{obra.progreso || 0}%</span>
+            </div>
+          </div>
+          <div className="card-footer">
+            <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado}</span>
+            {obra.categoria && <span className="status-badge status-categoria">{obra.categoria.toUpperCase()}</span>}
+            {plazoStatus && <span className={`status-badge ${plazoStatus.className}`}>{plazoStatus.text}</span>}
           </div>
         </div>
-        <div className="card-footer">
-            <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado}</span>
-        </div>
       </div>
-    </div>
-  </Link>
-);
+    </Link>
+  );
+};
 
 // --- Filter Components --- //
-const FilterDropdown = ({ close, applyFilters, currentStatus, currentSortBy }) => {
+const FilterDropdown = ({ obras, applyFilters, currentStatus, currentSortBy, currentCategory }) => {
     const [status, setStatus] = useState(currentStatus);
     const [sortBy, setSortBy] = useState(currentSortBy);
+    const [category, setCategory] = useState(currentCategory);
+    const isInitialMount = useRef(true);
 
-    const handleApply = () => {
-        applyFilters({ status, sortBy });
-        close();
-    };
+    const categories = useMemo(() => {
+        const allCategories = obras.map(o => o.categoria).filter(Boolean);
+        return [...new Set(allCategories)];
+    }, [obras]);
+
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+        } else {
+            applyFilters({ status, sortBy, category });
+        }
+    }, [status, sortBy, category]);
 
     return (
         <div className="filter-dropdown">
@@ -222,23 +266,84 @@ const FilterDropdown = ({ close, applyFilters, currentStatus, currentSortBy }) =
                     ))}
                 </div>
             </div>
+            {categories.length > 0 && (
+                <div className="filter-section">
+                    <h5>Categoría</h5>
+                    <div className="options-group">
+                        {categories.map(c => (
+                            <button key={c} className={`filter-option-btn ${category === c ? 'active' : ''}`} onClick={() => setCategory(c === category ? null : c)}>
+                                {capitalize(c)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
             <div className="filter-section">
-                <h5>Ordenar por Fecha de Creación</h5>
+                <h5>Ordenar por Fecha</h5>
                 <div className="options-group">
-                    <button className={`filter-option-btn ${sortBy === 'createdAt_desc' ? 'active' : ''}`} onClick={() => setSortBy('createdAt_desc')}>
+                    <button className={`filter-option-btn ${sortBy === 'fecha_inicio_desc' ? 'active' : ''}`} onClick={() => setSortBy('fecha_inicio_desc')}>
                         Más Nuevas
                     </button>
-                    <button className={`filter-option-btn ${sortBy === 'createdAt_asc' ? 'active' : ''}`} onClick={() => setSortBy('createdAt_asc')}>
+                    <button className={`filter-option-btn ${sortBy === 'fecha_inicio_asc' ? 'active' : ''}`} onClick={() => setSortBy('fecha_inicio_asc')}>
                         Más Antiguas
                     </button>
                 </div>
             </div>
-            <button className="apply-filters-btn" onClick={handleApply}>Aplicar Filtros</button>
         </div>
     );
 };
 
-const FilterBar = ({ filterConfig, setFilterConfig, isAdmin }) => {
+const SearchTypeDropdown = ({ searchType, setSearchType }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [dropdownRef]);
+
+    const handleSelect = (type) => {
+        setSearchType(type);
+        setIsOpen(false);
+    }
+
+    const toggleDropdown = () => {
+        setIsOpen(!isOpen);
+    }
+
+    return (
+        <div className="search-type-dropdown" ref={dropdownRef}>
+            <button className="icon-btn" onClick={toggleDropdown}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+            {isOpen && (
+                <div className="search-type-options">
+                    <button 
+                        className={searchType === 'establecimiento' ? 'active' : ''} 
+                        onClick={() => handleSelect('establecimiento')}
+                    >
+                        Establecimiento
+                    </button>
+                    <button 
+                        className={searchType === 'numero_gestion' ? 'active' : ''} 
+                        onClick={() => handleSelect('numero_gestion')}
+                    >
+                        N° de Gestión
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+const FilterBar = ({ obras, filterConfig, setFilterConfig, isAdmin }) => {
     const [localSearch, setLocalSearch] = useState(filterConfig.searchTerm);
     const [isDropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -247,8 +352,44 @@ const FilterBar = ({ filterConfig, setFilterConfig, isAdmin }) => {
         setFilterConfig({ ...filterConfig, searchTerm: localSearch });
     };
 
+    const setSearchType = (type) => {
+        setFilterConfig({ ...filterConfig, searchType: type, searchTerm: '' });
+        setLocalSearch('');
+    };
+
+    const formatGestionNumber = (value) => {
+        const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const maxLength = 7; // 2 + 1 + 4
+        const truncated = cleaned.substring(0, maxLength);
+        
+        let formatted = '';
+        if (truncated.length > 0) {
+            formatted = truncated.substring(0, 2);
+        }
+        if (truncated.length > 2) {
+            formatted += '-' + truncated.substring(2, 3);
+        }
+        if (truncated.length > 3) {
+            formatted += ' - ' + truncated.substring(3, 7);
+        }
+        return formatted;
+    };
+
+    const handleInputChange = (e) => {
+        if (filterConfig.searchType === 'numero_gestion') {
+            const formattedValue = formatGestionNumber(e.target.value);
+            setLocalSearch(formattedValue);
+        } else {
+            setLocalSearch(e.target.value);
+        }
+    };
+
     const removeStatusFilter = () => {
         setFilterConfig({ ...filterConfig, status: null });
+    };
+
+    const removeCategoryFilter = () => {
+        setFilterConfig({ ...filterConfig, category: null });
     };
     
     useEffect(() => {
@@ -261,6 +402,9 @@ const FilterBar = ({ filterConfig, setFilterConfig, isAdmin }) => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [dropdownRef]);
 
+    useEffect(() => {
+        setLocalSearch(filterConfig.searchTerm);
+    }, [filterConfig.searchTerm]);
 
     return (
         <div className="filter-bar">
@@ -271,9 +415,10 @@ const FilterBar = ({ filterConfig, setFilterConfig, isAdmin }) => {
                     </button>
                     {isDropdownOpen && (
                         <FilterDropdown
-                            close={() => setDropdownOpen(false)}
+                            obras={obras}
                             currentStatus={filterConfig.status}
                             currentSortBy={filterConfig.sortBy}
+                            currentCategory={filterConfig.category}
                             applyFilters={(newFilters) => setFilterConfig({ ...filterConfig, ...newFilters })}
                         />
                     )}
@@ -282,13 +427,15 @@ const FilterBar = ({ filterConfig, setFilterConfig, isAdmin }) => {
                     <input
                         type="text"
                         value={localSearch}
-                        onChange={(e) => setLocalSearch(e.target.value)}
+                        onChange={handleInputChange}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                        placeholder="Buscar por establecimiento..."
+                        placeholder={filterConfig.searchType === 'establecimiento' ? "Buscar por establecimiento..." : "00-0 - 0000"}
+                        maxLength={filterConfig.searchType === 'numero_gestion' ? 11 : undefined}
                     />
                     <button className="icon-btn search-btn" onClick={handleSearch}>
                         <SearchIcon />
                     </button>
+                    <SearchTypeDropdown searchType={filterConfig.searchType} setSearchType={setSearchType} />
                 </div>
             </div>
 
@@ -297,6 +444,12 @@ const FilterBar = ({ filterConfig, setFilterConfig, isAdmin }) => {
                     <div className="active-filter-tag">
                         <span>{filterConfig.status}</span>
                         <button onClick={removeStatusFilter}><CloseIcon /></button>
+                    </div>
+                )}
+                {filterConfig.category && (
+                    <div className="active-filter-tag">
+                        <span>{capitalize(filterConfig.category)}</span>
+                        <button onClick={removeCategoryFilter}><CloseIcon /></button>
                     </div>
                 )}
             </div>
@@ -397,27 +550,27 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
                 return (
                     <li key={obra.id} className="reminder-item">
                         <Link to={`/obras/${obra.id}`} className="reminder-link">
-                            <div className="reminder-info">
-                                <span className="reminder-title">{obra.establecimiento}</span>
-                                <div className="reminder-details">
-                                    <span className="reminder-date" style={{ color }}>
-                                        {new Date(obra.fecha_finalizacion_estimada).toLocaleDateString('es-AR')}
-                                    </span>
-                                    <div className="reminder-progress">
-                                        <div className="progress-bar-reminder-container">
-                                            <div className="progress-bar-reminder" style={{ width: `${obra.progreso || 0}%` }}></div>
-                                        </div>
-                                        <span className="progress-text">{obra.progreso || 0}%</span>
+                            <span className="reminder-title">{obra.establecimiento}</span>
+                            <div className="reminder-details">
+                                <span className="reminder-date" style={{ color }}>
+                                    {new Date(obra.fecha_finalizacion_estimada).toLocaleDateString('es-AR')}
+                                </span>
+                                <div className="reminder-progress">
+                                    <div className="progress-bar-reminder-container">
+                                        <div className="progress-bar-reminder" style={{ width: `${obra.progreso || 0}%` }}></div>
                                     </div>
+                                    <span className="progress-text">{obra.progreso || 0}%</span>
                                 </div>
                             </div>
                         </Link>
-                        <CircularTimeChart percentage={timePercentage} color={color} />
-                        {isAdmin && (
-                            <button onClick={() => handleDelete(obra.id)} className="delete-reminder-btn" aria-label="Eliminar vencimiento">
-                            <TrashIcon />
-                            </button>
-                        )}
+                        <div className="reminder-actions">
+                            <CircularTimeChart percentage={timePercentage} color={color} />
+                            {isAdmin && (
+                                <button onClick={() => handleDelete(obra.id)} className="delete-reminder-btn" aria-label="Eliminar vencimiento">
+                                <TrashIcon />
+                                </button>
+                            )}
+                        </div>
                     </li>
                 )
             })}
@@ -516,8 +669,10 @@ const ObrasPage = () => {
   const { user } = useAuth();
   const [filterConfig, setFilterConfig] = useState({
     status: null,
-    sortBy: 'createdAt_desc',
-    searchTerm: ''
+    sortBy: 'fecha_inicio_desc',
+    searchTerm: '',
+    searchType: 'establecimiento',
+    category: null,
   });
 
   const fetchObras = async () => {
@@ -555,19 +710,55 @@ const ObrasPage = () => {
     let filteredObras = isAdmin ? obras : obras.filter(obra => obra.inspector_id === user.id);
 
     if (filterConfig.searchTerm) {
-        filteredObras = filteredObras.filter(obra =>
-            obra.establecimiento.toLowerCase().includes(filterConfig.searchTerm.toLowerCase())
-        );
+        if (filterConfig.searchType === 'establecimiento') {
+            filteredObras = filteredObras.filter(obra =>
+                obra.establecimiento.toLowerCase().includes(filterConfig.searchTerm.toLowerCase())
+            );
+        } else if (filterConfig.searchType === 'numero_gestion') {
+            filteredObras = filteredObras.filter(obra => {
+                if (!obra.numero_gestion) return false;
+                return obra.numero_gestion.toUpperCase().includes(filterConfig.searchTerm.toUpperCase());
+            });
+        }
     }
 
     if (filterConfig.status) {
         filteredObras = filteredObras.filter(obra => obra.estado === filterConfig.status);
     }
 
+    if (filterConfig.category) {
+        filteredObras = filteredObras.filter(obra => obra.categoria === filterConfig.category);
+    }
+
+    const statusOrder = {
+      'En ejecución': 1,
+      'Finalizada': 2,
+      'Anulada': 3,
+    };
+
     filteredObras.sort((a, b) => {
-        const dateA = new Date(a.createdAt);
-        const dateB = new Date(b.createdAt);
-        return filterConfig.sortBy === 'createdAt_asc' ? dateA - dateB : dateB - dateA;
+      const orderA = statusOrder[a.estado] || 4;
+      const orderB = statusOrder[b.estado] || 4;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      if (filterConfig.sortBy === 'fecha_inicio_asc' || filterConfig.sortBy === 'fecha_inicio_desc') {
+        const dateA = a.fecha_inicio ? new Date(a.fecha_inicio) : null;
+        const dateB = b.fecha_inicio ? new Date(b.fecha_inicio) : null;
+
+        if (dateA && dateB) {
+          return filterConfig.sortBy === 'fecha_inicio_asc' ? dateA - dateB : dateB - dateA;
+        }
+        if (dateA) return -1; // a has date, b doesn't, a comes first
+        if (dateB) return 1;  // b has date, a doesn't, b comes first
+        return 0; // both are null
+      }
+
+      // Fallback to createdAt, though UI doesn't set it anymore
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return filterConfig.sortBy === 'createdAt_asc' ? dateA - dateB : dateB - dateA;
     });
 
     return filteredObras;
@@ -596,6 +787,7 @@ const ObrasPage = () => {
         <div className="obras-main-view">
           <div className="main-controls-bar">
             <FilterBar
+              obras={obras}
               filterConfig={filterConfig}
               setFilterConfig={setFilterConfig}
               isAdmin={isAdmin}

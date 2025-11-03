@@ -7,13 +7,26 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedValue, setSelectedValue] = useState(null); // Nuevo estado
   const suggestionsRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
 
   // Sincronizar el estado interno si el valor externo cambia
   useEffect(() => {
-    setInputValue(value || '');
-  }, [value]);
+    // Si el valor es un número (ID), buscar el nombre para mostrar
+    if (value && !isNaN(value)) {
+      api.get(`${apiEndpoint}/${value}`)
+        .then(res => {
+          setInputValue(res.data.nombre);
+        })
+        .catch(err => {
+          console.error("Error fetching initial name:", err);
+          setInputValue(value); // Fallback al ID si no se encuentra
+        });
+    } else {
+      setInputValue(value || '');
+    }
+  }, [value, apiEndpoint]);
 
   const fetchSuggestions = useCallback(async (query) => {
     if (query.length < 2) {
@@ -47,20 +60,24 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
   const handleInputChange = (e) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    onChange({ target: { name, value: newValue } }); // Actualizar el formulario principal en tiempo real
+    setSelectedValue(null); // Resetea el ID seleccionado si el usuario escribe
+    onChange({ target: { name, value: newValue } });
     debouncedFetch(newValue);
   };
 
   const handleSuggestionClick = (suggestion) => {
     setInputValue(suggestion.nombre);
-    onChange({ target: { name, value: suggestion.nombre } });
+    setSelectedValue(suggestion.id);
+    onChange({ target: { name, value: suggestion.id } });
     setShowSuggestions(false);
   };
 
   const handleBlur = () => {
     // Pequeño delay para permitir que el clic en la sugerencia se registre antes de ocultar
     setTimeout(() => {
-      setShowSuggestions(false);
+      if (showSuggestions) {
+        setShowSuggestions(false);
+      }
     }, 150);
   };
 
