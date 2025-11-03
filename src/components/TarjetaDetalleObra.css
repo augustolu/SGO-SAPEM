@@ -9,57 +9,34 @@
 }
 
 .detalle-obra-content-wrapper {
+  display: flex;
+  gap: 2rem; /* Espacio entre la tarjeta principal y el nuevo sistema */
   width: 100%;
 }
 
-/* --- Botón Volver --- */
-.back-button {
-  font-family: 'Roboto', sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 1.5rem;
-  background-color: transparent;
-  color: #00bfff; /* Azul claro */
-  border: 1px solid #00bfff;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.back-button:hover {
-  background-color: rgba(0, 191, 255, 0.1);
-  color: #fff;
-  border-color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 191, 255, 0.2);
-}
-
-.back-button svg {
-  transition: transform 0.3s ease;
-}
-
-.back-button:hover svg {
-  transform: translateX(-4px);
-}
-
-/* --- Tarjeta Principal (Glassmorphism) --- */
 .detalle-obra-card {
+  flex: 3; /* La tarjeta principal ocupa 3/4 del espacio */
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px; /* Bordes más redondeados */
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  position: relative; /* Para posicionar el botón de editar */
+  position: relative;
   transition: all 0.3s ease-in-out;
+}
+
+.detalle-obra-sidebar {
+  flex: 1; /* El nuevo sistema ocupa 1/4 del espacio */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  color: #fff;
 }
 
 /* --- Botones de Acción (Editar/Guardar/Cancelar) --- */
@@ -300,6 +277,16 @@
 }
 
 /* --- Media Queries --- */
+@media (max-width: 1200px) {
+  .detalle-obra-content-wrapper {
+    flex-direction: column;
+  }
+  .detalle-obra-card, .detalle-obra-sidebar {
+    flex: none;
+    width: 100%;
+  }
+}
+
 @media (max-width: 992px) {
   .detalle-grid {
     grid-template-columns: 1fr;

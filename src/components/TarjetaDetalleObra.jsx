@@ -127,6 +127,10 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
       </button>
       <div className="detalle-obra-content-wrapper">
         <div className="detalle-obra-card">
+        </div>
+        <div className="detalle-obra-sidebar">
+          {/* Aquí irá el nuevo sistema */}
+        </div>
           <div className="actions-container">
             {!isEditing ? (
               <button onClick={handleEdit} className="edit-button">
