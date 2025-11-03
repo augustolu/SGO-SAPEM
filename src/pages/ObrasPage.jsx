@@ -509,8 +509,6 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
       const diffTime = new Date(date).getTime() - today.getTime();
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     };
-
-    const MAX_DAYS_FOR_CHART = 30;
   
     const getDateColor = (date) => {
         const daysUntil = getDaysUntil(date);
@@ -544,8 +542,31 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
           <ul className="reminders-list">
             {sortedObras.map(obra => {
                 const daysUntil = getDaysUntil(obra.fecha_finalizacion_estimada);
-                const timePercentage = Math.max(0, Math.min(100, (daysUntil / MAX_DAYS_FOR_CHART) * 100));
                 const color = getDateColor(obra.fecha_finalizacion_estimada);
+
+                let timePercentage = 0;
+                if (obra.fecha_inicio && obra.fecha_finalizacion_estimada) {
+                    const startDate = new Date(obra.fecha_inicio);
+                    const endDate = new Date(obra.fecha_finalizacion_estimada);
+                    const todayDate = new Date();
+                
+                    // Set hours to 0 to compare dates only
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setHours(0, 0, 0, 0);
+                    todayDate.setHours(0, 0, 0, 0);
+                
+                    const totalDuration = (endDate.getTime() - startDate.getTime());
+                    const elapsedDuration = (todayDate.getTime() - startDate.getTime());
+                
+                    if (totalDuration > 0) {
+                        const elapsedPercentage = (elapsedDuration / totalDuration) * 100;
+                        timePercentage = 100 - Math.max(0, Math.min(100, elapsedPercentage));
+                    } else if (todayDate >= endDate) {
+                        timePercentage = 0;
+                    } else {
+                        timePercentage = 100;
+                    }
+                }
 
                 return (
                     <li key={obra.id} className="reminder-item">
@@ -619,6 +640,12 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
   };
 
   const handleSubmit = async (formData) => {
+    // VALIDACIÓN: El nombre de la localidad no puede ser solo un número.
+    if (formData.localidad_id && /^\d+$/.test(formData.localidad_id)) {
+      alert('Error: El nombre de una nueva localidad no puede ser un número. Por favor, ingrese un nombre válido.');
+      return; // Detiene el envío del formulario
+    }
+
     try {
       const response = await api.post('/obras', formData);
       onObraCreated(response.data);

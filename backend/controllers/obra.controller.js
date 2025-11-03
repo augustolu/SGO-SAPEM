@@ -26,20 +26,32 @@ exports.create = async (req, res) => {
   try {
     let representanteId = null;
     if (req.body.rep_legal) {
-      const [representante] = await RepresentanteLegal.findOrCreate({
-        where: { nombre: req.body.rep_legal },
-        defaults: { nombre: req.body.rep_legal }
-      });
-      representanteId = representante.id;
+      // Si el valor no es un número, es un nombre nuevo y se crea.
+      if (isNaN(req.body.rep_legal)) {
+        const [representante] = await RepresentanteLegal.findOrCreate({
+          where: { nombre: req.body.rep_legal },
+          defaults: { nombre: req.body.rep_legal }
+        });
+        representanteId = representante.id;
+      } else {
+        // Si es un número, se usa directamente como ID.
+        representanteId = req.body.rep_legal;
+      }
     }
 
     let contribuyenteId = null;
     if (req.body.contratista) {
-      const [contribuyente] = await Contribuyente.findOrCreate({
-        where: { nombre: req.body.contratista },
-        defaults: { nombre: req.body.contratista }
-      });
-      contribuyenteId = contribuyente.id;
+      // Si el valor no es un número, es un nombre nuevo y se crea.
+      if (isNaN(req.body.contratista)) {
+        const [contribuyente] = await Contribuyente.findOrCreate({
+          where: { nombre: req.body.contratista },
+          defaults: { nombre: req.body.contratista }
+        });
+        contribuyenteId = contribuyente.id;
+      } else {
+        // Si es un número, se usa directamente como ID.
+        contribuyenteId = req.body.contratista;
+      }
     }
 
     let localidadId = null;
