@@ -24,7 +24,19 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(initialObra);
   const [inspectores, setInspectores] = useState([]);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const markerRef = React.useRef(null);
+
+  const handleStatusChange = async (newStatus) => {
+    try {
+      const response = await api.put(`/obras/${obra.id}`, { estado: newStatus });
+      setObra(response.data);
+      setIsStatusDropdownOpen(false);
+      window.location.reload(); // O una actualización de estado más optimizada
+    } catch (error) {
+      console.error("Error al actualizar el estado de la obra:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchInspectores = async () => {
@@ -109,25 +121,25 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
 
   return (
     <div className="detalle-obra-container">
+      <button onClick={() => navigate(-1)} className="back-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver al Listado
+      </button>
       <div className="detalle-obra-content-wrapper">
-        <button onClick={() => navigate(-1)} className="back-button">
-          &larr; Volver al Listado
-        </button>
-        <div className="actions-container">
-          {!isEditing ? (
-            <button onClick={handleEdit} className="edit-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-              Editar
-            </button>
-          ) : (
-            <div className="edit-controls">
-              <button onClick={handleUpdateObra} className="save-button">Guardar</button>
-              <button onClick={handleCancel} className="cancel-button">Cancelar</button>
-            </div>
-          )}
-        </div>
-
         <div className="detalle-obra-card">
+          <div className="actions-container">
+            {!isEditing ? (
+              <button onClick={handleEdit} className="edit-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                Editar
+              </button>
+            ) : (
+              <div className="edit-controls">
+                <button onClick={handleUpdateObra} className="save-button">Guardar</button>
+                <button onClick={handleCancel} className="cancel-button">Cancelar</button>
+              </div>
+            )}
+          </div>
           <div className="detalle-header-image-container">
             <img
               src={obra.imagen_url ? `http://localhost:8080${obra.imagen_url}` : '/uploads/default-obra.png'}
@@ -170,15 +182,21 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
 
               </div>
               <div className="tags">
-                {isEditing ? (
-                  <select name="estado" value={formData.estado} onChange={handleChange} className="form-select-inline">
-                    <option value="En ejecución">En ejecución</option>
-                    <option value="Finalizada">Finalizada</option>
-                    <option value="Anulada">Anulada</option>
-                  </select>
-                ) : (
-                  obra.estado && <span className={`status-badge ${getStatusClass(obra.estado)}`}>{obra.estado}</span>
-                )}
+                <div className="status-dropdown-container">
+                  <button 
+                    className={`status-badge ${getStatusClass(obra.estado)}`}
+                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                  >
+                    {obra.estado} <span className="dropdown-arrow">▼</span>
+                  </button>
+                  {isStatusDropdownOpen && (
+                    <div className="status-dropdown-menu">
+                      <button onClick={() => handleStatusChange('En ejecución')}>En Ejecución</button>
+                      <button onClick={() => handleStatusChange('Finalizada')}>Finalizada</button>
+                      <button onClick={() => handleStatusChange('Anulada')}>Anulada</button>
+                    </div>
+                  )}
+                </div>
                 {isEditing ? (
                   <select name="categoria" value={formData.categoria} onChange={handleChange} className="form-select-inline">
                     <option value="salud">Salud</option>
@@ -218,12 +236,20 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         <label>Aporte Financiero</label>
                         <CurrencyInput name="af" value={formData.af} onChange={handleChange} />
                       </div>
+                      <div className="form-field">
+                        <label>Cantidad de Contratos</label>
+                        <input type="number" name="cantidad_contratos" value={formData.cantidad_contratos} onChange={handleChange} className="form-input-inline" />
+                      </div>
                     </div>
                     <div className="info-section">
                       <h3>Plazos</h3>
                       <div className="form-field">
                         <label>Fecha de Inicio</label>
                         <input type="date" name="fecha_inicio" value={formData.fecha_inicio ? new Date(formData.fecha_inicio).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
+                      </div>
+                      <div className="form-field">
+                        <label>Finalización Estimada</label>
+                        <input type="date" name="fecha_finalizacion_estimada" value={formData.fecha_finalizacion_estimada ? new Date(formData.fecha_finalizacion_estimada).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
                       </div>
                       <div className="form-field">
                         <label>Plazo de Obra (días)</label>
@@ -252,12 +278,14 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         <p><strong>Monto SAPEM:</strong> <span>{formatCurrency(obra.monto_sapem)}</span></p>
                         <p><strong>Monto Subcontrato:</strong> <span>{formatCurrency(obra.monto_sub)}</span></p>
                         <p><strong>Aporte Financiero:</strong> <span>{formatCurrency(obra.af)}</span></p>
+                        <p><strong>Cantidad de Contratos:</strong> <span>{obra.cantidad_contratos || 'No disponible'}</span></p>
                       </div>
                     </div>
                     <div className="info-section">
                       <h3>Plazos</h3>
                       <div className="info-list">
                         <p><strong>Fecha de Inicio:</strong> <span>{formatDate(obra.fecha_inicio)}</span></p>
+                        <p><strong>Finalización Estimada:</strong> <span>{formatDate(obra.fecha_finalizacion_estimada)}</span></p>
                         <p><strong>Finalización Estimada:</strong> <span>{formatDate(obra.fecha_finalizacion_estimada)}</span></p>
                         <p><strong>Plazo de Obra:</strong> <span>{obra.plazo_dias ? `${obra.plazo_dias} días` : 'No disponible'}</span></p>
                       </div>

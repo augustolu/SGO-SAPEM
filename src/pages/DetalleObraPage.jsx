@@ -29,8 +29,14 @@ const DetalleObraPage = () => {
 
   return (
     <div className="detalle-obra-page">
-      <TarjetaDetalleObra obra={obra} />
-      {/* <GestionDocumentos obraId={obra.id} documentos={obra.Documentos} /> */}
+      <div className="detalle-obra-layout">
+        <div className="columna-principal">
+          <TarjetaDetalleObra obra={obra} />
+        </div>
+        <div className="columna-secundaria">
+          {/* Futuro contenido de documentos y contratos */}
+        </div>
+      </div>
     </div>
   );
 };
