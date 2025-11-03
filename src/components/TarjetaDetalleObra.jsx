@@ -7,6 +7,7 @@ import './TarjetaDetalleObra.css';
 import { useAuth } from '../context/AuthContext';
 import CreatableAutocomplete from './CreatableAutocomplete';
 import CurrencyInput from './CurrencyInput';
+import ContratoUpload from './ContratoUpload'; // Importar el nuevo componente
 import api from '../services/api';
 
 // Fix for default marker icon issue with webpack
@@ -127,10 +128,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
       </button>
       <div className="detalle-obra-content-wrapper">
         <div className="detalle-obra-card">
-        </div>
-        <div className="detalle-obra-sidebar">
-          {/* Aquí irá el nuevo sistema */}
-        </div>
+
           <div className="actions-container">
             {!isEditing ? (
               <button onClick={handleEdit} className="edit-button">
@@ -263,15 +261,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                   </>
                 ) : (
                   <>
-                    {typeof obra.progreso !== 'undefined' && (
-                      <div className="info-section progreso-seccion">
-                        <h3>Progreso de la Obra</h3>
-                        <div className="progress-bar-container">
-                          <div className="progress-bar-fill" style={{ width: `${obra.progreso}%` }}></div>
-                          <span style={{ color: "white", fontWeight: "bold" }}>{obra.progreso}%</span>
-                        </div>
-                      </div>
-                    )}
+
                     <div className="info-section">
                       <h3>Descripción</h3>
                       <p className="descripcion-obra">{obra.descripcion || 'No hay una descripción disponible para esta obra.'}</p>
@@ -328,33 +318,50 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                     </div>
                   </>
                 ) : (
-                  <div className="info-section">
-                    <h3>Responsables y Ubicación</h3>
-                    <ul className="responsables-list">
-                      <li><strong>Localidad:</strong> {obra.localidad_nombre || 'No especificada'}</li>
-                      <li><strong>Contratista:</strong> {obra.contratista_nombre || 'No especificado'}</li>
-                      <li><strong>Rep. Legal:</strong> {obra.rep_legal_nombre || 'No especificado'}</li>
-                      <li><strong>Inspector:</strong> {obra.inspector_nombre || 'No asignado'}</li>
-                    </ul>
-                  </div>
-                )}
-                {obra.latitude && obra.longitude && (
-                  <div className="map-container-detalle">
-                    <MapContainer center={[formData.latitude, formData.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={isEditing}>
-                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
-                      {isEditing ? (
-                        <>
-                          <DraggableMarker />
-                          <MapEvents />
-                        </>
-                      ) : (
-                        <Marker position={[obra.latitude, obra.longitude]} />
-                      )}
-                    </MapContainer>
-                  </div>
-                )}
+                  <>
+                    <div className="info-section">
+                      <h3>Responsables y Ubicación</h3>
+                      <ul className="responsables-list">
+                        <li><strong>Localidad:</strong> {obra.localidad_nombre || 'No especificada'}</li>
+                        <li><strong>Contratista:</strong> {obra.contratista_nombre || 'No especificado'}</li>
+                        <li><strong>Rep. Legal:</strong> {obra.rep_legal_nombre || 'No especificado'}</li>
+                        <li><strong>Inspector:</strong> {obra.inspector_nombre || 'No asignado'}</li>
+                      </ul>
+                    </div>
+                    {obra.latitude && obra.longitude && (
+                      <div className="map-container-detalle">
+                        <MapContainer center={[formData.latitude, formData.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={isEditing}>
+                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
+                          {isEditing ? (
+                            <>
+                              <DraggableMarker />
+                              <MapEvents />
+                            </>
+                          ) : (
+                            <Marker position={[obra.latitude, obra.longitude]} />
+                          )}
+                        </MapContainer>
+                      </div>
+                    )}
+
+                  </>
+                )}              </div>
+            </div>
+          </div>
+        </div> {/* Closing detalle-obra-card */}
+        <div className="detalle-obra-sidebar">
+          {typeof obra.progreso !== 'undefined' && (
+            <div className="info-section progreso-seccion">
+              <h3>Progreso de la Obra</h3>
+              <div className="progress-bar-container">
+                <div className="progress-bar-fill" style={{ width: `${obra.progreso}%` }}></div>
+                <span style={{ color: "white", fontWeight: "bold" }}>{obra.progreso}%</span>
               </div>
             </div>
+          )}
+          <div className="info-section">
+            <h3>Contratos</h3>
+            <ContratoUpload obraId={obra.id} />
           </div>
         </div>
       </div>
