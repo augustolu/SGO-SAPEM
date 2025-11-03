@@ -266,8 +266,84 @@ exports.findOne = (req, res) => {
 // Update a Obra by the id in the request
 exports.update = async (req, res) => {
   const id = req.params.id;
+  // console.log('UPDATE /obras/:id req.body:', req.body);
 
   try {
+    // Resolver IDs de campos de autocompletado
+    let localidadId = req.body.localidad_id;
+    if (req.body.localidad_nombre && isNaN(req.body.localidad_nombre)) {
+        const [localidad] = await Localidad.findOrCreate({
+            where: { nombre: req.body.localidad_nombre },
+            defaults: { nombre: req.body.localidad_nombre }
+        });
+        localidadId = localidad.id;
+    }
+
+    let contribuyenteId = req.body.contribuyente_id;
+    if (req.body.contratista_nombre && isNaN(req.body.contratista_nombre)) {
+        const [contribuyente] = await Contribuyente.findOrCreate({
+            where: { nombre: req.body.contratista_nombre },
+            defaults: { nombre: req.body.contratista_nombre }
+        });
+        contribuyenteId = contribuyente.id;
+    }
+
+    let representanteId = req.body.representante_legal_id;
+    if (req.body.rep_legal_nombre && isNaN(req.body.rep_legal_nombre)) {
+        const [representante] = await RepresentanteLegal.findOrCreate({
+            where: { nombre: req.body.rep_legal_nombre },
+            defaults: { nombre: req.body.rep_legal_nombre }
+        });
+        representanteId = representante.id;
+    }
+
+    const {
+      establecimiento,
+      numero_gestion,
+      categoria,
+      descripcion,
+      latitude,
+      longitude,
+      inspector_id,
+      monto_sapem,
+      monto_sub,
+      af,
+      plazo_dias,
+      cantidad_contratos,
+      fecha_inicio,
+      fecha_finalizacion_estimada,
+      estado,
+      progreso,
+      nro,
+      imagen_url
+    } = req.body;
+
+    const updateData = {
+      establecimiento,
+      numero_gestion,
+      categoria,
+      detalle: descripcion,
+      latitude,
+      longitude,
+      localidad_id: localidadId,
+      contribuyente_id: contribuyenteId,
+      inspector_id,
+      representante_legal_id: representanteId,
+      monto_sapem: monto_sapem ? Number(String(monto_sapem).replace(/[^0-9.-]+/g,"")) : null,
+      monto_sub: monto_sub ? Number(String(monto_sub).replace(/[^0-9.-]+/g,"")) : null,
+      af: af ? Number(String(af).replace(/[^0-9.-]+/g,"")) : null,
+      plazo: plazo_dias ? Number(plazo_dias) : null,
+      cantidad_contratos: cantidad_contratos ? Number(cantidad_contratos) : null,
+      fecha_inicio,
+      fecha_finalizacion_estimada,
+      estado,
+      progreso,
+      nro,
+      imagen_url
+    };
+
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
     const user = await Usuario.findByPk(req.userId, {
       include: { model: Role, as: 'role' }
     });
@@ -285,38 +361,59 @@ exports.update = async (req, res) => {
       }
 
       const now = new Date();
-      const fechaInicio = new Date(obra.fecha_inicio);
-      const createdAt = new Date(obra.createdAt);
-      const twoDaysAgo = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000));
+      const parts = obra.fecha_inicio.split('T')[0].split('-');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const fechaInicio = new Date(year, month, day);
+      const oneWeekAfterStartDate = new Date(fechaInicio.getTime() + (7 * 24 * 60 * 60 * 1000));
 
-      if (fechaInicio <= now || createdAt <= twoDaysAgo) {
+      if (now > oneWeekAfterStartDate) {
         return res.status(403).send({
-          message: "No tiene permiso para editar esta obra. La fecha de inicio ya ha pasado o han transcurrido más de 2 días desde su creación."
+          message: "No tiene permiso para editar esta obra. Han transcurrido más de una semana desde la fecha de inicio."
         });
       }
     }
 
-    Obra.update(req.body, {
+    const [num] = await Obra.update(updateData, {
       where: { id: id }
-    })
-      .then(num => {
-        if (num == 1) {
-          res.send({
-            message: "Obra was updated successfully."
-          });
-        } else {
-          res.send({
-            message: `Cannot update Obra with id=${id}. Maybe Obra was not found or req.body is empty!`
-          });
-        }
-      })
-      .catch(err => {
-        res.status(500).send({
-          message: "Error updating Obra with id=" + id
-        });
+    });
+
+    if (num == 1) {
+      const updatedObra = await Obra.findByPk(id, {
+        include: [
+          { model: db.Contribuyentes, as: 'Contribuyente', attributes: ['nombre'], required: false },
+          { model: db.Localidades, as: 'Localidad', attributes: ['nombre'], required: false },
+          { model: db.RepresentantesLegales, as: 'RepresentanteLegal', attributes: ['nombre'], required: false },
+          { model: db.Usuarios, as: 'Usuario', attributes: ['nombre'], required: false }
+        ]
       });
-  } catch (error) {
-    res.status(500).send({ message: error.message });
+
+      if (updatedObra) {
+        const obraData = updatedObra.toJSON();
+        const obraMapeada = {
+          ...obraData,
+          contratista_nombre: obraData.Contribuyente?.nombre,
+          localidad_nombre: obraData.Localidad?.nombre,
+          descripcion: obraData.detalle,
+          plazo_dias: obraData.plazo,
+          rep_legal_nombre: obraData.RepresentanteLegal?.nombre,
+          inspector_nombre: obraData.Usuario?.nombre,
+        };
+        res.send(obraMapeada);
+      } else {
+        res.status(404).send({ message: `Obra with id=${id} not found after update.` });
+      }
+    } else {
+      res.status(400).send({
+        message: `Cannot update Obra with id=${id}. Maybe Obra was not found or req.body is empty!`
+      });
+    }
+  } catch (err) {
+    console.error("Error updating Obra:", err);
+    res.status(500).send({
+      message: err.message || "Error updating Obra with id=" + id
+    });
   }
 };
 

@@ -74,6 +74,22 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
     setFormData(obra);
   };
 
+  const isInspectorEditDisabled = () => {
+    if (user && user.role && user.role === 'Inspector') {
+      const now = new Date();
+      // Fix for timezone issue: parse date parts manually
+      const parts = obra.fecha_inicio.split('T')[0].split('-');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+      const day = parseInt(parts[2], 10);
+      const fechaInicio = new Date(year, month, day);
+
+      const oneWeekAfterStartDate = new Date(fechaInicio.getTime() + (7 * 24 * 60 * 60 * 1000));
+      return now > oneWeekAfterStartDate;
+    }
+    return false;
+  };
+
   const handleUpdateObra = async () => {
     try {
       const response = await api.put(`/obras/${obra.id}`, formData);
@@ -138,10 +154,14 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
 
           <div className="actions-container">
             {!isEditing ? (
-              <button onClick={handleEdit} className="edit-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                Editar
-              </button>
+              <>
+                {!isInspectorEditDisabled() && (
+                  <button onClick={handleEdit} className="edit-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    Editar
+                  </button>
+                )}
+              </>
             ) : (
               <div className="edit-controls">
                 <button onClick={handleUpdateObra} className="save-button">Guardar</button>
@@ -323,6 +343,16 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         </select>
                       </div>
                     </div>
+                    {/* Mapa para editar */}
+                    {formData.latitude && formData.longitude && (
+                      <div className="map-container-detalle">
+                        <MapContainer center={[formData.latitude, formData.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
+                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
+                          <DraggableMarker />
+                          <MapEvents />
+                        </MapContainer>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -335,24 +365,20 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         <li><strong>Inspector:</strong> {obra.inspector_nombre || 'No asignado'}</li>
                       </ul>
                     </div>
+                    {/* Mapa para ver */}
                     {obra.latitude && obra.longitude && (
-                      <div className="map-container-detalle">
-                        <MapContainer center={[formData.latitude, formData.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={isEditing}>
-                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
-                          {isEditing ? (
-                            <>
-                              <DraggableMarker />
-                              <MapEvents />
-                            </>
-                          ) : (
+                      <a href={`https://www.google.com/maps/search/?api=1&query=${obra.latitude},${obra.longitude}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                        <div className="map-container-detalle">
+                          <MapContainer center={[obra.latitude, obra.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false}>
+                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
                             <Marker position={[obra.latitude, obra.longitude]} />
-                          )}
-                        </MapContainer>
-                      </div>
+                          </MapContainer>
+                        </div>
+                      </a>
                     )}
-
                   </>
-                )}              </div>
+                )}
+              </div>
             </div>
           </div>
         </div> {/* Closing detalle-obra-card */}
