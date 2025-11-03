@@ -30,18 +30,6 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TEXT,
       allowNull: true,
     },
-    nombre_archivo: {
-      type: Sequelize.STRING(512),
-      allowNull: true,
-    },
-    mime_type: {
-      type: Sequelize.STRING(100),
-      allowNull: true,
-    },
-    tamano_archivo: {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-    },
     obra_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
@@ -52,6 +40,7 @@ module.exports = (sequelize, Sequelize) => {
     },
   }, {
     tableName: 'Contratos',
+    timestamps: false
   });
 
   return Contrato;

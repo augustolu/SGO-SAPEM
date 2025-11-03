@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import CreatableAutocomplete from './CreatableAutocomplete';
 import CurrencyInput from './CurrencyInput';
 import ContratoUpload from './ContratoUpload'; // Importar el nuevo componente
+import AnimatedProgressNumber from './AnimatedProgressNumber'; // Importar el nuevo componente
 import api from '../services/api';
 
 // Fix for default marker icon issue with webpack
@@ -24,6 +25,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
   const [obra, setObra] = useState(initialObra);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(initialObra);
+  const [currentObraProgreso, setCurrentObraProgreso] = useState(initialObra.progreso);
   const [inspectores, setInspectores] = useState([]);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const markerRef = React.useRef(null);
@@ -54,9 +56,14 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
   useEffect(() => {
     setObra(initialObra);
     setFormData(initialObra);
+    setCurrentObraProgreso(initialObra.progreso);
   }, [initialObra]);
 
 
+
+  const handleContratoUploadSuccess = (newProgreso) => {
+    setCurrentObraProgreso(newProgreso);
+  };
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -350,18 +357,20 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
           </div>
         </div> {/* Closing detalle-obra-card */}
         <div className="detalle-obra-sidebar">
-          {typeof obra.progreso !== 'undefined' && (
+          {typeof currentObraProgreso !== 'undefined' && (
             <div className="info-section progreso-seccion">
               <h3>Progreso de la Obra</h3>
-              <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: `${obra.progreso}%` }}></div>
-                <span style={{ color: "white", fontWeight: "bold" }}>{obra.progreso}%</span>
+              <div className="progress-bar-wrapper">
+                <div className="progress-bar-reminder-container">
+                  <div className="progress-bar-reminder" style={{ width: `${currentObraProgreso}%` }}></div>
+                </div>
+                <span className="progress-text"><AnimatedProgressNumber targetValue={currentObraProgreso} /></span>
               </div>
             </div>
           )}
           <div className="info-section">
             <h3>Contratos</h3>
-            <ContratoUpload obraId={obra.id} />
+            <ContratoUpload obraId={obra.id} onContratoUploadSuccess={handleContratoUploadSuccess} />
           </div>
         </div>
       </div>

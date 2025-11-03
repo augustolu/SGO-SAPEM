@@ -351,7 +351,7 @@ input[type="date"].form-input-inline::-webkit-calendar-picker-indicator {
 }
 
 .back-button {
-  display: inline-flex;
+  display: flex; /* Changed from inline-flex for better layout control */
   align-items: center;
   gap: 0.4rem;
   padding: 0.8rem 1rem;
@@ -366,6 +366,7 @@ input[type="date"].form-input-inline::-webkit-calendar-picker-indicator {
   transition: all 0.3s ease-in-out;
   margin-bottom: 1.5rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 10; /* Ensure it's above other elements */
 }
 
 .back-button:hover {
@@ -384,36 +385,34 @@ input[type="date"].form-input-inline::-webkit-calendar-picker-indicator {
   margin-bottom: 1.5rem;
 }
 
-.progress-bar-container {
-  width: 100%;
-  background-color: #333;
-  border-radius: 8px;
-  overflow: hidden;
-  height: 25px;
+.progress-bar-wrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
+  gap: 1rem; /* Space between bar and text */
+  margin-top: 0.5rem; /* Adjust spacing as needed */
 }
 
-.progress-bar-fill {
-  height: 100%;
-  background-color: #00bfff;
-  border-radius: 8px;
-  text-align: center;
-  white-space: nowrap;
-  transition: width 0.5s ease-in-out;
-  position: absolute;
-  left: 0;
-  top: 0;
+.progress-bar-reminder-container {
+    flex-grow: 1; /* Allow container to take available space */
+    background-color: #0a192f;
+    border-radius: 10px;
+    height: 10px;
 }
 
-.progress-bar-container span {
-  position: relative;
-  z-index: 1;
-  color: white;
-  font-weight: bold;
-  font-size: 0.9rem;
+.progress-bar-reminder {
+    height: 100%;
+    background-color: #007bff;
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    color: #8892b0;
+    font-weight: 600;
+    white-space: nowrap; /* Prevent text from wrapping */
+    margin-top: 0; /* Reset margin as it's now in a flex container */
+    text-align: left; /* Reset text-align as it's now in a flex container */
 }
 
 /* Estilos para ContratoUpload */
@@ -544,7 +543,7 @@ input[type="date"].form-input-inline::-webkit-calendar-picker-indicator {
 }
 
 .contrato-upload-container .contratos-list li a::before {
-  content: "📄"; /* PDF icon */
+  content: ""; /* PDF icon */
   font-size: 1.2rem;
 }
 

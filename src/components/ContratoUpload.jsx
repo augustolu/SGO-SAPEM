@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const ContratoUpload = ({ obraId, cantidadContratosMax }) => {
+const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [contratos, setContratos] = useState([]);
+  const [cantidadContratosTotal, setCantidadContratosTotal] = useState(0);
+  const [obraProgreso, setObraProgreso] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -15,7 +17,12 @@ const ContratoUpload = ({ obraId, cantidadContratosMax }) => {
     setLoading(true);
     try {
       const response = await api.get(`/obras/${obraId}/contratos`);
-      setContratos(response.data);
+      setContratos(response.data.contratos);
+      setCantidadContratosTotal(response.data.cantidad_contratos);
+      setObraProgreso(response.data.progreso);
+      if (onContratoUploadSuccess) {
+        onContratoUploadSuccess(response.data.progreso);
+      }
     } catch (err) {
       setError('Error al cargar los contratos.');
       console.error('Error fetching contratos:', err);
@@ -34,8 +41,8 @@ const ContratoUpload = ({ obraId, cantidadContratosMax }) => {
       return;
     }
 
-    if (contratos.length >= cantidadContratosMax) {
-      setError(`Ya se ha alcanzado el número máximo de ${cantidadContratosMax} contratos para esta obra.`);
+    if (cantidadContratosTotal > 0 && contratos.length >= cantidadContratosTotal) {
+      setError(`Ya se ha alcanzado el número máximo de ${cantidadContratosTotal} contratos para esta obra.`);
       return;
     }
 
@@ -68,12 +75,15 @@ const ContratoUpload = ({ obraId, cantidadContratosMax }) => {
       <h3>Carga de Contratos</h3>
       {error && <p className="error-message">{error}</p>}
       <input type="file" accept="application/pdf" onChange={handleFileChange} />
-      <button onClick={handleUpload} disabled={loading || !selectedFile}>
+      <button onClick={handleUpload} disabled={loading || !selectedFile || (cantidadContratosTotal > 0 && contratos.length >= cantidadContratosTotal)}>
         {loading ? 'Subiendo...' : 'Subir Contrato'}
       </button>
 
       <div className="contratos-list">
-        <h4>Contratos Cargados ({contratos.length}/{cantidadContratosMax})</h4>
+        <h4>Contratos Cargados ({contratos.length}/{cantidadContratosTotal})</h4>
+        {cantidadContratosTotal > 0 && (
+          <p>Progreso de Contratos: {obraProgreso.toFixed(2)}%</p>
+        )}
         {loading && <p>Cargando contratos...</p>}
         {!loading && contratos.length === 0 && <p>No hay contratos cargados.</p>}
         <ul>

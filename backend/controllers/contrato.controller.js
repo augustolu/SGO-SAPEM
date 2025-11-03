@@ -1,10 +1,42 @@
 const db = require('../models');
 const Contrato = db.contratos;
-const Obra = db.obras;
+const Obra = db.Obras;
 const Archivo = db.Archivos; // Importar el modelo Archivo
 const upload = require('../middleware/upload');
 const fs = require('fs');
 const path = require('path');
+
+// Helper function to update obra progress
+async function updateObraProgress(obraId) {
+  try {
+    const obra = await Obra.findByPk(obraId);
+    if (!obra) {
+      console.error(`Obra with ID ${obraId} not found for progress update.`);
+      return;
+    }
+
+    const existingContratosCount = await Contrato.count({
+      where: { obra_id: obraId }
+    });
+
+    let newProgress = 0;
+    if (obra.cantidad_contratos && obra.cantidad_contratos > 0) {
+      newProgress = (existingContratosCount / obra.cantidad_contratos) * 100;
+    } else {
+      newProgress = 0; // If cantidad_contratos is null or 0, progress is 0
+    }
+
+    // Ensure progress is between 0 and 100 and has at most 2 decimal places
+    newProgress = Math.min(100, Math.max(0, parseFloat(newProgress.toFixed(2))));
+
+    if (obra.progreso !== newProgress) {
+      await obra.update({ progreso: newProgress });
+      console.log(`Obra ID ${obraId} progress updated to ${newProgress}%`);
+    }
+  } catch (error) {
+    console.error(`Error updating progress for Obra ID ${obraId}:`, error);
+  }
+}
 
 exports.uploadContrato = async (req, res) => {
   console.log("--- Entering uploadContrato function ---");
@@ -63,6 +95,9 @@ exports.uploadContrato = async (req, res) => {
     });
     console.log("Contrato created:", contrato.toJSON());
 
+    // Update obra progress after successful upload
+    await updateObraProgress(obraId);
+
     res.status(200).send({ message: "Contrato subido exitosamente!", contrato: contrato });
   } catch (error) {
     console.error("Detailed error al procesar el contrato o archivo:", error);
@@ -89,8 +124,11 @@ exports.getContratosByObra = async (req, res) => {
       }],
       order: [['orden', 'ASC']],
     });
+
+    const obra = await Obra.findByPk(obraId, { attributes: ['cantidad_contratos', 'progreso'] });
+
     console.log("Contracts fetched:", contratos.map(c => c.toJSON()));
-    res.status(200).send(contratos);
+    res.status(200).send({ contratos, cantidad_contratos: obra ? obra.cantidad_contratos : 0, progreso: obra ? obra.progreso : 0 });
   } catch (error) {
     console.error("Detailed error al obtener contratos:", error);
     res.status(500).send({ message: "Error al obtener los contratos." });
@@ -130,6 +168,10 @@ exports.deleteContrato = async (req, res) => {
 
     await contrato.destroy();
     console.log("Contrato entry deleted from database.");
+
+    // Update obra progress after successful deletion
+    await updateObraProgress(obra.id);
+
     res.status(200).send({ message: "Contrato y archivo asociado eliminados exitosamente!" });
   } catch (error) {
     console.error("Detailed error al eliminar contrato:", error);
