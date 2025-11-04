@@ -66,6 +66,13 @@ exports.uploadContrato = async (req, res) => {
       return res.status(404).send({ message: `Obra con ID ${obraId} no encontrada.` });
     }
 
+    // Verificar el estado de la obra
+    if (obra.estado === 'Finalizada' || obra.estado === 'Anulada') {
+      fs.unlinkSync(req.file.path);
+      console.log(`Attempted to add a contract to a finished or canceled work (Obra ID: ${obraId}).`);
+      return res.status(400).send({ message: 'No se puede agregar un contrato a una obra finalizada o anulada.' });
+    }
+
     const existingContratosCount = await Contrato.count({
       where: { obra_id: obraId }
     });

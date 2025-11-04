@@ -207,6 +207,7 @@ exports.findAll = async (req, res) => {
 
     const obrasMapeadas = data.map(obra => ({
       ...obra,
+      progreso: obra.progreso,
       contratista_nombre: obra.Contribuyente?.nombre,
       localidad_nombre: obra.Localidad?.nombre,
       rep_legal_nombre: obra.RepresentanteLegal?.nombre,
@@ -247,6 +248,7 @@ exports.findOne = (req, res) => {
         const obraData = data.toJSON(); // Convertimos la instancia de Sequelize a un objeto plano
         const obraMapeada = {
           ...obraData,
+          progreso: obraData.progreso, // Asegurarse de que el progreso se incluya
           contratista_nombre: obraData.Contribuyente?.nombre,
           localidad_nombre: obraData.Localidad?.nombre,
           descripcion: obraData.detalle, // Mapeo para el frontend
@@ -400,6 +402,7 @@ exports.update = async (req, res) => {
         const obraData = updatedObra.toJSON();
         const obraMapeada = {
           ...obraData,
+          progreso: obraData.progreso, // Asegurarse de que el progreso se incluya
           contratista_nombre: obraData.Contribuyente?.nombre,
           localidad_nombre: obraData.Localidad?.nombre,
           descripcion: obraData.detalle,

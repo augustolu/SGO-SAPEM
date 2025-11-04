@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
-import Slider from '@mui/material/Slider';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import getCroppedImg from '../utils/cropImage'; // We'll create this utility
+import { 
+  Slider, 
+  Button, 
+  Dialog, 
+  DialogActions, 
+  DialogContent, 
+  DialogTitle,
+  IconButton,
+  Typography,
+  Box
+} from '@mui/material';
+import { Close, ZoomIn, RotateRight } from '@mui/icons-material';
+import getCroppedImg from '../utils/cropImage';
 import './ImageUpload.css';
 
 const ImageUpload = ({ onFileSelect, selectedFile, setIsCropping }) => {
@@ -27,13 +33,13 @@ const ImageUpload = ({ onFileSelect, selectedFile, setIsCropping }) => {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (file) {
+    if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.addEventListener('load', () => {
+      reader.onload = () => {
         setImageSrc(reader.result);
         setOpenCropDialog(true);
         setIsCropping(true);
-      });
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -44,17 +50,19 @@ const ImageUpload = ({ onFileSelect, selectedFile, setIsCropping }) => {
 
   const handleCrop = async () => {
     try {
+      if (!croppedAreaPixels) return;
+
       const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
-      // Convert base64 to File object
       const response = await fetch(croppedImage);
       const blob = await response.blob();
-      const croppedFile = new File([blob], selectedFile.name, { type: selectedFile.type });
+      const fileName = selectedFile?.name || `cropped-${Date.now()}.jpg`;
+      const croppedFile = new File([blob], fileName, { type: selectedFile?.type || 'image/jpeg' });
 
       onFileSelect(croppedFile);
       setOpenCropDialog(false);
       setIsCropping(false);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error('Error cropping image:', error);
       setIsCropping(false);
     }
   };
@@ -63,79 +71,150 @@ const ImageUpload = ({ onFileSelect, selectedFile, setIsCropping }) => {
     setOpenCropDialog(false);
     setIsCropping(false);
     setImageSrc(null);
-    onFileSelect(null); // Clear the selected file if cropping is cancelled
+    onFileSelect(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Clear the file input
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const resetControls = () => {
+    setZoom(1);
+    setRotation(0);
+    setCrop({ x: 0, y: 0 });
+  };
+
+  const handleReCrop = () => {
+    if (selectedFile) {
+      setImageSrc(URL.createObjectURL(selectedFile));
+      setOpenCropDialog(true);
+      setIsCropping(true);
+      resetControls();
     }
   };
 
   return (
-    <div className="image-upload-container">
+    <div className="image-upload">
       <input
         type="file"
         accept="image/*"
         onChange={handleFileChange}
-        className="file-input"
+        className="image-upload__input"
         id="image-upload-input"
         ref={fileInputRef}
       />
-      <label htmlFor="image-upload-input" className="file-input-label">
-        {selectedFile ? selectedFile.name : 'Seleccionar Imagen'}
+      
+      <label htmlFor="image-upload-input" className="image-upload__label">
+        <div className="image-upload__trigger">
+          <span className="image-upload__text">
+            {selectedFile ? selectedFile.name : 'Seleccionar imagen'}
+          </span>
+        </div>
       </label>
 
       {selectedFile && !openCropDialog && (
-        <div className="image-preview-container">
-          <img src={URL.createObjectURL(selectedFile)} alt="Preview" className="image-preview" />
-          <button onClick={() => {
-            setImageSrc(URL.createObjectURL(selectedFile));
-            setOpenCropDialog(true);
-            setIsCropping(true);
-          }} className="re-crop-button">Recortar de Nuevo</button>
+        <div className="image-preview">
+          <img 
+            src={URL.createObjectURL(selectedFile)} 
+            alt="Preview" 
+            className="image-preview__image" 
+          />
+          <Button 
+            onClick={handleReCrop}
+            className="image-preview__crop-btn"
+            startIcon={<ZoomIn />}
+          >
+            Recortar
+          </Button>
         </div>
       )}
 
-      <Dialog open={openCropDialog} onClose={handleCancelCrop} maxWidth="md" fullWidth>
-        <DialogTitle>Recortar Imagen</DialogTitle>
-        <DialogContent>
-          <div className="cropper-container">
+      <Dialog 
+        open={openCropDialog} 
+        onClose={handleCancelCrop} 
+        maxWidth="lg" 
+        fullWidth
+        className="crop-dialog"
+      >
+        <DialogTitle className="crop-dialog__title">
+          <Typography variant="h6" component="span">
+            Recortar imagen
+          </Typography>
+          <IconButton onClick={handleCancelCrop} size="small">
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent className="crop-dialog__content">
+          <div className="cropper-wrapper">
             {imageSrc && (
               <Cropper
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
                 rotation={rotation}
-                aspect={4 / 3} // Adjust aspect ratio as needed
+                aspect={4 / 3}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onRotationChange={setRotation}
                 onCropComplete={onCropComplete}
+                classes={{
+                  containerClassName: 'cropper__container',
+                  mediaClassName: 'cropper__media',
+                }}
               />
             )}
           </div>
-          <div className="controls">
-            <label>Zoom:</label>
-            <Slider
-              value={zoom}
-              min={1}
-              max={3}
-              step={0.1}
-              aria-labelledby="Zoom"
-              onChange={(e, zoom) => setZoom(zoom)}
-            />
-            <label>Rotación:</label>
-            <Slider
-              value={rotation}
-              min={0}
-              max={360}
-              step={1}
-              aria-labelledby="Rotation"
-              onChange={(e, rotation) => setRotation(rotation)}
-            />
-          </div>
+          
+          <Box className="controls">
+            <div className="control-group">
+              <div className="control-label">
+                <ZoomIn fontSize="small" />
+                <Typography variant="body2">Zoom</Typography>
+              </div>
+              <Slider
+                value={zoom}
+                min={1}
+                max={3}
+                step={0.1}
+                onChange={(e, value) => setZoom(value)}
+                className="control-slider"
+              />
+              <Typography variant="caption" className="control-value">
+                {zoom.toFixed(1)}x
+              </Typography>
+            </div>
+            
+            <div className="control-group">
+              <div className="control-label">
+                <RotateRight fontSize="small" />
+                <Typography variant="body2">Rotación</Typography>
+              </div>
+              <Slider
+                value={rotation}
+                min={0}
+                max={360}
+                step={1}
+                onChange={(e, value) => setRotation(value)}
+                className="control-slider"
+              />
+              <Typography variant="caption" className="control-value">
+                {rotation}°
+              </Typography>
+            </div>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelCrop} color="primary">Cancelar</Button>
-          <Button onClick={handleCrop} color="primary" variant="contained">Recortar</Button>
+        
+        <DialogActions className="crop-dialog__actions">
+          <Button onClick={handleCancelCrop} color="inherit">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleCrop} 
+            variant="contained" 
+            className="crop-confirm-btn"
+          >
+            Aplicar recorte
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

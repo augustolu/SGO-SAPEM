@@ -1,0 +1,206 @@
+/* ImageUpload.css */
+.image-upload {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Input oculto */
+.image-upload__input {
+  display: none;
+}
+
+/* Trigger principal */
+.image-upload__label {
+  display: block;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-upload__trigger {
+  padding: 12px 20px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.image-upload__trigger:hover {
+  border-color: #1976d2;
+  background: #f3f7ff;
+}
+
+.image-upload__text {
+  color: #666;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Preview de imagen */
+.image-preview {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.image-preview__image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+}
+
+.image-preview__crop-btn {
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+/* Dialog de recorte */
+.crop-dialog .MuiDialog-paper {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.crop-dialog__title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px !important;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.crop-dialog__title .MuiTypography-h6 {
+  font-weight: 600;
+  color: #333;
+}
+
+.crop-dialog__content {
+  padding: 0 !important;
+}
+
+/* Contenedor del cropper */
+.cropper-wrapper {
+  position: relative;
+  height: 400px;
+  background: #f8f9fa;
+}
+
+.cropper__container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.cropper__media {
+  max-height: 100%;
+}
+
+/* Controles */
+.controls {
+  padding: 20px 24px;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 80px;
+  color: #666;
+}
+
+.control-label .MuiTypography-body2 {
+  font-weight: 500;
+}
+
+.control-slider {
+  flex: 1;
+  color: #1976d2;
+}
+
+.control-slider .MuiSlider-track {
+  border: none;
+}
+
+.control-slider .MuiSlider-thumb {
+  width: 16px;
+  height: 16px;
+}
+
+.control-value {
+  min-width: 40px;
+  text-align: right;
+  color: #999;
+  font-weight: 500;
+}
+
+/* Acciones del dialog */
+.crop-dialog__actions {
+  padding: 16px 24px 20px !important;
+  gap: 12px;
+}
+
+.crop-confirm-btn {
+  text-transform: none !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 8px 20px !important;
+  box-shadow: none !important;
+}
+
+.crop-confirm-btn:hover {
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cropper-wrapper {
+    height: 300px;
+  }
+  
+  .control-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .control-label {
+    min-width: auto;
+  }
+  
+  .control-value {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .cropper-wrapper {
+    height: 250px;
+  }
+  
+  .crop-dialog__title {
+    padding: 16px 20px 12px !important;
+  }
+  
+  .controls {
+    padding: 16px 20px;
+  }
+  
+  .crop-dialog__actions {
+    padding: 12px 20px 16px !important;
+    flex-direction: column-reverse;
+  }
+}

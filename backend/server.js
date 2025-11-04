@@ -72,7 +72,7 @@ require('./routes/contribuyente.routes')(apiRouter);
 require('./routes/representanteLegal.routes')(apiRouter);
 require('./routes/localidad.routes')(apiRouter);
 
-require('./routes/contrato.routes')(apiRouter); // Nuevas rutas de contratos
+require('./routes/contrato.routes')(apiRouter);
 app.use('/api', apiRouter);
 
 // set port, listen for requests
