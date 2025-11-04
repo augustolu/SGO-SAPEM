@@ -160,7 +160,8 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
         Volver al Listado
       </button>
       <div className="detalle-obra-content-wrapper">
-        <div className="detalle-obra-card">
+        <>
+          <div className="detalle-obra-card">
 
           <div className="actions-container">
             {!isEditing ? (
@@ -392,23 +393,11 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
             </div>
           </div>
         </div> {/* Closing detalle-obra-card */}
-        <div className="detalle-obra-sidebar">
-          {typeof currentObraProgreso !== 'undefined' && (
-            <div className="info-section progreso-seccion">
-              <h3>Progreso de la Obra</h3>
-              <div className="progress-bar-wrapper">
-                <div className="progress-bar-reminder-container">
-                  <div className="progress-bar-reminder" style={{ width: `${currentObraProgreso}%` }}></div>
-                </div>
-                <span className="progress-text"><AnimatedProgressNumber targetValue={currentObraProgreso} /></span>
-              </div>
-            </div>
-          )}
+        
           <div className="info-section">
-            <h3>Contratos</h3>
             <ContratoUpload obraId={obra.id} onContratoUploadSuccess={handleContratoUploadSuccess} />
           </div>
-        </div>
+        </>
       </div>
     </div>
   );

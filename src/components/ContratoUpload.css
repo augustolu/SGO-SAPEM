@@ -74,9 +74,10 @@
 }
 
 .progress-percentage {
-  font-weight: 600;
+  font-weight: 700;
   color: #4fc3f7;
-  font-size: 1rem;
+  font-size: 1.2rem; /* Increased font size */
+  text-shadow: 0 0 8px rgba(79, 195, 247, 0.6); /* Subtle glow effect */
 }
 
 .progress-bar {
@@ -128,7 +129,12 @@
 }
 
 .file-input {
-  display: none;
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
 }
 
 .file-input-label {
