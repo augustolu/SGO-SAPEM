@@ -47,9 +47,22 @@ const AnimatedProgressNumber = ({
   }, [targetValue, isAnimating, onAnimationComplete]);
 
   return (
-    <span style={{ fontFamily: 'monospace', minWidth: '5ch', display: 'inline-block', textAlign: 'right' }}>
-      {currentValue.toFixed(1)}%
-    </span>
+    <div style={{ width: '100%', backgroundColor: '#e0e0e0', borderRadius: '5px', overflow: 'hidden', marginTop: '10px' }}>
+      <div
+        style={{
+          width: `${currentValue}%`,
+          backgroundColor: '#4CAF50',
+          height: '20px',
+          borderRadius: '5px',
+          textAlign: 'center',
+          color: 'white',
+          lineHeight: '20px',
+          transition: 'width 0.5s ease-in-out',
+        }}
+      >
+        {currentValue.toFixed(1)}%
+      </div>
+    </div>
   );
 };
 

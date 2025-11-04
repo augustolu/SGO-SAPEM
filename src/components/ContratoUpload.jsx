@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api'; // Assuming you have an API service
+import api from '../services/api';
 import './ContratoUpload.css';
+import AnimatedProgressNumber from './AnimatedProgressNumber';
 
 const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -8,52 +9,93 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
   const [message, setMessage] = useState('');
   const [contracts, setContracts] = useState([]);
   const [obraDetails, setObraDetails] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isProgressAnimating, setIsProgressAnimating] = useState(false);
+  const [showContracts, setShowContracts] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!obraId) return;
+      
       try {
-        // Fetch contracts
-        console.log('Fetching contracts for obraId:', obraId);
-        const contractsResponse = await api.get(`/obras/${obraId}/contratos`);
-        console.log('Contracts Response:', contractsResponse.data);
-        setContracts(contractsResponse.data);
+        console.log('Fetching data for obraId:', obraId);
+        
+        const [contractsResponse, obraResponse] = await Promise.all([
+          api.get(`/obras/${obraId}/contratos`),
+          api.get(`/obras/${obraId}`)
+        ]);
 
-        // Fetch obra details to get cantidad_contratos
-        console.log('Fetching obra details for obraId:', obraId);
-        const obraResponse = await api.get(`/obras/${obraId}`);
+        console.log('Contracts Response:', contractsResponse.data);
         console.log('Obra Details Response:', obraResponse.data);
+
+        setContracts(contractsResponse.data);
         setObraDetails(obraResponse.data);
-        console.log('Obra Details:', obraResponse.data); // Add this line for debugging
+
+        const total = obraResponse.data?.cantidad_contratos || 0;
+        const current = contractsResponse.data.length;
+        setUploadProgress(total > 0 ? (current / total) * 100 : 0);
+
       } catch (error) {
-        console.error('Error al obtener datos de la obra o contratos:', error);
-        console.error('Detalles del error:', error.response ? error.response.data : error.message);
+        console.error('Error al obtener datos:', error);
+        console.error('Detalles del error:', error.response?.data || error.message);
+        setMessage('Error al cargar los datos de la obra');
       }
     };
 
-    if (obraId) {
-      fetchData();
-    }
+    fetchData();
   }, [obraId]);
 
   const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
+    const file = event.target.files[0];
+    if (file && file.type !== 'application/pdf') {
+      setMessage('Por favor, selecciona un archivo PDF');
+      return;
+    }
+    setSelectedFile(file);
     setMessage('');
   };
 
+  const updateProgress = (currentContracts, totalContracts) => {
+    const newProgress = totalContracts > 0 ? (currentContracts / totalContracts) * 100 : 0;
+    setUploadProgress(newProgress);
+    setIsProgressAnimating(true);
+  };
+
+  const handleAnimationComplete = () => {
+    setIsProgressAnimating(false);
+  };
+
   const handleDelete = async (contratoId) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este contrato?')) {
+      return;
+    }
+
+    setUploading(true);
+    setMessage('Eliminando contrato...');
+    
     try {
       const response = await api.delete(`/obras/${obraId}/contratos/${contratoId}`);
-      setMessage(response.data.message);
-      console.log('ContratoUpload: Delete response newProgreso:', response.data.newProgreso);
-      // Re-fetch contracts and update progress
-      const contractsResponse = await api.get(`/obras/${obraId}/contratos`);
+      setMessage('Contrato eliminado exitosamente');
+      
+      const [contractsResponse, obraResponse] = await Promise.all([
+        api.get(`/obras/${obraId}/contratos`),
+        api.get(`/obras/${obraId}`)
+      ]);
+
       setContracts(contractsResponse.data);
-      if (response.data && response.data.newProgreso) {
+      setObraDetails(obraResponse.data);
+
+      if (response.data?.newProgreso) {
         onContratoUploadSuccess(response.data.newProgreso);
       }
+      
+      updateProgress(contractsResponse.data.length, obraResponse.data?.cantidad_contratos || 0);
+
     } catch (error) {
       console.error('Error al eliminar el contrato:', error);
       setMessage(`Error al eliminar el contrato: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -69,30 +111,36 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
     const formData = new FormData();
     formData.append('contrato', selectedFile);
     formData.append('obraId', obraId);
-    // Add contract details as needed by the new backend schema
-    formData.append('nombre', selectedFile.name); // Using filename as contract name for now
-    formData.append('orden', contracts.length + 1); // Simple sequential order
+    formData.append('nombre', selectedFile.name);
+    formData.append('orden', contracts.length + 1);
 
-    console.log('Uploading contract for obraId:', obraId);
-    console.log('FormData content:', formData);
     try {
       const response = await api.post(`/obras/${obraId}/upload-contrato`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+
       setMessage('Contrato subido exitosamente.');
       setSelectedFile(null);
-      // Re-fetch contracts to update the list and progress
-      const contractsResponse = await api.get(`/obras/${obraId}/contratos`);
-      setContracts(contractsResponse.data);
+      
+      const fileInput = document.getElementById('contrato-file-input');
+      if (fileInput) fileInput.value = '';
 
-      if (response.data && response.data.newProgreso) {
-        // Also re-fetch obra details to ensure `cantidad_contratos` is up-to-date
-        const obraResponse = await api.get(`/obras/${obraId}`);
-        setObraDetails(obraResponse.data);
+      const [contractsResponse, obraResponse] = await Promise.all([
+        api.get(`/obras/${obraId}/contratos`),
+        api.get(`/obras/${obraId}`)
+      ]);
+
+      setContracts(contractsResponse.data);
+      setObraDetails(obraResponse.data);
+
+      if (response.data?.newProgreso) {
         onContratoUploadSuccess(response.data.newProgreso);
       }
+      
+      updateProgress(contractsResponse.data.length, obraResponse.data?.cantidad_contratos || 0);
+
     } catch (error) {
       console.error('Error al subir el contrato:', error);
       setMessage(`Error al subir el contrato: ${error.message || 'Error desconocido'}`);
@@ -101,48 +149,140 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
     }
   };
 
+  const toggleContracts = () => {
+    setShowContracts(!showContracts);
+  };
+
   const totalContractsNeeded = obraDetails?.cantidad_contratos || 0;
+  const hasReachedLimit = contracts.length >= totalContractsNeeded;
 
   return (
     <div className="contrato-upload-container">
-      <input
-        type="file"
-        accept=".pdf"
-        onChange={handleFileChange}
-        className="file-input"
-        id="contrato-file-input"
-      />
-      <label htmlFor="contrato-file-input" className="file-input-label">
-        {selectedFile ? selectedFile.name : 'Seleccionar Contrato (PDF)'}
-      </label>
-      <button
-        onClick={handleUpload}
-        disabled={!selectedFile || uploading || (contracts.length >= totalContractsNeeded)}
-        className="upload-button"
-      >
-        {uploading ? 'Subiendo...' : 'Subir Contrato'}
-      </button>
-      {message && <p className="upload-message">{message}</p>}
+      <div className="upload-header">
+        <h3>Gestión de Contratos</h3>
+        <div className="contracts-count">
+          {contracts.length} / {totalContractsNeeded} contratos cargados
+        </div>
+      </div>
 
-      <p>Contratos cargados: {contracts.length} / {totalContractsNeeded}</p>
-
-      {contracts.length > 0 && (
-        <div className="contracts-list">
-          <h3>Contratos Subidos:</h3>
-          <ul>
-            {contracts.map((contrato) => (
-              <li key={contrato.id}>
-                <a href={contrato.Archivo?.ruta_archivo} target="_blank" rel="noopener noreferrer">
-                  {contrato.Archivo?.nombre_original}
-                </a>
-                <button onClick={() => handleDelete(contrato.id)} className="delete-button">X</button>
-              </li>
-            ))}
-          </ul>
+      {message && (
+        <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>
+          {message}
         </div>
       )}
+
+      <div className="progress-section">
+        <div className="progress-header">
+          <span>Progreso de carga</span>
+          <span className="progress-percentage">
+            <AnimatedProgressNumber
+              targetValue={uploadProgress}
+              isAnimating={isProgressAnimating}
+              onAnimationComplete={handleAnimationComplete}
+            />%
+          </span>
+        </div>
+        <div className="progress-bar">
+          <div 
+            className="progress-fill" 
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {!hasReachedLimit && (
+        <div className="upload-section">
+          <div className="file-upload-area">
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={handleFileChange}
+              className="file-input"
+              id="contrato-file-input"
+              disabled={uploading}
+            />
+            <label htmlFor="contrato-file-input" className="file-input-label">
+              <div className="file-label-content">
+                <span className="file-icon"></span>
+                {selectedFile ? (
+                  <span className="file-name">{selectedFile.name}</span>
+                ) : (
+                  <span>Seleccionar Contrato PDF</span>
+                )}
+              </div>
+            </label>
+          </div>
+
+          <button
+            onClick={handleUpload}
+            disabled={!selectedFile || uploading}
+            className="upload-button"
+          >
+            {uploading ? (
+              <span className="button-loading">
+                <span className="spinner"></span>
+                Subiendo...
+              </span>
+            ) : (
+              'Subir Contrato'
+            )}
+          </button>
+        </div>
+      )}
+
+      {hasReachedLimit && (
+        <div className="limit-reached-message">
+          Todos los contratos requeridos han sido cargados
+        </div>
+      )}
+
+      {contracts.length > 0 && (
+        <div className="contracts-section">
+          <button 
+            className="contracts-toggle"
+            onClick={toggleContracts}
+          >
+            <span>Contratos Subidos ({contracts.length})</span>
+            <span className={`toggle-arrow ${showContracts ? 'open' : ''}`}>
+              ▼
+            </span>
+          </button>
+          
+          <div className={`contracts-list ${showContracts ? 'show' : ''}`}>
+            {contracts.map((contrato) => (
+              <div key={contrato.id} className="contract-item">
+                <div className="contract-info">
+                  <span className="contract-name">
+                    {contrato.Archivo?.nombre_original}
+                  </span>
+                  <a 
+                    href={contrato.Archivo?.ruta_archivo} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="view-link"
+                  >
+                    Ver
+                  </a>
+                </div>
+                <button 
+                  onClick={() => handleDelete(contrato.id)} 
+                  disabled={uploading}
+                  className="delete-button"
+                  title="Eliminar contrato"
+                >
+                  Eliminar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {contracts.length === 0 && !uploading && (
-        <p>No hay contratos subidos para esta obra.</p>
+        <div className="empty-state">
+          <span className="empty-icon"></span>
+          <p>No hay contratos subidos para esta obra</p>
+        </div>
       )}
     </div>
   );
