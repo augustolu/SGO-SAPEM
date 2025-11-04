@@ -6,6 +6,7 @@ module.exports = {
   PASSWORD: "sapemsegura2025",
   DB: "sgo_sapem",
   dialect: "mysql",
+  charset: "utf8mb4",
   pool: {
     max: 5,
     min: 0,

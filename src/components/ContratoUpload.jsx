@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import './ContratoUpload.css';
-import AnimatedProgressNumber from './AnimatedProgressNumber';
 
 const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -70,12 +69,9 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
       return;
     }
 
-    setUploading(true);
-    setMessage('Eliminando contrato...');
-    
+    setUploading(true);    
     try {
       const response = await api.delete(`/obras/${obraId}/contratos/${contratoId}`);
-      setMessage('Contrato eliminado exitosamente');
       
       const [contractsResponse, obraResponse] = await Promise.all([
         api.get(`/obras/${obraId}/contratos`),
@@ -106,7 +102,6 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
     }
 
     setUploading(true);
-    setMessage('Subiendo contrato...');
 
     const formData = new FormData();
     formData.append('contrato', selectedFile);
@@ -121,7 +116,6 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
         },
       });
 
-      setMessage('Contrato subido exitosamente.');
       setSelectedFile(null);
       
       const fileInput = document.getElementById('contrato-file-input');
@@ -166,7 +160,7 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
       </div>
 
       {message && (
-        <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>
+        <div className={`message ${message.includes('Error') ? 'error' : 'info'}`}>
           {message}
         </div>
       )}
@@ -178,26 +172,11 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
               className={`progress-fill ${isProgressAnimating ? 'animating' : ''}`}
               style={{ width: `${uploadProgress}%` }}
             >
-              {uploadProgress >= 50 && (
-                <span className="progress-percentage">
-                  <AnimatedProgressNumber
-                    targetValue={uploadProgress}
-                    isAnimating={isProgressAnimating}
-                    onAnimationComplete={handleAnimationComplete}
-                  />
-                </span>
-              )}
+              <span className="progress-percentage">
+                {uploadProgress.toFixed(0)}%
+              </span>
             </div>
           </div>
-          {uploadProgress < 50 && (
-            <div className="progress-indicator">
-              <AnimatedProgressNumber
-                targetValue={uploadProgress}
-                isAnimating={isProgressAnimating}
-                onAnimationComplete={handleAnimationComplete}
-              />
-            </div>
-          )}
         </div>
       </div>
 
@@ -249,44 +228,162 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
 
       {contracts.length > 0 && (
         <div className="contracts-section">
-          <button 
-            className="contracts-toggle"
-            onClick={toggleContracts}
+  <button 
+    className="contracts-toggle"
+    onClick={toggleContracts}
+    style={{
+      background: 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%)',
+      border: '1px solid rgba(79, 195, 247, 0.3)',
+      width: '100%',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      color: '#4fc3f7',
+      fontWeight: '600',
+      fontSize: '0.875rem'
+    }}
+  >
+    <span 
+      className={`toggle-arrow ${showContracts ? 'open' : ''}`}
+      style={{
+        display: 'inline-block',
+        transition: 'transform 0.3s ease',
+        fontSize: '1rem',
+        fontWeight: 'bold'
+      }}
+    >
+      ▼
+    </span>
+  </button>
+  
+  <div 
+    className={`contracts-list ${showContracts ? 'show' : ''}`}
+    style={{
+      maxHeight: showContracts ? '500px' : '0',
+      overflow: 'hidden',
+      transition: 'max-height 0.3s ease',
+      marginTop: showContracts ? '8px' : '0'
+    }}
+  >
+    {contracts.map((contrato) => (
+      <div 
+        key={contrato.id} 
+        className="contract-item"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 16px',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '8px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          transition: 'all 0.2s ease',
+          marginBottom: '8px'
+        }}
+      >
+        <div 
+          className="contract-info"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            flex: '1'
+          }}
+        >
+          <span 
+            className="contract-name"
+            style={{
+              fontSize: '0.875rem',
+              color: '#ffffff',
+              fontWeight: '500',
+              flex: '1'
+            }}
           >
-            <span>Contratos Subidos ({contracts.length})</span>
-            <span className={`toggle-arrow ${showContracts ? 'open' : ''}`}>
-              ▼
-            </span>
-          </button>
-          
-          <div className={`contracts-list ${showContracts ? 'show' : ''}`}>
-            {contracts.map((contrato) => (
-              <div key={contrato.id} className="contract-item">
-                <div className="contract-info">
-                  <span className="contract-name">
-                    {contrato.Archivo?.nombre_original}
-                  </span>
-                  <a 
-                    href={contrato.Archivo?.ruta_archivo} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="view-link"
-                  >
-                    Ver
-                  </a>
-                </div>
-                <button 
-                  onClick={() => handleDelete(contrato.id)} 
-                  disabled={uploading}
-                  className="delete-button"
-                  title="Eliminar contrato"
-                >
-                  Eliminar
-                </button>
-              </div>
-            ))}
-          </div>
+            {contrato.Archivo?.nombre_original}
+          </span>
+          <a 
+            href={contrato.Archivo?.ruta_archivo} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="view-link"
+            style={{
+              color: '#4fc3f7',
+              textDecoration: 'none',
+              fontSize: '0.8rem',
+              fontWeight: '500',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              transition: 'all 0.2s ease',
+              background: 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%)',
+              border: '1px solid rgba(79, 195, 247, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%)';
+              e.target.style.color = '#132238';
+              e.target.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%)';
+              e.target.style.color = '#4fc3f7';
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            <span></span>
+            Ver
+          </a>
         </div>
+        <button 
+          onClick={() => handleDelete(contrato.id)} 
+          disabled={uploading}
+          className="delete-button"
+          title="Eliminar contrato"
+          style={{
+            background: 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%)',
+            color: '#4fc3f7',
+            maxWidth: '65px',
+            maxHeight: '35px',  
+            marginLeft: '10px', 
+            border: '1px solid rgba(79, 195, 247, 0.3)',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            transition: 'all 0.2s ease',
+            fontSize: '0.75rem',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            opacity: uploading ? '0.5' : '1'
+          }}
+          onMouseEnter={(e) => {
+            if (!uploading) {
+              e.target.style.background = 'linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%)';
+              e.target.style.color = '#132238';
+              e.target.style.transform = 'translateY(-1px)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!uploading) {
+              e.target.style.background = 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%)';
+              e.target.style.color = '#4fc3f7';
+              e.target.style.transform = 'translateY(0)';
+            }
+          }}
+        >
+          <span></span>
+          Eliminar
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
       )}
 
       {contracts.length === 0 && !uploading && (
