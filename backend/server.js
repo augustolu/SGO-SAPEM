@@ -64,14 +64,14 @@ const apiRouter = express.Router();
 require('./routes/auth.routes')(apiRouter);
 require('./routes/user.routes')(apiRouter);
 require('./routes/obra.routes')(apiRouter);
-require('./routes/actividad.routes')(apiRouter);
-require('./routes/documento.routes')(apiRouter);
+
+
 require('./routes/role.routes')(apiRouter);
 require('./routes/geocode.routes')(apiRouter);
 require('./routes/contribuyente.routes')(apiRouter);
 require('./routes/representanteLegal.routes')(apiRouter);
 require('./routes/localidad.routes')(apiRouter);
-require('./routes/upload.routes')(apiRouter); // Nueva ruta de subida
+
 require('./routes/contrato.routes')(apiRouter); // Nuevas rutas de contratos
 app.use('/api', apiRouter);
 

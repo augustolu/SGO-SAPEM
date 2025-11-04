@@ -21,48 +21,51 @@ db.sequelize = sequelize;
 db.Roles = require("./role.model.js")(sequelize, Sequelize);
 db.Usuarios = require("./user.model.js")(sequelize, Sequelize);
 db.Obras = require("./obra.model.js")(sequelize, Sequelize);
-db.Actividades = require("./actividad.model.js")(sequelize, Sequelize);
-db.Documentos = require("./documento.model.js")(sequelize, Sequelize);
+
+
 db.RepresentantesLegales = require("./representanteLegal.model.js")(sequelize, Sequelize); // NUEVO
 db.Contribuyentes = require("./contribuyente.model.js")(sequelize, Sequelize);
 db.Localidades = require("./localidad.model.js")(sequelize, Sequelize);
-db.contratos = require("./contrato.model.js")(sequelize, Sequelize); // Nuevo modelo de Contratos
 db.Archivos = require("./archivo.model.js")(sequelize, Sequelize); // Nuevo modelo de Archivos
+db.Contratos = require("./contrato.model.js")(sequelize, Sequelize); // Nuevo modelo de Contratos
+
 
 // Relaciones
 db.Roles.hasMany(db.Usuarios, { as: "usuarios", foreignKey: 'rol_id' });
 db.Usuarios.belongsTo(db.Roles, { as: "role", foreignKey: 'rol_id' });
 
-db.Usuarios.hasMany(db.Obras, { as: 'Obras', foreignKey: 'inspector_id' }); // CORRECCIÓN: Añadir alias inverso
-db.Obras.belongsTo(db.Usuarios, { as: 'Usuario', foreignKey: 'inspector_id' }); // CORRECCIÓN: Añadir alias 'Usuario'
+db.Usuarios.hasMany(db.Obras, { as: 'Obras', foreignKey: 'inspector_id' });
+db.Obras.belongsTo(db.Usuarios, { as: 'Usuario', foreignKey: 'inspector_id' });
 
-db.Obras.hasMany(db.Actividades, { as: 'Actividades', foreignKey: 'obra_id' }); // CORRECCIÓN: Añadir alias 'Actividades'
-db.Actividades.belongsTo(db.Obras, { foreignKey: 'obra_id' });
 
-db.Obras.hasMany(db.Documentos, { as: 'Documentos', foreignKey: 'obra_id' }); // CORRECCIÓN: Añadir alias 'Documentos'
-db.Documentos.belongsTo(db.Obras, { foreignKey: 'obra_id' });
 
-db.Actividades.hasMany(db.Documentos, { foreignKey: 'actividad_id' });
-db.Documentos.belongsTo(db.Actividades, { foreignKey: 'actividad_id' });
 
-// NUEVA RELACIÓN: Obras <-> RepresentantesLegales
+// Obras <-> RepresentantesLegales
 db.RepresentantesLegales.hasMany(db.Obras, { foreignKey: 'representante_legal_id' });
 db.Obras.belongsTo(db.RepresentantesLegales, { as: 'RepresentanteLegal', foreignKey: 'representante_legal_id' });
 
-// NUEVA RELACIÓN: Obras <-> Contribuyentes
+// Obras <-> Contribuyentes
 db.Contribuyentes.hasMany(db.Obras, { foreignKey: 'contribuyente_id' });
 db.Obras.belongsTo(db.Contribuyentes, { as: 'Contribuyente', foreignKey: 'contribuyente_id' });
 
-// NUEVA RELACIÓN: Obras <-> Localidades
+// Obras <-> Localidades
 db.Localidades.hasMany(db.Obras, { foreignKey: 'localidad_id' });
 db.Obras.belongsTo(db.Localidades, { as: 'Localidad', foreignKey: 'localidad_id' });
 
-// NUEVA RELACIÓN: Obras <-> Contratos
-db.Obras.hasMany(db.contratos, { as: 'Contratos', foreignKey: 'obra_id' });
-db.contratos.belongsTo(db.Obras, { foreignKey: 'obra_id' });
+// Obras <-> Contratos
+db.Obras.hasMany(db.Contratos, { as: 'Contratos', foreignKey: 'obra_id' });
+db.Contratos.belongsTo(db.Obras, { foreignKey: 'obra_id' });
 
-// NUEVA RELACIÓN: Contratos <-> Archivos
-db.Archivos.hasMany(db.contratos, { foreignKey: 'archivo_id' });
-db.contratos.belongsTo(db.Archivos, { as: 'Archivo', foreignKey: 'archivo_id' });
+// Contratos <-> Archivos
+db.Contratos.belongsTo(db.Archivos, { foreignKey: 'archivo_id', as: 'Archivo' });
+db.Archivos.hasOne(db.Contratos, { foreignKey: 'archivo_id' });
+
+// Obras <-> Archivos
+db.Obras.hasMany(db.Archivos, { as: 'Archivos', foreignKey: 'obra_id' });
+db.Archivos.belongsTo(db.Obras, { foreignKey: 'obra_id' });
+
+// Archivos (self-referencing for parent_id)
+db.Archivos.hasMany(db.Archivos, { as: 'Children', foreignKey: 'parent_id' });
+db.Archivos.belongsTo(db.Archivos, { as: 'Parent', foreignKey: 'parent_id' });
 
 module.exports = db;

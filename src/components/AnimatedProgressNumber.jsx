@@ -1,43 +1,56 @@
 import React, { useState, useEffect } from 'react';
 
-const AnimatedProgressNumber = ({ targetValue }) => {
-  const [currentValue, setCurrentValue] = useState(0);
+const AnimatedProgressNumber = ({
+  targetValue,
+  isAnimating,
+  onAnimationComplete,
+}) => {
+  const [currentValue, setCurrentValue] = useState(parseFloat((targetValue || 0).toFixed(1)));
 
   useEffect(() => {
-    if (typeof targetValue === 'undefined' || targetValue === null) {
-      setCurrentValue(0);
-      return;
+    if (isAnimating) {
+      let animationFrameId;
+      const startValue = currentValue;
+      const duration = 1000; // Duración de 1 segundo
+      let startTime = null;
+
+      const animate = (currentTime) => {
+        if (!startTime) startTime = currentTime;
+        const progress = (currentTime - startTime) / duration;
+
+        if (progress < 1) {
+          // Usar una función de easing exponencial (ease-in-out)
+          const easedProgress = progress < 0.5 
+            ? Math.pow(2, 20 * progress - 10) / 2 
+            : (2 - Math.pow(2, -20 * progress + 10)) / 2;
+
+          const newValue =
+            startValue + ((targetValue || 0) - startValue) * easedProgress;
+          setCurrentValue(parseFloat(newValue.toFixed(1)));
+          animationFrameId = requestAnimationFrame(animate);
+        } else {
+          setCurrentValue(parseFloat((targetValue || 0).toFixed(1)));
+          if (onAnimationComplete) {
+            onAnimationComplete();
+          }
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(animate);
+
+      return () => {
+        cancelAnimationFrame(animationFrameId);
+      };
+    } else {
+      setCurrentValue(parseFloat((targetValue || 0).toFixed(1)));
     }
+  }, [targetValue, isAnimating, onAnimationComplete]);
 
-    const startValue = currentValue;
-    const duration = 800; // milliseconds
-    let startTime = null;
-
-    const animate = (currentTime) => {
-      if (!startTime) startTime = currentTime;
-      const progress = (currentTime - startTime) / duration;
-
-      if (progress < 1) {
-        // Ease-out effect for the number animation
-        const easedProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
-        const newValue = startValue + (targetValue - startValue) * easedProgress;
-        setCurrentValue(parseFloat(newValue.toFixed(2)));
-        requestAnimationFrame(animate);
-      } else {
-        setCurrentValue(parseFloat(targetValue.toFixed(2)));
-      }
-    };
-
-    requestAnimationFrame(animate);
-
-    // Cleanup function to cancel animation if component unmounts or targetValue changes
-    return () => {
-      // No direct way to cancel requestAnimationFrame, but subsequent calls will be ignored
-      // if targetValue changes, as startTime will be reset.
-    };
-  }, [targetValue]); // Re-run effect when targetValue changes
-
-  return <>{currentValue}%</>;
+  return (
+    <span style={{ fontFamily: 'monospace', minWidth: '5ch', display: 'inline-block', textAlign: 'right' }}>
+      {currentValue.toFixed(1)}%
+    </span>
+  );
 };
 
 export default AnimatedProgressNumber;

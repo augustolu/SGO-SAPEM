@@ -1,46 +1,54 @@
 module.exports = (sequelize, Sequelize) => {
-  const Contrato = sequelize.define("Contrato", {
+  const Contrato = sequelize.define("Contratos", {
     id: {
       type: Sequelize.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: true
     },
     nombre: {
-      type: Sequelize.STRING,
-      allowNull: false,
+      type: Sequelize.STRING(255),
+      allowNull: false
     },
     orden: {
       type: Sequelize.INTEGER,
-      allowNull: false,
+      allowNull: false
     },
     estado: {
       type: Sequelize.ENUM('pendiente', 'en ejecución', 'completado'),
       allowNull: false,
-      defaultValue: 'pendiente',
+      defaultValue: 'pendiente'
     },
     monto: {
       type: Sequelize.DECIMAL(15, 2),
-      allowNull: true,
+      allowNull: true
     },
     fecha_firma: {
       type: Sequelize.DATEONLY,
-      allowNull: true,
+      allowNull: true
     },
     observaciones: {
       type: Sequelize.TEXT,
-      allowNull: true,
+      allowNull: true
     },
     obra_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
         model: 'Obras',
-        key: 'id',
-      },
+        key: 'id'
+      }
     },
+    archivo_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'Archivos',
+        key: 'id'
+      }
+    }
   }, {
-    tableName: 'Contratos',
-    timestamps: false
+    timestamps: false,
+    tableName: 'Contratos'
   });
 
   return Contrato;

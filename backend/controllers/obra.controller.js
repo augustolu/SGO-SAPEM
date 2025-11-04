@@ -1,4 +1,6 @@
 const db = require("../models");
+const Contrato = db.Contratos;
+const Archivo = db.Archivos;
 
 // DEBUG: Imprime todos los modelos disponibles en el objeto db. Revisa la consola de tu servidor.
 console.log("Modelos disponibles en DB:", Object.keys(db));
@@ -88,8 +90,7 @@ exports.create = async (req, res) => {
       fecha_finalizacion_estimada: req.body.fecha_finalizacion_estimada || null,
       estado: req.body.estado,
       progreso: req.body.progreso || 0,
-      nro: req.body.nro ? Number(req.body.nro) : null,
-      imagen_url: req.body.imagen_url || null // Añadir imagen_url
+      nro: req.body.nro ? Number(req.body.nro) : null
     };
 
     // LOG PARA VER QUÉ SE INTENTA GUARDAR EN LA BASE DE DATOS
@@ -232,8 +233,12 @@ exports.findOne = (req, res) => {
       { model: db.Localidades, as: 'Localidad', attributes: ['nombre'], required: false },
       { model: db.RepresentantesLegales, as: 'RepresentanteLegal', attributes: ['nombre'], required: false },
       { model: db.Usuarios, as: 'Usuario', attributes: ['nombre'], required: false },
-      { model: db.Actividades, as: 'Actividades', required: false },
-      { model: db.Documentos, as: 'Documentos', required: false }
+
+      { model: db.Contratos, as: 'Contratos', required: false, include: [{
+        model: db.Archivos,
+        as: 'Archivo',
+        attributes: ['ruta_archivo', 'nombre_original']
+      }]} // Include Contratos with explicit attributes and Archivo
     ]
   })
     .then(data => {
@@ -257,8 +262,12 @@ exports.findOne = (req, res) => {
       }
     })
     .catch(err => {
+      console.error("--- ERROR DETALLADO AL OBTENER LA OBRA (findOne) ---");
+      console.error("Mensaje:", err.message);
+      console.error("Stack Trace:", err);
+      console.error("--- FIN DEL ERROR DETALLADO ---");
       res.status(500).send({
-        message: "Error retrieving Obra with id=" + id
+        message: "Error retrieving Obra with id=" + id + ": " + err.message
       });
     });
 };
@@ -314,8 +323,7 @@ exports.update = async (req, res) => {
       fecha_finalizacion_estimada,
       estado,
       progreso,
-      nro,
-      imagen_url
+      nro
     } = req.body;
 
     const updateData = {
@@ -338,8 +346,7 @@ exports.update = async (req, res) => {
       fecha_finalizacion_estimada,
       estado,
       progreso,
-      nro,
-      imagen_url
+      nro
     };
 
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
@@ -488,6 +495,133 @@ exports.asignarInspector = async (req, res) => {
   } catch (err) {
     res.status(500).send({
       message: err.message || "Ocurrió un error al asignar el inspector."
+    });
+  }
+};
+
+// Upload a contract for an Obra
+exports.uploadContrato = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!req.file) {
+      return res.status(400).send({ message: "No se adjuntó ningún archivo de contrato." });
+    }
+
+    const obra = await Obra.findByPk(id);
+
+    if (!obra) {
+      return res.status(404).send({ message: `No se encontró la Obra con id=${id}.` });
+    }
+
+    // Assuming you want to store the path relative to the public folder
+    const relativePath = req.file.path.split('public')[1].replace(/\\/g, '/');
+
+    // Create Archivo entry
+    const archivo = await Archivo.create({
+      nombre_original: req.file.originalname,
+      nombre_guardado: req.file.filename,
+      ruta_archivo: relativePath,
+      mime_type: req.file.mimetype,
+      tamano_archivo: req.file.size,
+      obra_id: id,
+      tipo: 'file'
+    });
+
+    // Create Contrato entry, linking to Archivo and Obra
+    // Assuming 'nombre' and 'orden' are sent in req.body for the contract
+    const { nombre, orden } = req.body;
+    await Contrato.create({
+      nombre: nombre || req.file.originalname, // Use original filename as default name
+      orden: orden || 0, // Default order to 0
+      obra_id: id,
+      archivo_id: archivo.id
+    });
+
+    // Recalculate progress based on uploaded contracts
+    const newProgreso = await updateObraProgress(id);
+
+    res.status(200).send({ message: "Contrato subido exitosamente.", newProgreso: newProgreso });
+  } catch (err) {
+    console.error("Error al subir el contrato:", err);
+    res.status(500).send({
+      message: err.message || "Ocurrió un error al subir el contrato."
+    });
+  }
+};
+
+// Get all contracts for an Obra
+exports.getContratos = async (req, res) => {
+  try {
+    const obraId = req.params.id;
+    const contratos = await db.Contratos.findAll({
+      where: { obra_id: obraId },
+      include: [{
+        model: db.Archivos,
+        as: 'Archivo',
+        attributes: ['ruta_archivo', 'nombre_original']
+      }]
+    });
+    res.status(200).send(contratos);
+  } catch (err) {
+    console.error("Error al obtener contratos:", err);
+    res.status(500).send({
+      message: err.message || "Ocurrió un error al obtener los contratos."
+    });
+  }
+};
+
+// Helper function to calculate and update obra progress
+const updateObraProgress = async (obraId) => {
+  const obra = await Obra.findByPk(obraId);
+  if (!obra) {
+    throw new Error(`Obra con id=${obraId} no encontrada.`);
+  }
+
+  const uploadedContractsCount = await Contrato.count({ where: { obra_id: obraId } });
+  const totalContracts = obra.cantidad_contratos || 1; // Default to 1 to avoid division by zero
+  const newProgreso = Math.min(100, Math.round((uploadedContractsCount / totalContracts) * 100));
+
+  obra.progreso = newProgreso;
+  try {
+    await obra.save();
+  } catch (saveErr) {
+    console.error(`Error saving obra progress for obraId=${obraId}:`, saveErr);
+    // Re-throw the error so it's caught by the main uploadContrato catch block
+    throw saveErr;
+  }
+  return newProgreso;
+};
+
+// Delete a contract from an Obra
+exports.deleteContrato = async (req, res) => {
+  try {
+    const { obraId, contratoId } = req.params;
+
+    const contrato = await Contrato.findOne({
+      where: { id: contratoId, obra_id: obraId }
+    });
+
+    if (!contrato) {
+      return res.status(404).send({ message: `No se encontró el contrato con id=${contratoId} para la obra con id=${obraId}.` });
+    }
+
+    const archivoId = contrato.archivo_id;
+
+    // Delete the Contrato
+    await Contrato.destroy({ where: { id: contratoId } });
+
+    // Delete the associated Archivo
+    if (archivoId) {
+      await Archivo.destroy({ where: { id: archivoId } });
+    }
+
+    const newProgreso = await updateObraProgress(obraId);
+    res.status(200).send({ message: "Contrato eliminado exitosamente.", newProgreso: newProgreso });
+  } catch (err) {
+    console.error("Error al eliminar el contrato:", err);
+    res.status(500).send({
+      message: err.message || "Ocurrió un error al eliminar el contrato."
     });
   }
 };

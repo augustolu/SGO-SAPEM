@@ -1,5 +1,6 @@
 
 const { authJwt } = require("../middleware");
+const upload = require("../middleware/upload");
 const obras = require("../controllers/obra.controller.js");
 
 module.exports = function(app) {
@@ -31,4 +32,13 @@ module.exports = function(app) {
 
   // Asignar un inspector a una obra
   app.post("/obras/asignar-inspector", [authJwt.verifyToken, authJwt.isSupervisorOrAdmin], obras.asignarInspector);
+
+  // Upload a contract for an Obra
+  app.post("/obras/:id/upload-contrato", [authJwt.verifyToken, upload], obras.uploadContrato);
+
+  // Retrieve all contracts for an Obra
+  app.get("/obras/:id/contratos", [authJwt.verifyToken], obras.getContratos);
+
+  // Delete a contract from an Obra
+  app.delete("/obras/:obraId/contratos/:contratoId", [authJwt.verifyToken], obras.deleteContrato);
 };

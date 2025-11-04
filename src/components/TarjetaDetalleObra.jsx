@@ -61,8 +61,18 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
 
 
 
-  const handleContratoUploadSuccess = (newProgreso) => {
+  const handleContratoUploadSuccess = async (newProgreso) => {
+    console.log('TarjetaDetalleObra: handleContratoUploadSuccess received newProgreso:', newProgreso);
     setCurrentObraProgreso(newProgreso);
+    // Re-fetch the entire obra to ensure all details are up-to-date
+    try {
+      const response = await api.get(`/obras/${obra.id}`);
+      console.log('TarjetaDetalleObra: Re-fetched obra data:', response.data);
+      setObra(response.data);
+      setFormData(response.data);
+    } catch (error) {
+      console.error('Error re-fetching obra after contract update:', error);
+    }
   };
 
   const handleEdit = () => {
