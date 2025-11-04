@@ -1,5 +1,6 @@
 .contrato-upload-container {
-  max-width: 600px;
+  max-width: 900px;
+  right: 50px;
   margin: 0 auto;
   padding: 24px;
   border-radius: 12px;
@@ -55,66 +56,131 @@
   border: 1px solid rgba(198, 40, 40, 0.3);
 }
 
-/* Progress section mejorada */
+/* Progress section mejorada - VERSIÓN ACTUALIZADA */
 .progress-section {
   margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.9);
 }
 
-.progress-percentage {
-  font-weight: 700;
-  color: #4fc3f7;
-  font-size: 1.2rem; /* Increased font size */
-  text-shadow: 0 0 8px rgba(79, 195, 247, 0.6); /* Subtle glow effect */
+.progress-bar-container {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .progress-bar {
   width: 100%;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  overflow: hidden;
+  height: 100%;
+  background: transparent;
+  border-radius: 12px;
   position: relative;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4fc3f7, #29b6f6);
-  border-radius: 6px;
-  transition: width 0.5s ease-in-out;
-  box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+  background: linear-gradient(90deg, 
+    #4fc3f7 0%, 
+    #29b6f6 50%, 
+    #0288d1 100%);
+  border-radius: 12px;
+  transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 
+    0 0 20px rgba(79, 195, 247, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+  min-width: 50px; /* Asegura espacio para el número */
 }
 
-.progress-fill::after {
+.progress-fill::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 0;
   right: 0;
+  bottom: 0;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(255, 255, 255, 0.3) 50%, 
+    rgba(255, 255, 255, 0.4) 50%, 
     transparent 100%);
-  animation: shimmer 2s infinite;
+  animation: shimmer 2.5s infinite;
+  transform: translateX(-100%);
+}
+
+.progress-percentage {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 2;
+  letter-spacing: 0.5px;
+}
+
+/* Indicador de progreso flotante cuando la barra es pequeña */
+.progress-indicator {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.75rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 8px;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+  transition: all 0.3s ease;
 }
 
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
+}
+
+/* Efecto de pulso para la barra cuando está animándose */
+.progress-fill.animating {
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(79, 195, 247, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(79, 195, 247, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
 }
 
 .upload-section {
@@ -131,10 +197,11 @@
 .file-input {
   position: absolute;
   left: -9999px;
-  width: 1px;
-  height: 1px;
+  width: 0;
+  height: 0;
   overflow: hidden;
   opacity: 0;
+  visibility: hidden;
 }
 
 .file-input-label {
@@ -175,7 +242,7 @@
 }
 
 .file-icon::before {
-  content: "📎";
+  content: "";
 }
 
 .file-name {
@@ -372,7 +439,7 @@
 }
 
 .empty-icon::before {
-  content: "📄";
+  content: "";
   font-size: 2rem;
   opacity: 0.5;
 }
@@ -403,5 +470,18 @@
 
   .contract-name {
     word-break: break-word;
+  }
+  
+  .progress-section {
+    padding: 16px;
+  }
+  
+  .progress-fill {
+    padding-right: 8px;
+    min-width: 40px;
+  }
+  
+  .progress-percentage {
+    font-size: 0.7rem;
   }
 }

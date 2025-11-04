@@ -172,21 +172,32 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
       )}
 
       <div className="progress-section">
-        <div className="progress-header">
-          <span>Progreso de carga</span>
-          <span className="progress-percentage">
-            <AnimatedProgressNumber
-              targetValue={uploadProgress}
-              isAnimating={isProgressAnimating}
-              onAnimationComplete={handleAnimationComplete}
-            />%
-          </span>
-        </div>
-        <div className="progress-bar">
-          <div 
-            className="progress-fill" 
-            style={{ width: `${uploadProgress}%` }}
-          ></div>
+        <div className="progress-bar-container">
+          <div className="progress-bar">
+            <div 
+              className={`progress-fill ${isProgressAnimating ? 'animating' : ''}`}
+              style={{ width: `${uploadProgress}%` }}
+            >
+              {uploadProgress >= 50 && (
+                <span className="progress-percentage">
+                  <AnimatedProgressNumber
+                    targetValue={uploadProgress}
+                    isAnimating={isProgressAnimating}
+                    onAnimationComplete={handleAnimationComplete}
+                  />
+                </span>
+              )}
+            </div>
+          </div>
+          {uploadProgress < 50 && (
+            <div className="progress-indicator">
+              <AnimatedProgressNumber
+                targetValue={uploadProgress}
+                isAnimating={isProgressAnimating}
+                onAnimationComplete={handleAnimationComplete}
+              />
+            </div>
+          )}
         </div>
       </div>
 

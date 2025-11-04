@@ -394,7 +394,8 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
           </div>
         </div> {/* Closing detalle-obra-card */}
         
-          <div className="info-section">
+          <div className="info-section contratos-section-wrapper">
+            <h3>Contratos</h3>
             <ContratoUpload obraId={obra.id} onContratoUploadSuccess={handleContratoUploadSuccess} />
           </div>
         </>
