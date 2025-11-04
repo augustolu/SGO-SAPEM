@@ -90,7 +90,8 @@ exports.create = async (req, res) => {
       fecha_finalizacion_estimada: req.body.fecha_finalizacion_estimada || null,
       estado: req.body.estado,
       progreso: req.body.progreso || 0,
-      nro: req.body.nro ? Number(req.body.nro) : null
+      nro: req.body.nro ? Number(req.body.nro) : null,
+      imagen_url: req.body.imagen_url, // ¡AÑADIDO!
     };
 
     // LOG PARA VER QUÉ SE INTENTA GUARDAR EN LA BASE DE DATOS

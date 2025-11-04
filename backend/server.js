@@ -73,6 +73,7 @@ require('./routes/representanteLegal.routes')(apiRouter);
 require('./routes/localidad.routes')(apiRouter);
 
 require('./routes/contrato.routes')(apiRouter);
+require('./routes/upload.routes')(apiRouter);
 app.use('/api', apiRouter);
 
 // set port, listen for requests

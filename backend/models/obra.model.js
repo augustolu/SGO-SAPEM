@@ -79,6 +79,10 @@ module.exports = (sequelize, Sequelize) => {
     },
     longitude: {
       type: Sequelize.DECIMAL(11, 8)
+    },
+    imagen_url: { // ¡CAMPO AÑADIDO!
+      type: Sequelize.STRING(255),
+      allowNull: true
     }
   }, {
     timestamps: false
