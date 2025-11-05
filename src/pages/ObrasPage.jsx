@@ -221,7 +221,7 @@ const ObraCard = ({ obra }) => {
             <p>Progreso:</p>
             <div className="progress-display">
               <div className="progress-bar-container">
-                <div className="progress-bar" style={{ width: `${obra.progreso || 0}%` }}></div>
+                <div className="progress-bar" style={{ width: `${obra.progreso || 0}%`, height: '100%', backgroundColor: '#84bef5ff' }}></div>
               </div>
               <span className="progress-text">{obra.progreso || 0}%</span>
             </div>
@@ -580,8 +580,8 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
                                     {new Date(obra.fecha_finalizacion_estimada).toLocaleDateString('es-AR')}
                                 </span>
                                 <div className="reminder-progress">
-                                    <div className="progress-bar-reminder-container">
-                                        <div className="progress-bar-reminder" style={{ width: `${obra.progreso || 0}%` }}></div>
+                                    <div className="progress-bar-reminder-container" style={{ backgroundColor: '#3A475C' }}>
+                                        <div className="progress-bar-reminder" style={{ width: `${obra.progreso || 0}%`, height: '100%', backgroundColor: '#0D99FF' }}></div>
                                     </div>
                                     <span className="progress-text">{obra.progreso || 0}%</span>
                                 </div>

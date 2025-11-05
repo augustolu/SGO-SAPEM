@@ -619,7 +619,7 @@ html, body {
 }
 
 .progress-bar-container {
-  background-color: var(--bg-primary);
+  background-color: var(--bg-tertiary); /* Cambiado para que el fondo sea visible */
   border-radius: 6px;
   height: 4px;
   overflow: hidden;
@@ -686,7 +686,7 @@ html, body {
 /* ========================================================================== */
 
 .right-column {
-  width: 375px;
+  width: 410px;
   flex-shrink: 0;
   position: relative;
   transition: all var(--transition-normal);
@@ -823,14 +823,14 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100px;
+  width: 150px; /* Aumentado para hacer la barra más larga */
   flex-shrink: 0;
 }
 
 .progress-bar-reminder-container {
   width: 100%;
-  background-color: var(--bg-tertiary);
-  border-radius: 4px;
+  background-color: var(--bg-primary); /* Cambiado para que contraste con el fondo */
+  border-radius: 6px;
   height: 4px;
   overflow: hidden;
 }
