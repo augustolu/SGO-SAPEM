@@ -174,49 +174,39 @@ exports.findAll = async (req, res) => {
       condition.inspector_id = req.userId;
     }
 
-    const data = await Obra.findAll({ 
+    const obras = await Obra.findAll({
       where: condition,
       include: [
-        {
-          model: db.Contribuyentes,
-          as: 'Contribuyente',
-          attributes: ['nombre'],
-          required: false
-        },
-        {
-          model: db.Localidades,
-          as: 'Localidad',
-          attributes: ['nombre'],
-          required: false
-        },
-        {
-          model: db.RepresentantesLegales,
-          as: 'RepresentanteLegal',
-          attributes: ['nombre'],
-          required: false
-        },
-        {
-          model: db.Usuarios,
-          as: 'Usuario',
-          attributes: ['nombre'],
-          required: false
-        }
-      ],
-      raw: true,
-      nest: true
+        { model: db.Contribuyentes, as: 'Contribuyente', attributes: ['nombre'], required: false },
+        { model: db.Localidades, as: 'Localidad', attributes: ['nombre'], required: false },
+        { model: db.RepresentantesLegales, as: 'RepresentanteLegal', attributes: ['nombre'], required: false },
+        { model: db.Usuarios, as: 'Usuario', attributes: ['nombre'], required: false }
+      ]
     });
 
-    const obrasMapeadas = data.map(obra => ({
-      ...obra,
-      progreso: obra.progreso,
-      contratista_nombre: obra.Contribuyente?.nombre,
-      localidad_nombre: obra.Localidad?.nombre,
-      rep_legal_nombre: obra.RepresentanteLegal?.nombre,
-      inspector_nombre: obra.Usuario?.nombre,
-      Contribuyente: undefined, Localidad: undefined, RepresentanteLegal: undefined, Usuario: undefined
+    const obrasConProgreso = await Promise.all(obras.map(async (obra) => {
+      const uploadedContractsCount = await Contrato.count({ where: { obra_id: obra.id } });
+      const totalContracts = obra.cantidad_contratos > 0 ? obra.cantidad_contratos : 1;
+      const newProgreso = Math.min(100, Math.round((uploadedContractsCount / totalContracts) * 100));
+      
+      // Actualizamos la instancia de la obra en la base de datos
+      if (obra.progreso !== newProgreso) {
+        await obra.update({ progreso: newProgreso });
+      }
+
+      const obraJSON = obra.toJSON();
+
+      return {
+        ...obraJSON,
+        progreso: newProgreso,
+        contratista_nombre: obraJSON.Contribuyente?.nombre,
+        localidad_nombre: obraJSON.Localidad?.nombre,
+        rep_legal_nombre: obraJSON.RepresentanteLegal?.nombre,
+        inspector_nombre: obraJSON.Usuario?.nombre,
+      };
     }));
 
-    res.send(obrasMapeadas);
+    res.send(obrasConProgreso);
   } catch (err) {
     res.status(500).send({
       message: err.message || "Some error occurred while retrieving obras."

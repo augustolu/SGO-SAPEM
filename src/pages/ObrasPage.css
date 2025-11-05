@@ -619,7 +619,6 @@ html, body {
 }
 
 .progress-bar-container {
-  width: 100%;
   background-color: var(--bg-primary);
   border-radius: 6px;
   height: 4px;
@@ -634,13 +633,14 @@ html, body {
   transition: width 0.3s ease;
 }
 
-.progress-bar-container span {
-  position: absolute;
-  right: 0;
-  top: -18px;
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 0.75rem;
+.progress-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-display .progress-bar-container {
+  flex-grow: 1;
 }
 
 /* Footer de la tarjeta - Etiquetas más juntas */

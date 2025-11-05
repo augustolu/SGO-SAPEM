@@ -201,6 +201,7 @@ const getPlazoStatus = (fechaFinEstimado) => {
 
 // --- Obra Card --- //
 const ObraCard = ({ obra }) => {
+  console.log('Obra data:', obra);
   const plazoStatus = getPlazoStatus(obra.fecha_finalizacion_estimada);
 
   return (
@@ -218,9 +219,11 @@ const ObraCard = ({ obra }) => {
           <h3>{obra.establecimiento}</h3>
           <div className="card-body">
             <p>Progreso:</p>
-            <div className="progress-bar-container">
-              <div className="progress-bar" style={{ width: `${obra.progreso || 0}%` }}></div>
-              <span>{obra.progreso || 0}%</span>
+            <div className="progress-display">
+              <div className="progress-bar-container">
+                <div className="progress-bar" style={{ width: `${obra.progreso || 0}%` }}></div>
+              </div>
+              <span className="progress-text">{obra.progreso || 0}%</span>
             </div>
           </div>
           <div className="card-footer">
