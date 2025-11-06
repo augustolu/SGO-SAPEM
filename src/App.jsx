@@ -12,9 +12,7 @@ function App() {
   const { resetSessionTimeout } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    resetSessionTimeout();
-  }, [location, resetSessionTimeout]);
+
 
   useEffect(() => {
     const activityEvents = ['click', 'keypress', 'scroll', 'mousemove'];

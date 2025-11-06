@@ -51,11 +51,59 @@ const capitalize = (s) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
+// --- Role Selector Component ---
+const RoleSelector = ({ user, roles, onRoleChange, isOpen, onToggle }) => {
+  const selectorRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (selectorRef.current && !selectorRef.current.contains(event.target)) {
+        if (isOpen) onToggle();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, onToggle]);
+
+  const handleSelectRole = (roleName) => {
+    onRoleChange(user.id, roleName);
+    onToggle(); // Close dropdown on selection
+  };
+
+  const selectableRoles = roles.filter(role => ['Inspector', 'Supervisor', 'Pendiente'].includes(role.nombre));
+
+  return (
+    <div className="role-selector-container" ref={selectorRef}>
+      <button 
+        className={`user-role-tag role-${user.role?.nombre.toLowerCase().replace(/\s+/g, '-')}`}
+        onClick={onToggle}
+      >
+        {user.role ? user.role.nombre : 'Sin rol'}
+        <i className={`arrow-icon-select ${isOpen ? 'is-open' : ''}`}></i>
+      </button>
+      {isOpen && (
+        <div className="role-options-dropdown">
+          {selectableRoles.map(role => (
+            <button 
+              key={role.id} 
+              className="role-option"
+              onClick={() => handleSelectRole(role.nombre)}
+            >
+              {role.nombre}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- User Management Modal --- //
 const UserManagementModal = ({ onClose }) => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openSelector, setOpenSelector] = useState(null); // ID of the user whose selector is open
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,7 +134,23 @@ const UserManagementModal = ({ onClose }) => {
     }
   };
 
-  const selectableRoles = roles.filter(role => ['Inspector', 'Supervisor', 'Pendiente'].includes(role.nombre));
+  const toggleSelector = (userId) => {
+    setOpenSelector(openSelector === userId ? null : userId);
+  };
+
+  // Filter out the admin user
+  const filteredUsers = users.filter(user => user.role?.nombre !== 'Administrador General');
+
+  // Sort users to show "Pendiente" first
+  filteredUsers.sort((a, b) => {
+    if (a.role?.nombre === 'Pendiente' && b.role?.nombre !== 'Pendiente') {
+      return -1; // a comes first
+    }
+    if (a.role?.nombre !== 'Pendiente' && b.role?.nombre === 'Pendiente') {
+      return 1; // b comes first
+    }
+    return 0; // maintain original order otherwise
+  });
 
   return (
     <div className="modal-overlay">
@@ -96,27 +160,20 @@ const UserManagementModal = ({ onClose }) => {
           <p>Cargando...</p>
         ) : (
           <ul className="user-list">
-            {users.map(user => (
-              <li key={user.id} className="user-list-item">
+            {filteredUsers.map(user => (
+              <li key={user.id} className={`user-list-item ${openSelector === user.id ? 'is-open' : ''}`}>
                 <div className="user-details">
-                  <span className="user-name">{user.nombre} ({user.email})</span>
-                  <span className={`user-role-tag`}>{user.role ? user.role.nombre : 'Sin rol'}</span>
+                  <span className="user-name">{user.nombre}</span>
+                  <span className="user-email">{user.email}</span>
                 </div>
                 <div className="user-actions">
-                  <select 
-                    value={user.role ? user.role.nombre : ''} 
-                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                    disabled={user.role?.nombre === 'Administrador General'}
-                    className="role-select"
-                  >
-                    {user.role?.nombre === 'Administrador General' ? (
-                      <option value="Administrador General">Administrador General</option>
-                    ) : (
-                      selectableRoles.map(role => (
-                        <option key={role.id} value={role.nombre}>{role.nombre}</option>
-                      ))
-                    )}
-                  </select>
+                  <RoleSelector 
+                    user={user} 
+                    roles={roles} 
+                    onRoleChange={handleRoleChange} 
+                    isOpen={openSelector === user.id}
+                    onToggle={() => toggleSelector(user.id)}
+                  />
                 </div>
               </li>
             ))}
@@ -219,7 +276,7 @@ const ObraCard = ({ obra }) => {
           <h3>{obra.establecimiento}</h3>
           <div className="card-body">
             <p>Progreso:</p>
-            <div className="progress-display">
+            <div className="progress-display" style={{ width: '100%' }}>
               <div className="progress-bar-container">
                 <div className="progress-bar" style={{ width: `${obra.progreso || 0}%`, height: '100%', backgroundColor: '#84bef5ff' }}></div>
               </div>
@@ -687,6 +744,44 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
   );
 };
 
+// --- NUEVO: Componente de Paginación --- //
+const PaginationControls = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  const handlePrev = () => {
+    onPageChange(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNext = () => {
+    onPageChange(prev => Math.min(prev + 1, totalPages));
+  };
+
+  return (
+    <div className="pagination-controls">
+      <button 
+        onClick={handlePrev} 
+        disabled={currentPage === 1}
+        className="pagination-btn"
+      >
+        Anterior
+      </button>
+      <span className="pagination-info">
+        Página {currentPage} de {totalPages}
+      </span>
+      <button 
+        onClick={handleNext} 
+        disabled={currentPage === totalPages}
+        className="pagination-btn"
+      >
+        Siguiente
+      </button>
+    </div>
+  );
+};
+
+
 
 
 // --- Main Page Component --- //
@@ -697,6 +792,8 @@ const ObrasPage = () => {
   const [isCreateObraModalOpen, setCreateObraModalOpen] = useState(false);
   const [isRightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const { user } = useAuth();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 30;
   const [filterConfig, setFilterConfig] = useState({
     status: null,
     sortBy: 'fecha_inicio_desc',
@@ -736,7 +833,12 @@ const ObrasPage = () => {
   const isAdmin = user.role === 'Administrador General';
   const canCreateObra = isAdmin || user.role === 'Supervisor';
 
-  const obrasToShow = useMemo(() => {
+  // Cuando cambian los filtros, volvemos a la primera página.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterConfig]);
+
+  const filteredAndSortedObras = useMemo(() => {
     let filteredObras = isAdmin ? obras : obras.filter(obra => obra.inspector_id === user.id);
 
     if (filterConfig.searchTerm) {
@@ -794,7 +896,12 @@ const ObrasPage = () => {
     return filteredObras;
   }, [obras, filterConfig, isAdmin, user.id]);
 
+  const totalPages = Math.ceil(filteredAndSortedObras.length / itemsPerPage);
 
+  const obrasToShow = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedObras.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedObras, currentPage, itemsPerPage]);
   if (loading || !user) {
     return <div className="loading-screen">Cargando...</div>;
   }
@@ -840,6 +947,11 @@ const ObrasPage = () => {
                   <p className="no-obras-message">No hay obras para mostrar.</p>
                 )}
               </div>
+              <PaginationControls 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
             <RightPanel 
               obras={obras} 
