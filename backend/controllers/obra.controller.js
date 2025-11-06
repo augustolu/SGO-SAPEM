@@ -1,5 +1,7 @@
 const db = require("../models");
 const Contrato = db.Contratos;
+const xlsx = require('xlsx');
+const fs = require('fs');
 const Archivo = db.Archivos;
 
 // DEBUG: Imprime todos los modelos disponibles en el objeto db. Revisa la consola de tu servidor.
@@ -131,6 +133,145 @@ exports.create = async (req, res) => {
     res.status(500).send({
       message: err.message || "Ocurrió un error al crear la Obra."
     });
+  }
+};
+
+// --- AÑADE ESTA FUNCIÓN COMPLETA AL FINAL DEL ARCHIVO ---
+
+exports.uploadExcel = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No se subió ningún archivo.' });
+  }
+
+  const filePath = req.file.path;
+  // Usamos una transacción de Sequelize para asegurar que todo o nada se importe
+  const transaction = await db.sequelize.transaction(); 
+
+  try {
+    // 1. Leer el archivo Excel
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    // Convertir la hoja a JSON. Los nombres de las columnas deben coincidir
+    const data = xlsx.utils.sheet_to_json(sheet);
+
+    if (data.length === 0) {
+      fs.unlinkSync(filePath); // Limpiar el archivo subido
+      return res.status(400).json({ message: 'El archivo Excel está vacío.' });
+    }
+
+    let importedCount = 0;
+    const errors = [];
+
+    // 2. Procesar cada fila del Excel
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNumber = i + 2; // (fila 1 es cabecera, empezamos en la 2)
+
+      // Nombres de columnas de tu Excel:
+      // % CAN NRO ESTABLECIMINETO LOCALIDAD DETALLE MONTO SAPEM MONTO SUB AF PLAZO REP LEGAL INSPECTOR
+      
+      try {
+        // 3. Lógica "Buscar o Crear" para tus tablas relacionadas
+        
+        // LOCALIDAD
+        let localidadId = null;
+        if (row.LOCALIDAD && String(row.LOCALIDAD).trim() !== '') {
+          const [localidad] = await db.Localidades.findOrCreate({
+            where: { nombre: String(row.LOCALIDAD).trim() },
+            defaults: { nombre: String(row.LOCALIDAD).trim() },
+            transaction
+          });
+          localidadId = localidad.id;
+        }
+
+        // REPRESENTANTE LEGAL
+        let representanteId = null;
+        if (row['REP LEGAL'] && String(row['REP LEGAL']).trim() !== '') {
+          const [representante] = await db.RepresentantesLegales.findOrCreate({
+            where: { nombre: String(row['REP LEGAL']).trim() },
+            defaults: { nombre: String(row['REP LEGAL']).trim() },
+            transaction
+          });
+          representanteId = representante.id;
+        }
+
+        // INSPECTOR (Este solo lo buscamos, no lo creamos desde Excel)
+        let inspectorId = null;
+        if (row.INSPECTOR && String(row.INSPECTOR).trim() !== '') {
+          const inspector = await db.Usuarios.findOne({
+            where: { nombre: String(row.INSPECTOR).trim() },
+            transaction
+          });
+          
+          if (inspector) {
+            inspectorId = inspector.id;
+          } else {
+            errors.push(`Fila ${rowNumber}: El inspector '${row.INSPECTOR}' no fue encontrado en la base de datos.`);
+          }
+        }
+        
+        // 4. Mapear campos a tu modelo 'Obras' (según obra.model.js)
+        
+        // Tu modelo 'Obras' requiere 'categoria' y 'estado' (NOT NULL)
+        // Debes decidir un valor por defecto si no vienen en el Excel
+        const categoria = row.CATEGORIA || 'varios';
+        const estado = row.ESTADO || 'En ejecución';
+
+        const obraData = {
+          nro: row.NRO || null,
+          establecimiento: row.ESTABLECIMINETO || 'Sin especificar', // NOT NULL
+          detalle: row.DETALLE || null,
+          localidad_id: localidadId,
+          categoria: categoria, // NOT NULL
+          estado: estado, // NOT NULL
+          plazo: row.PLAZO || null, // Tu modelo lo llama 'plazo'
+          monto_sapem: row['MONTO SAPEM'] || 0,
+          monto_sub: row['MONTO SUB'] || 0,
+          af: row.AF || 0,
+          representante_legal_id: representanteId,
+          inspector_id: inspectorId,
+          progreso: row['%'] || 0,
+          // 'can' no parece estar en tu modelo `obra.model.js`
+        };
+
+        // 5. Crear la Obra dentro de la transacción
+        await Obra.create(obraData, { transaction });
+        importedCount++;
+
+      } catch (rowError) {
+        errors.push(`Error en fila ${rowNumber}: ${rowError.message}`);
+      }
+    }
+
+    // 6. Finalizar la transacción
+    if (errors.length > 0) {
+      // Si hubo errores en algunas filas, deshacemos *todo*
+      await transaction.rollback();
+      res.status(400).json({ 
+        message: 'Ocurrieron errores al procesar las filas. No se importó ninguna obra.', 
+        errors,
+        importedCount: 0 
+      });
+    } else {
+      // Si todo salió bien, confirmamos los cambios
+      await transaction.commit();
+      res.status(201).json({ 
+        message: `¡Éxito! Se importaron ${importedCount} obras.`, 
+        importedCount,
+        errors: []
+      });
+    }
+
+  } catch (error) {
+    // Error general (ej. no se pudo leer el archivo)
+    await transaction.rollback();
+    console.error('Error en la importación de Excel:', error);
+    res.status(500).json({ message: 'Error en el servidor al procesar el archivo.', errors: [error.message], importedCount: 0 });
+  
+  } finally {
+    // 7. Siempre eliminar el archivo temporal
+    fs.unlinkSync(filePath);
   }
 };
 

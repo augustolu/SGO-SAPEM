@@ -1,6 +1,7 @@
 
 const { authJwt } = require("../middleware");
 const upload = require("../middleware/upload");
+const uploadExcel = require("../middleware/uploadExcel.js");
 const obras = require("../controllers/obra.controller.js");
 
 module.exports = function(app) {
@@ -14,6 +15,13 @@ module.exports = function(app) {
 
   // Create a new Obra
   app.post("/obras", [authJwt.verifyToken, authJwt.isSupervisorOrAdmin], obras.create);
+
+  // Create multiple Obras from Excel file
+  app.post(
+    "/obras/upload-excel",
+    [authJwt.verifyToken, authJwt.isSupervisorOrAdmin, uploadExcel.single('excel_file')], 
+    obras.uploadExcel
+  );
 
   // Retrieve all Obras
   app.get("/obras", [authJwt.verifyToken], obras.findAll);

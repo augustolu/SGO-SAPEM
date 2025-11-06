@@ -1,0 +1,448 @@
+/* ========================================================================== */
+/* ============================ VARIABLES CSS =============================== */
+/* ========================================================================== */
+:root {
+  /* Colores del modal - Coherentes con el tema principal */
+  --modal-bg: #2A3447;
+  --modal-overlay-bg: rgba(34, 43, 58, 0.92);
+  --modal-text-primary: #FFFFFF;
+  --modal-text-secondary: #A0AEC0;
+  --modal-border: #3A475C;
+  --modal-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  
+  /* Colores de botones */
+  --modal-confirm-bg: #0D99FF;
+  --modal-confirm-hover-bg: #0b8ae6;
+  --modal-confirm-active-bg: #097ccc;  
+  --modal-cancel-bg: #6B7280; /* Gris oscuro para el fondo */
+  --modal-cancel-hover-bg: rgba(255, 255, 255, 0.05);
+  --modal-cancel-active-bg: rgba(255, 255, 255, 0.1);
+  
+  /* Efectos visuales */
+  --modal-glow: 0 0 0 1px rgba(13, 153, 255, 0.1);
+  --modal-glow-hover: 0 0 0 1px rgba(13, 153, 255, 0.3);
+}
+
+/* ========================================================================== */
+/* ============================ OVERLAY PRINCIPAL =========================== */
+/* ========================================================================== */
+
+.confirmation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--modal-overlay-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: modalOverlayEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.confirmation-modal-overlay.closing {
+  animation: modalOverlayExit 0.3s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* ========================================================================== */
+/* ============================ CONTENIDO MODAL ============================= */
+/* ========================================================================== */
+
+.confirmation-modal-content {
+  background: var(--modal-bg);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: var(--modal-shadow);
+  width: 90%;
+  max-width: 440px;
+  text-align: center;
+  animation: modalContentEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid var(--modal-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.confirmation-modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--modal-confirm-bg), transparent);
+  opacity: 0.6;
+}
+
+.confirmation-modal-overlay.closing .confirmation-modal-content {
+  animation: modalContentExit 0.3s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.confirmation-modal-content h3 {
+  margin: 0 0 1rem 0;
+  color: var(--modal-text-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.confirmation-modal-content p {
+  margin: 0 0 2rem 0;
+  color: var(--modal-text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* ========================================================================== */
+/* ============================ ACCIONES MODAL ============================== */
+/* ========================================================================== */
+
+.confirmation-modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.confirmation-modal-actions button {
+  padding: 0.875rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  min-width: 120px;
+  letter-spacing: 0.02em;
+}
+
+.confirmation-modal-actions button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.confirmation-modal-actions button:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* Botón de Confirmar */
+.btn-confirm {
+  background: var(--modal-confirm-bg);
+  color: white;
+  box-shadow: var(--modal-glow);
+  position: relative;
+}
+
+.btn-confirm:hover {
+  background: var(--modal-confirm-hover-bg);
+  transform: translateY(-2px);
+  box-shadow: var(--modal-glow-hover), 0 8px 25px rgba(13, 153, 255, 0.25);
+}
+
+.btn-confirm:active {
+  background: var(--modal-confirm-active-bg);
+  transform: translateY(0);
+  box-shadow: var(--modal-glow), 0 4px 12px rgba(13, 153, 255, 0.3);
+}
+
+/* Efecto de pulso para confirmación exitosa */
+.btn-confirm.success {
+  animation: successPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Botón de Cancelar */
+.btn-cancel {
+  background: var(--modal-cancel-bg);
+  color: var(--modal-text-primary); /* Texto blanco para contraste */
+  border: 1px solid transparent; /* Sin borde visible */
+  position: relative;
+}
+
+.btn-cancel:hover {
+  background: #5a626f; /* Un gris un poco más claro al pasar el mouse */
+  color: var(--modal-text-primary);
+  border-color: var(--modal-text-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-cancel:active {
+  background: var(--modal-cancel-active-bg);
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================================================== */
+/* ============================ ANIMACIONES ================================= */
+/* ========================================================================== */
+
+/* Animación de entrada del overlay */
+@keyframes modalOverlayEnter {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* Animación de salida del overlay */
+@keyframes modalOverlayExit {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+/* Animación de entrada del contenido */
+@keyframes modalContentEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Animación de salida del contenido */
+@keyframes modalContentExit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+}
+
+/* Animación de éxito para confirmación */
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: var(--modal-glow);
+  }
+  25% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px rgba(13, 153, 255, 0.4);
+  }
+  50% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(13, 153, 255, 0.2);
+  }
+  75% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 12px rgba(13, 153, 255, 0.1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: var(--modal-glow-hover), 0 8px 25px rgba(13, 153, 255, 0.25);
+  }
+}
+
+/* Animación de shake para errores o advertencias */
+@keyframes shakeWarning {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.confirmation-modal-content.warning {
+  animation: shakeWarning 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ========================================================================== */
+/* ============================ EFECTO DE PARTÍCULAS ======================== */
+/* ========================================================================== */
+
+.confirmation-modal-content::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(13, 153, 255, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.confirmation-modal-content.success::after {
+  animation: particleRipple 0.8s ease-out;
+}
+
+@keyframes particleRipple {
+  0% {
+    opacity: 1;
+    transform: scale(0.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* ========================================================================== */
+/* ============================ ESTADOS ESPECIALES ========================== */
+/* ========================================================================== */
+
+/* Modal de peligro/destructivo */
+.confirmation-modal-content.danger .btn-confirm {
+  background: #F56565;
+  box-shadow: 0 0 0 1px rgba(245, 101, 101, 0.1);
+}
+
+.confirmation-modal-content.danger .btn-confirm:hover {
+  background: #E53E3E;
+  box-shadow: 0 0 0 1px rgba(245, 101, 101, 0.3), 0 8px 25px rgba(245, 101, 101, 0.25);
+}
+
+.confirmation-modal-content.danger::before {
+  background: linear-gradient(90deg, transparent, #F56565, transparent);
+}
+
+/* Modal de éxito */
+.confirmation-modal-content.success .btn-confirm {
+  background: #48BB78;
+  box-shadow: 0 0 0 1px rgba(72, 187, 120, 0.1);
+}
+
+.confirmation-modal-content.success .btn-confirm:hover {
+  background: #38A169;
+  box-shadow: 0 0 0 1px rgba(72, 187, 120, 0.3), 0 8px 25px rgba(72, 187, 120, 0.25);
+}
+
+.confirmation-modal-content.success::before {
+  background: linear-gradient(90deg, transparent, #48BB78, transparent);
+}
+
+/* ========================================================================== */
+/* ============================ RESPONSIVE ================================== */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+  .confirmation-modal-content {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+    max-width: none;
+    width: calc(100% - 2rem);
+    border-radius: 16px;
+  }
+  
+  .confirmation-modal-content h3 {
+    font-size: 1.3rem;
+  }
+  
+  .confirmation-modal-content p {
+    font-size: 0.95rem;
+  }
+  
+  .confirmation-modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+  
+  .confirmation-modal-actions button {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmation-modal-content {
+    padding: 1.75rem 1.25rem;
+    border-radius: 14px;
+  }
+  
+  .confirmation-modal-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .confirmation-modal-content p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* ========================================================================== */
+/* ============================ ACCESIBILIDAD =============================== */
+/* ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmation-modal-overlay,
+  .confirmation-modal-content,
+  .confirmation-modal-actions button {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.confirmation-modal-actions button:focus {
+  outline: 2px solid var(--modal-confirm-bg);
+  outline-offset: 2px;
+}
+
+.confirmation-modal-actions button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ========================================================================== */
+/* ============================ MODOS ESPECIALES ============================ */
+/* ========================================================================== */
+
+/* Modo de carga para operaciones asíncronas */
+.confirmation-modal-content.loading .btn-confirm {
+  position: relative;
+  color: transparent;
+}
+
+.confirmation-modal-content.loading .btn-confirm::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: buttonSpin 0.8s linear infinite;
+}
+
+@keyframes buttonSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Deshabilitar interacción durante carga */
+.confirmation-modal-content.loading .confirmation-modal-actions button {
+  pointer-events: none;
+  opacity: 0.7;
+}

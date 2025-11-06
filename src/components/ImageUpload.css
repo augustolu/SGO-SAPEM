@@ -1,6 +1,15 @@
 /* ImageUpload.css */
 .image-upload {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --surface-color: #1F2937; /* Más oscuro, como el fondo del wizard */
+  --border-color: #4B5563;
+  --text-primary-color: #F3F4F6;
+  --text-secondary-color: #9CA3AF;
+  --primary-color: #3B82F6;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  width: 100%;
+  height: 100%;
 }
 
 /* Input oculto */
@@ -12,27 +21,34 @@
 .image-upload__label {
   display: block;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  height: 100%;
 }
 
 .image-upload__trigger {
-  padding: 12px 20px;
-  border: 2px dashed #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 32px;
+  border: 2px dashed var(--border-color);
   border-radius: 8px;
   text-align: center;
-  transition: all 0.2s ease;
-  background: #fafafa;
+  transition: all 0.3s ease;
+  background: var(--surface-color);
 }
 
 .image-upload__trigger:hover {
-  border-color: #1976d2;
-  background: #f3f7ff;
+  border-color: var(--primary-color);
+  background: #4a5568; /* Un poco más claro que surface */
+  transform: translateY(-2px);
 }
 
 .image-upload__text {
-  color: #666;
+  color: var(--text-secondary-color);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 /* Preview de imagen */

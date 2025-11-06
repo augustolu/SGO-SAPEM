@@ -33,6 +33,9 @@
 }
 
 .contracts-count {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: linear-gradient(135deg, rgba(79, 195, 247, 0.15) 0%, rgba(41, 182, 246, 0.15) 100%);
   color: #4fc3f7;
   padding: 8px 16px;
@@ -42,6 +45,7 @@
   border: 1px solid rgba(79, 195, 247, 0.2);
   backdrop-filter: blur(10px);
 }
+
 
 .message {
   padding: 16px;
@@ -127,7 +131,7 @@
     #29b6f6 50%, 
     #0288d1 100%);
   border-radius: 14px;
-  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 5s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 
     0 0 30px rgba(79, 195, 247, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
@@ -185,7 +189,7 @@
 }
 
 .progress-fill.animating {
-  animation: progressPulse 0.8s ease-out;
+  animation: progressPulse 5s ease-out;
 }
 
 @keyframes progressPulse {

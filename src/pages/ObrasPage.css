@@ -1096,6 +1096,92 @@ html, body {
   text-decoration: none !important;
 }
 
+/* --- Estilos para ObrasExcelUploader (añadir a ObrasPage.css) --- */
+
+.excel-uploader-container {
+  font-family: var(--font-family);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.excel-uploader-form {
+  display: flex;
+  gap: 10px;
+}
+
+.excel-uploader-form input[type="file"] {
+  display: none; /* Ocultamos el input feo */
+}
+
+.excel-uploader-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.excel-uploader-label:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+.excel-uploader-label.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.excel-uploader-button {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--tag-finalizada); /* Verde */
+  border: none;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.excel-uploader-button:hover {
+  background-color: #38a169;
+}
+
+.excel-uploader-button:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.excel-message {
+  font-size: 0.9rem;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 5px;
+}
+.excel-message.success {
+  color: #48BB78;
+  background-color: rgba(72, 187, 120, 0.1);
+  border: 1px solid #48BB78;
+}
+.excel-message.error {
+  color: #F56565;
+  background-color: rgba(245, 101, 101, 0.1);
+  border: 1px solid #F56565;
+}
+.excel-message.error ul {
+  margin-top: 5px;
+  padding-left: 20px;
+}
+
 /* Botón de cierre del Wizard */
 .modal-header {
   position: relative;

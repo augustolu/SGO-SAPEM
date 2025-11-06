@@ -7,7 +7,10 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import notificationSound from '../assets/notification.mp3';
 import logo from '/uploads/logo.png'; // Importar el logo desde la subcarpeta
+import ConfirmationModal from '../components/ConfirmationModal'; // Importar ConfirmationModal
 import ObraWizardForm from '../components/ObraWizardForm';
+
+import { ObrasExcelUploader } from '../components/ObrasExcelUploader';
 
 // --- Icons --- //
 const FilterIcon = (props) => (
@@ -552,7 +555,7 @@ const CircularTimeChart = ({ percentage, color, size = 40 }) => {
 };
 
 // --- Reminders Panel --- //
-const RemindersPanel = ({ obras, user, onUpdateObra }) => {
+const RemindersPanel = ({ obras, user, onUpdateObra, onOpenDeleteModal }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
   
@@ -579,19 +582,6 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
             return `rgb(255, ${green}, ${blue})`;
         }
         return '#8892b0';
-    };
-  
-    const handleDelete = async (obraId) => {
-      if (window.confirm('¿Está seguro de que desea eliminar el vencimiento de esta obra?')) {
-        try {
-          onUpdateObra(obraId, { fecha_finalizacion_estimada: null });
-          await api.put(`/obras/${obraId}`, { fecha_finalizacion_estimada: null });
-          toast.success('Vencimiento eliminado con éxito.');
-        } catch (error) {
-          console.error('Error deleting due date:', error);
-          toast.error('No se pudo eliminar el vencimiento.');
-        }
-      }
     };
   
     const isAdmin = user.role === 'Administrador General';
@@ -646,8 +636,8 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
                         </Link>
                         <div className="reminder-actions">
                             <CircularTimeChart percentage={timePercentage} color={color} />
-                            {isAdmin && (
-                                <button onClick={() => handleDelete(obra.id)} className="delete-reminder-btn" aria-label="Eliminar vencimiento">
+                            {isAdmin && obra.fecha_finalizacion_estimada && (
+                                <button onClick={() => onOpenDeleteModal(obra.id)} className="delete-reminder-btn" aria-label="Eliminar vencimiento">
                                 <TrashIcon />
                                 </button>
                             )}
@@ -663,7 +653,7 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
     );
   };
 
-  const RightPanel = ({ obras, isCollapsed, onToggleCollapse, user, onUpdateObra }) => (
+  const RightPanel = ({ obras, isCollapsed, onToggleCollapse, user, onUpdateObra, onOpenDeleteModal }) => (
     <div className={`right-column ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="right-column-content-wrapper">
         <div className="reminders-container">
@@ -674,7 +664,7 @@ const RemindersPanel = ({ obras, user, onUpdateObra }) => {
             </button>
           </div>
           <div className="reminders-content">
-            <RemindersPanel obras={obras} user={user} onUpdateObra={onUpdateObra} />
+            <RemindersPanel obras={obras} user={user} onUpdateObra={onUpdateObra} onOpenDeleteModal={onOpenDeleteModal} />
           </div>
         </div>
       </div>
@@ -802,6 +792,34 @@ const ObrasPage = () => {
     category: null,
   });
 
+  const [isDeleteReminderModalOpen, setIsDeleteReminderModalOpen] = useState(false);
+  const [obraToDeleteReminderId, setObraToDeleteReminderId] = useState(null);
+
+  const handleDeleteReminderClick = (obraId) => {
+    setObraToDeleteReminderId(obraId);
+    setIsDeleteReminderModalOpen(true);
+  };
+
+  const confirmDeleteReminder = async () => {
+    if (!obraToDeleteReminderId) return;
+
+    try {
+      handleUpdateObraInState(obraToDeleteReminderId, { fecha_finalizacion_estimada: null });
+      await api.put(`/obras/${obraToDeleteReminderId}`, { fecha_finalizacion_estimada: null });
+      toast.success('Vencimiento eliminado con éxito.');
+    } catch (error) {
+      console.error('Error deleting due date:', error);
+      toast.error('No se pudo eliminar el vencimiento.');
+    } finally {
+      setIsDeleteReminderModalOpen(false);
+      setObraToDeleteReminderId(null);
+    }
+  };
+
+  const handleCloseDeleteReminderModal = () => {
+    setIsDeleteReminderModalOpen(false);
+    setObraToDeleteReminderId(null);
+  };
   const fetchObras = async () => {
     try {
       setLoading(true);
@@ -819,6 +837,13 @@ const ObrasPage = () => {
     audio.play();
     toast.success(`Obra "${newObra.establecimiento}" creada con éxito!`);
     fetchObras();
+  };
+
+  // --- AÑADE ESTA NUEVA FUNCIÓN ---
+  // Esta función se pasará al uploader para refrescar la lista
+  const handleExcelUploadSuccess = () => {
+    toast.success("¡Obras importadas con éxito! Actualizando lista...");
+    fetchObras(); // Re-utiliza tu función de carga
   };
 
   const handleUpdateObraInState = (obraId, updatedFields) => {
@@ -930,12 +955,22 @@ const ObrasPage = () => {
               isAdmin={isAdmin}
             />
             {canCreateObra && (
-              <button 
-                className="btn btn-primary create-obra-btn"
-                onClick={() => setCreateObraModalOpen(true)}
-              >
-                + Crear Nueva Obra
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}> {/* Agrupador */}
+                
+                {/* 1. Tu botón existente */}
+                <button 
+                  className="btn btn-primary create-obra-btn"
+                  onClick={() => setCreateObraModalOpen(true)}
+                >
+                  + Crear Nueva Obra
+                </button>
+
+                {/* 2. El nuevo componente de subida (solo para admins) */}
+                {isAdmin && (
+                  <ObrasExcelUploader onUploadSuccess={handleExcelUploadSuccess} />
+                )}
+              
+              </div>
             )}
           </div>
           <div className="obras-content-area">
@@ -959,12 +994,22 @@ const ObrasPage = () => {
               onToggleCollapse={() => setRightPanelCollapsed(!isRightPanelCollapsed)}
               user={user}
               onUpdateObra={handleUpdateObraInState}
+              onOpenDeleteModal={handleDeleteReminderClick}
             />
           </div>
         </div>
       </main>
       {userModalOpen && <UserManagementModal onClose={() => setUserModalOpen(false)} />}
       {isCreateObraModalOpen && <CreateObraModal onClose={() => setCreateObraModalOpen(false)} onObraCreated={handleObraCreated} />}
+      
+      <ConfirmationModal
+        isOpen={isDeleteReminderModalOpen}
+        onClose={handleCloseDeleteReminderModal}
+        onConfirm={confirmDeleteReminder}
+        title="Eliminar Vencimiento"
+        message="¿Estás seguro de que quieres eliminar el vencimiento de esta obra? Esta acción no se puede deshacer."
+        type="danger"
+      />
     </div>
   );
 };

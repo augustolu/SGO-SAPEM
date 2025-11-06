@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import ConfirmationModal from './ConfirmationModal'; // Importar el nuevo modal
 import './ContratoUpload.css';
 
 const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
@@ -11,6 +12,13 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProgressAnimating, setIsProgressAnimating] = useState(false);
   const [showContracts, setShowContracts] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Estado para el modal
+  const [contractToDelete, setContractToDelete] = useState(null); // Estado para guardar el ID a eliminar
+
+  // NUEVO LOG: Para rastrear el estado del modal en el padre
+  useEffect(() => {
+    console.log(`[ContratoUpload] El estado isModalOpen cambió a: ${isModalOpen}`);
+  }, [isModalOpen]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,15 +72,22 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
     setIsProgressAnimating(false);
   };
 
-  const handleDelete = async (contratoId) => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este contrato?')) {
-      return;
-    }
+  const handleDeleteClick = (contratoId) => {
+    if (uploading) return; // No abrir si ya se está procesando algo
+    setContractToDelete(contratoId); // Guardar el ID del contrato
+    console.log('[ContratoUpload] Abriendo modal para eliminar contrato ID:', contratoId);
+    setIsModalOpen(true); // Abrir el modal
+  };
 
-    setUploading(true);    
+  const confirmDelete = async () => {
+    if (!contractToDelete) return;
+    console.log('[ContratoUpload] confirmDelete iniciado.');
+
+    setUploading(true);
     try {
-      const response = await api.delete(`/obras/${obraId}/contratos/${contratoId}`);
-      
+      const deleteResponse = await api.delete(`/obras/${obraId}/contratos/${contractToDelete}`);
+
+      // Volver a cargar los datos para actualizar la UI sin recargar la página
       const [contractsResponse, obraResponse] = await Promise.all([
         api.get(`/obras/${obraId}/contratos`),
         api.get(`/obras/${obraId}`)
@@ -81,18 +96,38 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
       setContracts(contractsResponse.data);
       setObraDetails(obraResponse.data);
 
-      if (response.data?.newProgreso) {
-        onContratoUploadSuccess(response.data.newProgreso);
+      if (deleteResponse.data?.newProgreso) {
+        onContratoUploadSuccess(deleteResponse.data.newProgreso);
       }
-      
       updateProgress(contractsResponse.data.length, obraResponse.data?.cantidad_contratos || 0);
 
     } catch (error) {
-      console.error('Error al eliminar el contrato:', error);
-      setMessage(`Error al eliminar el contrato: ${error.message || 'Error desconocido'}`);
+      console.error('Error al eliminar el certificado:', error);
+      setMessage(`Error al eliminar el certificado: ${error.message || 'Error desconocido'}`);
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleIncrementTotal = async () => {
+    if (!obraDetails) return;
+
+    const newTotal = (obraDetails.cantidad_contratos || 0) + 1;
+
+    try {
+      const response = await api.put(`/obras/${obraId}`, { cantidad_contratos: newTotal });
+      setObraDetails(response.data);
+      updateProgress(contracts.length, newTotal);
+      setMessage('Cantidad de certificados requeridos actualizada.');
+    } catch (error) {
+      console.error('Error al incrementar la cantidad de certificados:', error);
+      setMessage('Error al actualizar el total de certificados.');
+    }
+  };
+
+  const handleCloseModal = () => {
+    console.log('[ContratoUpload] handleCloseModal llamado. Seteando isModalOpen = false.');
+    setIsModalOpen(false);
   };
 
   const handleUpload = async () => {
@@ -136,8 +171,8 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
       updateProgress(contractsResponse.data.length, obraResponse.data?.cantidad_contratos || 0);
 
     } catch (error) {
-      console.error('Error al subir el contrato:', error);
-      setMessage(`Error al subir el contrato: ${error.message || 'Error desconocido'}`);
+      console.error('Error al subir el certificado:', error);
+      setMessage(`Error al subir el certificado: ${error.message || 'Error desconocido'}`);
     } finally {
       setUploading(false);
     }
@@ -153,9 +188,42 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
   return (
     <div className="contrato-upload-container">
       <div className="upload-header">
-        <h3>Gestión de Contratos</h3>
+        <h3>Gestión de Certificados</h3>
         <div className="contracts-count">
-          {contracts.length} / {totalContractsNeeded} contratos cargados
+          <span>{contracts.length} / {totalContractsNeeded} certificados cargados</span>
+          <button
+            onClick={handleIncrementTotal}
+            className="increment-btn"
+            title="Aumentar cantidad de certificados requeridos"
+            style={{
+              backgroundColor: 'transparent',
+              border: '1px solid #4fc3f7',
+              color: '#4fc3f7',
+              padding: 0,
+              textAlign: 'center',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#81d4fa';
+              e.target.style.color = '#132238';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.color = '#4fc3f7';
+            }}
+          >
+            +
+          </button>
         </div>
       </div>
 
@@ -197,7 +265,7 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
                 {selectedFile ? (
                   <span className="file-name">{selectedFile.name}</span>
                 ) : (
-                  <span>Seleccionar Contrato PDF</span>
+                  <span>Seleccionar Certificado PDF</span>
                 )}
               </div>
             </label>
@@ -214,7 +282,7 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
                 Subiendo...
               </span>
             ) : (
-              'Subir Contrato'
+              'Subir Certificado'
             )}
           </button>
         </div>
@@ -222,7 +290,7 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
 
       {hasReachedLimit && (
         <div className="limit-reached-message">
-          Todos los contratos requeridos han sido cargados
+          Todos los Certificados requeridos han sido cargados
         </div>
       )}
 
@@ -340,10 +408,10 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
           </a>
         </div>
         <button 
-          onClick={() => handleDelete(contrato.id)} 
+          onClick={() => handleDeleteClick(contrato.id)} 
           disabled={uploading}
           className="delete-button"
-          title="Eliminar contrato"
+          title="Eliminar certificado"
           style={{
             background: 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%)',
             color: '#4fc3f7',
@@ -389,9 +457,19 @@ const ContratoUpload = ({ obraId, onContratoUploadSuccess }) => {
       {contracts.length === 0 && !uploading && (
         <div className="empty-state">
           <span className="empty-icon"></span>
-          <p>No hay contratos subidos para esta obra</p>
+          <p>No hay certificados subidos para esta obra</p>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={confirmDelete}
+        title="Eliminar Certificado"
+        message="¿Estás seguro de que quieres eliminar este certificado? Esta acción no se puede deshacer."
+        type="danger"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };
