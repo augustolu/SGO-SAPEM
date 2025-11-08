@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
       if (currentTimeout) {
         clearTimeout(currentTimeout);
       }
-      const newTimeout = setTimeout(logout, 30 * 60 * 1000); // 30 minutes
+      const newTimeout = setTimeout(logout, 8 * 60 * 60 * 1000); // 8 hours
       return newTimeout;
     });
   }, [logout]);

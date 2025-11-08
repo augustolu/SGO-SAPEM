@@ -1325,17 +1325,17 @@ html, body {
 
 @media (max-width: 992px) {
   .obras-content-area {
-    flex-direction: column;
+    /* flex-direction: column; */
   }
   
   .right-column {
-    width: 100%;
-    height: 400px;
+    /* width: 100%; */
+    /* height: 400px; */
   }
   
   .right-column.collapsed {
-    width: 100%;
-    height: 60px;
+    /* width: 100%; */
+    /* height: 60px; */
   }
   
   .obras-grid {

@@ -795,6 +795,17 @@ const ObrasPage = () => {
   const [isDeleteReminderModalOpen, setIsDeleteReminderModalOpen] = useState(false);
   const [obraToDeleteReminderId, setObraToDeleteReminderId] = useState(null);
 
+  useEffect(() => {
+    const checkSize = () => {
+      if (window.innerWidth < 992) {
+        setRightPanelCollapsed(true);
+      }
+    };
+    window.addEventListener('resize', checkSize);
+    checkSize(); // Run on initial load
+    return () => window.removeEventListener('resize', checkSize);
+  }, []);
+
   const handleDeleteReminderClick = (obraId) => {
     setObraToDeleteReminderId(obraId);
     setIsDeleteReminderModalOpen(true);

@@ -83,7 +83,7 @@ exports.signin = async (req, res) => {
     }
 
     const keepLoggedIn = req.body.keepLoggedIn;
-    const expiresIn = keepLoggedIn ? '7d' : '30m';
+    const expiresIn = keepLoggedIn ? '365d' : '8h';
 
     const token = jwt.sign({ id: user.id }, config.secret, {
       expiresIn: expiresIn
