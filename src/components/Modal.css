@@ -1,0 +1,397 @@
+/* ========================================================================== */
+/* ========================= EXCEL UPLOADER MODAL =========================== */
+/* ========================================================================== */
+
+/* Overlay que bloquea el contenido de fondo */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px); /* Difuminado del fondo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estilo para el body cuando el modal está abierto */
+.modal-open, .modal-open body {
+  overflow: hidden;
+  /* Forzamos que no haya scroll en el elemento raíz y en el body */
+}
+
+/* 
+  FORZAR FOCO EN EL MODAL: 
+  Cuando un modal está abierto, deshabilitamos los eventos de puntero en el 
+  contenido principal de la aplicación y los volvemos a habilitar solo para el modal.
+*/
+.modal-open #root {
+  pointer-events: none;
+  /* Opcional: puedes añadir un filtro para que se vea más "desactivado" */
+  /* filter: blur(2px) brightness(0.8); */
+}
+
+/* Contenedor principal del modal */
+.modal-content {
+  background: linear-gradient(145deg, var(--bg-secondary), #242f40);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 32px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: var(--shadow-elevated);
+  animation: modal-slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto; /* ¡IMPORTANTE! Reactivamos los eventos para el modal y su contenido */
+}
+
+/* Botón de cierre */
+.modal-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  z-index: 10;
+}
+
+.modal-close-button:hover {
+  background-color: rgba(245, 101, 101, 0.2);
+  color: var(--tag-anulada);
+  transform: scale(1.1);
+}
+
+/* ========================================================================== */
+/* ========================= CONTENIDO UPLOADER ============================= */
+/* ========================================================================== */
+
+.excel-uploader-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Paso 1: Selección de archivo */
+.excel-uploader-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 20px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-normal);
+  background-color: var(--bg-primary);
+}
+
+.excel-uploader-form:hover {
+  border-color: var(--accent-primary);
+  background-color: var(--bg-tertiary);
+}
+
+/* Input de archivo oculto */
+.excel-uploader-form input[type="file"] {
+  display: none;
+}
+
+/* Label estilizado como botón de upload */
+.excel-uploader-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.excel-uploader-label:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+  background-color: var(--bg-tertiary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.excel-uploader-label.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Paso 2: Mapeo de columnas */
+.excel-mapping-container h4 {
+  color: var(--accent-primary);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.excel-mapping-container p {
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0 0 20px 0;
+  font-size: 0.95rem;
+}
+
+/* Grid de mapeo de columnas */
+.excel-mapping-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  margin-bottom: 20px;
+}
+
+/* Fila individual de mapeo */
+.mapping-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-small);
+  transition: all var(--transition-fast);
+}
+
+.mapping-row:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.mapping-row label {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  min-width: 140px;
+  text-transform: capitalize;
+}
+
+.mapping-row select {
+  flex: 1;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.mapping-row select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(13, 153, 255, 0.2);
+}
+
+/* Selector de categoría especial */
+.mapping-row:first-child {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+.mapping-row:first-child label {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+/* Botones de acción */
+.excel-mapping-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.excel-uploader-button {
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--accent-primary);
+  border: none;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-width: 120px;
+}
+
+.excel-uploader-button:hover:not(:disabled) {
+  background-color: #0b8ae6;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.excel-uploader-button:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.excel-uploader-button.secondary {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.excel-uploader-button.secondary:hover:not(:disabled) {
+  background-color: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* ========================================================================== */
+/* ========================= MENSAJES Y ESTADOS ============================= */
+/* ========================================================================== */
+
+.excel-message {
+  font-size: 0.95rem;
+  padding: 16px;
+  border-radius: var(--border-radius-small);
+  margin-top: 16px;
+  border: 1px solid transparent;
+  line-height: 1.5;
+}
+
+.excel-message.success {
+  color: #48BB78;
+  background-color: rgba(72, 187, 120, 0.1);
+  border-color: #48BB78;
+}
+
+.excel-message.error {
+  color: #F56565;
+  background-color: rgba(245, 101, 101, 0.1);
+  border-color: #F56565;
+}
+
+.excel-message.error ul {
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+.excel-message.error li {
+  margin-bottom: 4px;
+}
+
+/* ========================================================================== */
+/* ========================= SCROLLBAR PERSONALIZADO ======================== */
+/* ========================================================================== */
+
+.excel-mapping-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.excel-mapping-grid::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-radius: 3px;
+}
+
+.excel-mapping-grid::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.excel-mapping-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* ========================================================================== */
+/* ========================= ANIMACIONES ==================================== */
+/* ========================================================================== */
+
+/* Animación de entrada del overlay */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Animación de entrada del modal */
+@keyframes modal-slide-in {
+  from { 
+    transform: translateY(50px) scale(0.95); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0) scale(1); 
+    opacity: 1; 
+  }
+}
+
+/* ========================================================================== */
+/* ========================= DISEÑO RESPONSIVE ============================== */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 24px;
+    margin: 20px;
+    width: calc(100% - 40px);
+  }
+  
+  .excel-mapping-grid {
+    padding: 12px;
+  }
+  
+  .mapping-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .mapping-row label {
+    min-width: auto;
+    margin-bottom: 4px;
+  }
+  
+  .excel-mapping-actions {
+    flex-direction: column;
+  }
+  
+  .excel-uploader-button {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .excel-uploader-label {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+}

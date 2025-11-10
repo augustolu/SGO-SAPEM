@@ -3,6 +3,7 @@ const Contrato = db.Contratos;
 const xlsx = require('xlsx');
 const fs = require('fs');
 const Archivo = db.Archivos;
+const bcrypt = require("bcryptjs");
 
 // DEBUG: Imprime todos los modelos disponibles en el objeto db. Revisa la consola de tu servidor.
 console.log("Modelos disponibles en DB:", Object.keys(db));
@@ -136,6 +137,8 @@ exports.create = async (req, res) => {
   }
 };
 
+
+
 // --- AÑADE ESTA FUNCIÓN COMPLETA AL FINAL DEL ARCHIVO ---
 
 exports.uploadExcel = async (req, res) => {
@@ -143,12 +146,31 @@ exports.uploadExcel = async (req, res) => {
     return res.status(400).json({ message: 'No se subió ningún archivo.' });
   }
 
+  // 1. Obtener y deserializar el mapa de mapeo y la categoría desde el frontend
+  const mapa = JSON.parse(req.body.mapa_json || '{}');
+  const categoria = req.body.categoria || 'varios'; // Categoría unificada para todo el lote
+
   const filePath = req.file.path;
   // Usamos una transacción de Sequelize para asegurar que todo o nada se importe
   const transaction = await db.sequelize.transaction(); 
 
+  // Función helper para obtener valores usando el mapa dinámico
+  const getMappedValue = (row, dbFieldName, mapa) => {
+    const excelHeader = mapa[dbFieldName];
+    if (excelHeader && row[excelHeader] !== undefined) {
+      return row[excelHeader];
+    }
+    return null; // Retorna null si no hay mapeo o valor
+  };
+
   try {
-    // 1. Leer el archivo Excel
+    const inspectorRole = await db.Roles.findOne({ where: { nombre: 'Inspector' } });
+    if (!inspectorRole) {
+      await transaction.rollback();
+      return res.status(500).json({ message: "El rol 'Inspector' no fue encontrado en la base de datos. No se puede continuar." });
+    }
+
+    // Leer el archivo Excel
     const workbook = xlsx.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -163,79 +185,94 @@ exports.uploadExcel = async (req, res) => {
     let importedCount = 0;
     const errors = [];
 
-    // 2. Procesar cada fila del Excel
+    // Procesar cada fila del Excel
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       const rowNumber = i + 2; // (fila 1 es cabecera, empezamos en la 2)
-
-      // Nombres de columnas de tu Excel:
-      // % CAN NRO ESTABLECIMINETO LOCALIDAD DETALLE MONTO SAPEM MONTO SUB AF PLAZO REP LEGAL INSPECTOR
       
       try {
-        // 3. Lógica "Buscar o Crear" para tus tablas relacionadas
+        // Lógica "Buscar o Crear" para tablas relacionadas usando el mapeo
         
         // LOCALIDAD
         let localidadId = null;
-        if (row.LOCALIDAD && String(row.LOCALIDAD).trim() !== '') {
+        const localidadNombre = getMappedValue(row, 'localidad', mapa);
+        if (localidadNombre && String(localidadNombre).trim() !== '') {
           const [localidad] = await db.Localidades.findOrCreate({
-            where: { nombre: String(row.LOCALIDAD).trim() },
-            defaults: { nombre: String(row.LOCALIDAD).trim() },
+            where: { nombre: String(localidadNombre).trim() },
+            defaults: { nombre: String(localidadNombre).trim() },
             transaction
           });
           localidadId = localidad.id;
         }
 
+        // CONTRATISTA (CONTRIBUYENTE)
+        let contribuyenteId = null;
+        const contratistaNombre = getMappedValue(row, 'contratista', mapa);
+        if (contratistaNombre && String(contratistaNombre).trim() !== '') {
+          const [contribuyente] = await db.Contribuyentes.findOrCreate({
+            where: { nombre: String(contratistaNombre).trim() },
+            defaults: { nombre: String(contratistaNombre).trim() },
+            transaction
+          });
+          contribuyenteId = contribuyente.id;
+        }
+
         // REPRESENTANTE LEGAL
         let representanteId = null;
-        if (row['REP LEGAL'] && String(row['REP LEGAL']).trim() !== '') {
+        const repLegalNombre = getMappedValue(row, 'rep_legal', mapa);
+        if (repLegalNombre && String(repLegalNombre).trim() !== '') {
           const [representante] = await db.RepresentantesLegales.findOrCreate({
-            where: { nombre: String(row['REP LEGAL']).trim() },
-            defaults: { nombre: String(row['REP LEGAL']).trim() },
+            where: { nombre: String(repLegalNombre).trim() },
+            defaults: { nombre: String(repLegalNombre).trim() },
             transaction
           });
           representanteId = representante.id;
         }
 
-        // INSPECTOR (Este solo lo buscamos, no lo creamos desde Excel)
+        // INSPECTOR (Buscar o Crear)
         let inspectorId = null;
-        if (row.INSPECTOR && String(row.INSPECTOR).trim() !== '') {
-          const inspector = await db.Usuarios.findOne({
-            where: { nombre: String(row.INSPECTOR).trim() },
+        const inspectorNombre = getMappedValue(row, 'inspector_id', mapa);
+        if (inspectorNombre && String(inspectorNombre).trim() !== '') {
+          const [inspector] = await db.Usuarios.findOrCreate({
+            where: { nombre: String(inspectorNombre).trim() },
+            defaults: {
+              nombre: String(inspectorNombre).trim(),
+              email: `${String(inspectorNombre).trim().replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}_${Date.now()}@sapem-placeholder.com`,
+              password: bcrypt.hashSync(Math.random().toString(36).slice(-8), 8),
+              rol_id: inspectorRole.id
+            },
             transaction
           });
-          
-          if (inspector) {
-            inspectorId = inspector.id;
-          } else {
-            errors.push(`Fila ${rowNumber}: El inspector '${row.INSPECTOR}' no fue encontrado en la base de datos.`);
-          }
+          inspectorId = inspector.id;
         }
         
-        // 4. Mapear campos a tu modelo 'Obras' (según obra.model.js)
-        
-        // Tu modelo 'Obras' requiere 'categoria' y 'estado' (NOT NULL)
-        // Debes decidir un valor por defecto si no vienen en el Excel
-        const categoria = row.CATEGORIA || 'varios';
-        const estado = row.ESTADO || 'En ejecución';
+        // Mapear campos al modelo 'Obras' usando el helper y valores por defecto
+        const estado = 'En ejecución';
+
+        const plazoDias = getMappedValue(row, 'plazo', mapa);
+        const cantidadContratos = plazoDias && Number(plazoDias) > 0 ? Math.ceil(Number(plazoDias) / 30) : null;
 
         const obraData = {
-          nro: row.NRO || null,
-          establecimiento: row.ESTABLECIMINETO || 'Sin especificar', // NOT NULL
-          detalle: row.DETALLE || null,
+          nro: getMappedValue(row, 'nro', mapa) || null,
+          establecimiento: getMappedValue(row, 'establecimiento', mapa) || 'Sin especificar', // NOT NULL
+          numero_gestion: getMappedValue(row, 'numero_gestion', mapa),
+          detalle: getMappedValue(row, 'detalle', mapa) || null,
           localidad_id: localidadId,
-          categoria: categoria, // NOT NULL
+          contribuyente_id: contribuyenteId,
+          categoria: categoria, // Usa la categoría del body para todas las filas
           estado: estado, // NOT NULL
-          plazo: row.PLAZO || null, // Tu modelo lo llama 'plazo'
-          monto_sapem: row['MONTO SAPEM'] || 0,
-          monto_sub: row['MONTO SUB'] || 0,
-          af: row.AF || 0,
+          plazo: plazoDias || null,
+          cantidad_contratos: cantidadContratos,
+          monto_sapem: getMappedValue(row, 'monto_sapem', mapa) || 0,
+          monto_sub: getMappedValue(row, 'monto_sub', mapa) || 0,
+          af: getMappedValue(row, 'af', mapa) || 0,
           representante_legal_id: representanteId,
           inspector_id: inspectorId,
-          progreso: row['%'] || 0,
+          progreso: getMappedValue(row, 'progreso', mapa) || 0,
           // 'can' no parece estar en tu modelo `obra.model.js`
         };
 
-        // 5. Crear la Obra dentro de la transacción
+        // Crear la Obra dentro de la transacción
         await Obra.create(obraData, { transaction });
         importedCount++;
 
@@ -244,7 +281,7 @@ exports.uploadExcel = async (req, res) => {
       }
     }
 
-    // 6. Finalizar la transacción
+    // Finalizar la transacción
     if (errors.length > 0) {
       // Si hubo errores en algunas filas, deshacemos *todo*
       await transaction.rollback();
@@ -270,7 +307,7 @@ exports.uploadExcel = async (req, res) => {
     res.status(500).json({ message: 'Error en el servidor al procesar el archivo.', errors: [error.message], importedCount: 0 });
   
   } finally {
-    // 7. Siempre eliminar el archivo temporal
+    // Siempre eliminar el archivo temporal
     fs.unlinkSync(filePath);
   }
 };

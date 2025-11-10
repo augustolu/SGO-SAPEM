@@ -108,6 +108,16 @@ const UserManagementModal = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [openSelector, setOpenSelector] = useState(null); // ID of the user whose selector is open
 
+  // Efecto para controlar el scroll del body cuando el modal está abierto
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    // Función de limpieza que se ejecuta cuando el componente se desmonta
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []); // El array vacío asegura que se ejecute solo al montar y desmontar
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -679,6 +689,16 @@ const RemindersPanel = ({ obras, user, onUpdateObra, onOpenDeleteModal }) => {
 const CreateObraModal = ({ onClose, onObraCreated }) => {
   const [isClosing, setIsClosing] = useState(false);
 
+  useEffect(() => {
+    // Bloquear el scroll del body cuando el modal está abierto
+    document.body.classList.add('modal-open');
+    // Limpieza: remover la clase cuando el componente se desmonte
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []); // El array vacío asegura que se ejecute solo al montar y desmontar
+
+
   const handleClose = () => {
     setIsClosing(true);
   };
@@ -780,6 +800,7 @@ const ObrasPage = () => {
   const [loading, setLoading] = useState(true);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [isCreateObraModalOpen, setCreateObraModalOpen] = useState(false);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false); // Estado para el modal de Excel
   const [isRightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
@@ -855,6 +876,7 @@ const ObrasPage = () => {
   const handleExcelUploadSuccess = () => {
     toast.success("¡Obras importadas con éxito! Actualizando lista...");
     fetchObras(); // Re-utiliza tu función de carga
+    setIsExcelModalOpen(false); // Cierra el modal después de la subida exitosa
   };
 
   const handleUpdateObraInState = (obraId, updatedFields) => {
@@ -977,9 +999,13 @@ const ObrasPage = () => {
                 </button>
 
                 {/* 2. El nuevo componente de subida (solo para admins) */}
-                {isAdmin && (
-                  <ObrasExcelUploader onUploadSuccess={handleExcelUploadSuccess} />
-                )}
+                {isAdmin &&
+                  <button
+                    className="btn btn-secondary create-obra-btn" // Usamos una clase similar para consistencia
+                    onClick={() => setIsExcelModalOpen(true)}
+                  >
+                    Importar desde Excel
+                  </button>}
               
               </div>
             )}
@@ -1012,6 +1038,15 @@ const ObrasPage = () => {
       </main>
       {userModalOpen && <UserManagementModal onClose={() => setUserModalOpen(false)} />}
       {isCreateObraModalOpen && <CreateObraModal onClose={() => setCreateObraModalOpen(false)} onObraCreated={handleObraCreated} />}
+      
+      {/* El modal de Excel ahora se controla desde aquí */}
+      {isExcelModalOpen && (
+        <ObrasExcelUploader 
+          isOpen={isExcelModalOpen}
+          onClose={() => setIsExcelModalOpen(false)}
+          onUploadSuccess={handleExcelUploadSuccess}
+        />
+      )}
       
       <ConfirmationModal
         isOpen={isDeleteReminderModalOpen}
