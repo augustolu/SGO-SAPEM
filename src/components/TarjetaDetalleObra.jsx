@@ -236,23 +236,17 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                 )}
               </div>
               <div className="tags">
-                <div className="status-dropdown-container">
-                  <button 
-                    className={`status-badge ${getStatusClass(obra.estado)}`}
-                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                  >
-                    {obra.estado} <span className="dropdown-arrow">▼</span>
-                  </button>
-                  {isStatusDropdownOpen && (
-                    <div className="status-dropdown-menu">
-                      <button onClick={() => handleStatusChange('Solicitud')}>Solicitud</button>
-                      <button onClick={() => handleStatusChange('Compulsa')}>Compulsa</button>
-                      <button onClick={() => handleStatusChange('En ejecución')}>En ejecución</button>
-                      <button onClick={() => handleStatusChange('Finalizada')}>Finalizada</button>
-                      <button onClick={() => handleStatusChange('Anulada')}>Anulada</button>
-                    </div>
-                  )}
-                </div>
+                <select
+                  className={`status-badge status-select-detalle ${getStatusClass(obra.estado)}`}
+                  value={obra.estado}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                >
+                  <option value="Solicitud">Solicitud</option>
+                  <option value="Compulsa">Compulsa</option>
+                  <option value="En ejecución">En ejecución</option>
+                  <option value="Finalizada">Finalizada</option>
+                  <option value="Anulada">Anulada</option>
+                </select>
                 {isEditing ? ( // Mostrar select de categoría en cualquier modo de edición
                   <select name="categoria" value={formData.categoria} onChange={handleChange} className="form-select-inline">
                     <option value="salud">Salud</option>

@@ -270,8 +270,7 @@ const getPlazoStatus = (fechaFinEstimado) => {
 };
 
 // --- Obra Card --- //
-const ObraCard = ({ obra, isAdmin, onDeleteClick }) => {
-  console.log('Obra data:', obra);
+const ObraCard = ({ obra, isAdmin, onDeleteClick, onStatusChange }) => {
   const plazoStatus = getPlazoStatus(obra.fecha_finalizacion_estimada);
 
   const handleDelete = (e) => {
@@ -279,6 +278,13 @@ const ObraCard = ({ obra, isAdmin, onDeleteClick }) => {
     e.stopPropagation();
     onDeleteClick(obra.id);
   };
+
+  const handleStatusChange = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onStatusChange(obra.id, e.target.value);
+  };
+
   return (
     <Link to={`/obras/${obra.id}`} className="obra-card-link">
       <div className="obra-card">
@@ -307,7 +313,22 @@ const ObraCard = ({ obra, isAdmin, onDeleteClick }) => {
             </div>
           </div>
           <div className="card-footer">
-            <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado}</span>
+            {isAdmin ? (
+              <select
+                className={`status-badge status-select status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}
+                value={obra.estado}
+                onChange={handleStatusChange}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} // Prevent link navigation
+              >
+                <option value="Solicitud">Solicitud</option>
+                <option value="Compulsa">Compulsa</option>
+                <option value="En ejecución">En ejecución</option>
+                <option value="Finalizada">Finalizada</option>
+                <option value="Anulada">Anulada</option>
+              </select>
+            ) : (
+              <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado}</span>
+            )}
             {obra.categoria && <span className="status-badge status-categoria">{obra.categoria.toUpperCase()}</span>}
             {plazoStatus && <span className={`status-badge ${plazoStatus.className}`}>{plazoStatus.text}</span>}
           </div>
@@ -811,6 +832,7 @@ const ObrasPage = () => {
   const [loading, setLoading] = useState(true);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [isCreateObraModalOpen, setCreateObraModalOpen] = useState(false);
+  const [obraToEdit, setObraToEdit] = useState(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false); // Estado para el modal de Excel
   const [isRightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const { user } = useAuth();
@@ -890,6 +912,34 @@ const ObrasPage = () => {
       handleCloseDeleteObraModal();
     }
   };
+
+  const handleStatusChange = async (obraId, newStatus) => {
+    const obra = obras.find(o => o.id === obraId);
+
+    if (obra && newStatus === 'En ejecución' && (obra.estado === 'Solicitud' || obra.estado === 'Compulsa')) {
+      setObraToEdit(obra);
+      setCreateObraModalOpen(true);
+      handleUpdateObraInState(obraId, { estado: newStatus }); // Optimistic update
+      return; 
+    }
+
+    try {
+      // Optimistically update the UI
+      handleUpdateObraInState(obraId, { estado: newStatus });
+      
+      await api.put(`/obras/${obraId}`, { estado: newStatus });
+      
+      toast.success('Estado de la obra actualizado con éxito.');
+      // Optionally, you can re-fetch all obras to ensure data consistency
+      // fetchObras(); 
+    } catch (error) {
+      console.error('Error updating obra status:', error);
+      toast.error('No se pudo actualizar el estado de la obra.');
+      // Revert the optimistic update on error
+      fetchObras();
+    }
+  };
+
   const fetchObras = async () => {
     try {
       setLoading(true);
@@ -1054,7 +1104,7 @@ const ObrasPage = () => {
             <div className="obras-grid-container">
               <div className="obras-grid">
                 {obrasToShow.length > 0 ? (
-                  obrasToShow.map(obra => <ObraCard key={obra.id} obra={obra} isAdmin={isAdmin} onDeleteClick={handleDeleteObraClick} />)
+                  obrasToShow.map(obra => <ObraCard key={obra.id} obra={obra} isAdmin={isAdmin} onDeleteClick={handleDeleteObraClick} onStatusChange={handleStatusChange} />)
                 ) : (
                   <p className="no-obras-message">No hay obras para mostrar.</p>
                 )}
