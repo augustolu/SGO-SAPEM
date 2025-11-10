@@ -382,17 +382,7 @@ const FilterDropdown = ({ obras, applyFilters, currentStatus, currentSortBy, cur
                     </div>
                 </div>
             )}
-            <div className="filter-section">
-                <h5>Ordenar por Fecha</h5>
-                <div className="options-group">
-                    <button className={`filter-option-btn ${sortBy === 'fecha_inicio_desc' ? 'active' : ''}`} onClick={() => setSortBy('fecha_inicio_desc')}>
-                        Más Nuevas
-                    </button>
-                    <button className={`filter-option-btn ${sortBy === 'fecha_inicio_asc' ? 'active' : ''}`} onClick={() => setSortBy('fecha_inicio_asc')}>
-                        Más Antiguas
-                    </button>
-                </div>
-            </div>
+            
         </div>
     );
 };

@@ -13,12 +13,12 @@
   
   /* Colores de estados */
   --tag-salud: #ED64A6;
-  --tag-educacion: #9F7AEA;
-  --tag-en-ejecucion: #ECC94B;
-  --tag-finalizada: #48BB78;
-  --tag-anulada: #F56565;
-  --tag-solicitud: #4A69BD;
-  --tag-cancelada: #E55039;
+  --tag-educacion: #9F7AEA; /* Morado para categoría */
+  --tag-en-ejecucion: #48BB78; /* Verde */
+  --tag-finalizada: #4A69BD; /* Azul */
+  --tag-anulada: #F56565; /* Rojo */
+  --tag-solicitud: #FFFFFF; /* Blanco */
+  --tag-compulsa: #ECC94B; /* Amarillo */
   
   /* Bordes y sombras */
   --border-color: #3A475C;
@@ -523,7 +523,7 @@ html, body {
 .obras-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 20px;
+  gap: 30px;
   align-items: start;
 }
 
@@ -533,6 +533,7 @@ html, body {
   color: inherit;
   display: block;
   height: 100%;
+  width: 275px;
 }
 
 .obra-card-link:hover {
@@ -668,10 +669,11 @@ html, body {
   line-height: 1;
 }
 
-.status-solicitud { background-color: var(--tag-solicitud); color: white; }
-.status-en-ejecución { background-color: var(--tag-en-ejecucion); color: #2D3748; }
-.status-finalizada { background-color: var(--tag-finalizada); color: white; }
-.status-cancelada { background-color: var(--tag-anulada); color: white; }
+.status-solicitud, .status-select.status-solicitud { background-color: var(--tag-solicitud); color: #2D3748 !important; }
+.status-compulsa { background-color: var(--tag-compulsa); color: #2D3748; }
+.status-en-ejecución { background-color: #48BB78; color: white; } /* Verde */
+.status-finalizada { background-color: #4A69BD; color: white; } /* Azul */
+.status-anulada { background-color: var(--tag-anulada); color: white; }
 .status-categoria { background-color: var(--tag-educacion); color: white; }
 .status-plazo-vencido { background-color: var(--tag-anulada); color: white; }
 .status-plazo-no-asignado { background-color: var(--text-muted); color: white; }
@@ -1715,4 +1717,9 @@ a:hover, button:hover, .btn:hover, .icon-btn:hover,
   background-size: 10px 10px;
   padding-right: 20px; /* space for arrow */
   border: none; /* remove border from select */
+}
+
+/* Flecha negra para el estado "Solicitud" */
+.status-select.status-solicitud {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%232D3748' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
 }
