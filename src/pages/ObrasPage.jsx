@@ -748,18 +748,26 @@ const CreateObraModal = ({ onClose, onObraCreated, initialData }) => {
     }
 
     try {
-      const response = await api.post('/obras', formData);
-      // Pasamos el ID original si existe, para que el padre sepa que es una actualización.
+      let response;
+      // Si tenemos un initialData con ID, es una actualización (PUT)
+      if (initialData?.id) {
+        const dataToUpdate = { ...formData, estado: 'En ejecución' };
+        response = await api.put(`/obras/${initialData.id}`, dataToUpdate);
+      } else {
+        // Si no, es una creación (POST)
+        response = await api.post('/obras', formData);
+      }
+      
       onObraCreated(response.data, initialData?.id);
       handleClose();
     } catch (error) {
-      console.error('Error creating obra:', error);
+      console.error('Error saving obra:', error);
       if (error.response) {
         alert(`Error del servidor: ${error.response.data.message || 'Error desconocido'}`);
       } else if (error.request) {
         alert('No se pudo conectar con el servidor. Revisa tu conexión de red.');
       } else {
-        alert(`Error al crear la solicitud: ${error.message}`);
+        alert(`Error al guardar la obra: ${error.message}`);
       }
     }
   };
@@ -952,10 +960,14 @@ const ObrasPage = () => {
     }
   };
 
-  const handleObraCreated = (newObra) => {
+  const handleObraCreated = (obra, originalId) => {
     const audio = new Audio(notificationSound);
     audio.play();
-    toast.success(`Obra "${newObra.establecimiento}" creada con éxito!`);
+    const message = originalId
+      ? `Obra "${obra.establecimiento}" actualizada con éxito!`
+      : `Obra "${obra.establecimiento}" creada con éxito!`;
+    toast.success(message);
+    setObraToEdit(null); // Clear editing state
     fetchObras();
   };
 
@@ -1127,7 +1139,15 @@ const ObrasPage = () => {
         </div>
       </main>
       {userModalOpen && <UserManagementModal onClose={() => setUserModalOpen(false)} />}
-      {isCreateObraModalOpen && <CreateObraModal onClose={() => setCreateObraModalOpen(false)} onObraCreated={handleObraCreated} />}
+      {isCreateObraModalOpen && <CreateObraModal 
+        initialData={obraToEdit} 
+        onClose={() => { 
+          setCreateObraModalOpen(false); 
+          setObraToEdit(null); 
+          fetchObras(); // Re-fetch to revert optimistic UI changes if cancelled
+        }} 
+        onObraCreated={handleObraCreated} 
+      />}
       
       {/* El modal de Excel ahora se controla desde aquí */}
       {isExcelModalOpen && (
