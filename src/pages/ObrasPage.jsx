@@ -342,7 +342,7 @@ const FilterDropdown = ({ obras, applyFilters, currentStatus, currentSortBy, cur
             <div className="filter-section">
                 <h5>Estado</h5>
                 <div className="options-group">
-                    {['En ejecución', 'Finalizada', 'Anulada'].map(s => (
+                    {['En ejecución', 'Finalizada', 'Anulada', 'Compulsa', 'Solicitud'].map(s => (
                         <button key={s} className={`filter-option-btn ${status === s ? 'active' : ''}`} onClick={() => setStatus(s === status ? null : s)}>
                             {s}
                         </button>
@@ -696,7 +696,7 @@ const RemindersPanel = ({ obras, user, onUpdateObra, onOpenDeleteModal }) => {
 
 
 // --- Create Obra Modal --- //
-const CreateObraModal = ({ onClose, onObraCreated }) => {
+const CreateObraModal = ({ onClose, onObraCreated, initialData }) => {
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
@@ -728,7 +728,8 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
 
     try {
       const response = await api.post('/obras', formData);
-      onObraCreated(response.data);
+      // Pasamos el ID original si existe, para que el padre sepa que es una actualización.
+      onObraCreated(response.data, initialData?.id);
       handleClose();
     } catch (error) {
       console.error('Error creating obra:', error);
@@ -757,7 +758,7 @@ const CreateObraModal = ({ onClose, onObraCreated }) => {
           </button>
         </div>
         <div className="modal-body">
-          <ObraWizardForm onSubmit={handleSubmit} />
+          <ObraWizardForm onSubmit={handleSubmit} initialData={initialData} />
         </div>
       </div>
     </div>
@@ -958,9 +959,11 @@ const ObrasPage = () => {
     }
 
     const statusOrder = {
-      'En ejecución': 1,
-      'Finalizada': 2,
-      'Anulada': 3,
+      'Solicitud': 1,
+      'Compulsa': 2,
+      'En ejecución': 3,
+      'Finalizada': 4,
+      'Anulada': 5,
     };
 
     filteredObras.sort((a, b) => {

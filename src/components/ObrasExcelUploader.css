@@ -212,6 +212,41 @@
   box-shadow: 0 0 0 2px rgba(13, 153, 255, 0.2);
 }
 
+/* --- Nuevos estilos para el mapeo de colores detectados --- */
+.color-map-row label {
+  font-family: monospace;
+  min-width: 80px;
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.no-colors-found {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px;
+  font-style: italic;
+}
+/* --------------------------------------------------------- */
+
+
+/* Estilo para el input de color */
+.color-picker-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 30px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+}
+
 /* Selector de categoría especial */
 .mapping-row:first-child {
   border-top: 1px solid var(--border-color);

@@ -30,12 +30,20 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const markerRef = React.useRef(null);
 
+  const isSimplifiedView = useMemo(() => {
+    return ['Solicitud', 'Compulsa'].includes(obra.estado);
+  }, [obra.estado]);
+
   const handleStatusChange = async (newStatus) => {
     try {
+      // Si pasamos a "En ejecución", activamos el modo edición.
+      if (newStatus === 'En ejecución') {
+        setFormData(prev => ({ ...prev, estado: newStatus }));
+        setIsEditing(true);
+      }
       const response = await api.put(`/obras/${obra.id}`, { estado: newStatus });
-      setObra(response.data);
       setIsStatusDropdownOpen(false);
-      window.location.reload(); // O una actualización de estado más optimizada
+      setObra(response.data); // Actualizar el estado local de la obra con los datos del backend
     } catch (error) {
       console.error("Error al actualizar el estado de la obra:", error);
     }
@@ -153,6 +161,12 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
     return status ? status.toLowerCase().replace(/\s+/g, '-') : '';
   };
 
+  // Determina si estamos en el modo de edición especial para Solicitud/Compulsa
+  const isSimplifiedEditMode = useMemo(() => {
+    return isEditing && isSimplifiedView;
+  }, [isEditing, isSimplifiedView]);
+
+
   return (
     <div className="detalle-obra-container">
       <button onClick={() => navigate(-1)} className="back-button">
@@ -193,33 +207,33 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
           <div className="detalle-obra-content">
             <div className="detalle-main-info">
               <div className="detalle-title-section">
-                {isEditing ? (
+                {isEditing ? ( // Si está en modo edición general o simplificado
                   <input
                     type="text"
                     name="establecimiento"
                     value={formData.establecimiento}
                     onChange={handleChange}
-                    className="form-input-inline"
+                    className="form-input-inline form-input-h1"
                   />
                 ) : (
                   <h1>{obra.establecimiento}</h1>
                 )}
-                <p className="numero-gestion" style={{
-                  backgroundColor: "#0d6efd",   // azul intenso (podés cambiarlo)
-                  color: "white",               // texto blanco
-                  fontWeight: "bold",           // texto marcado
-                  padding: "10px 16px",         // espacio interno
-                  borderRadius: "8px",          // bordes redondeados
-                  fontSize: "1.2rem",           // más grande
-                  textAlign: "center",          // centrado
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)", // sombra leve
-                  display: "inline-block" ,   // se ajusta al contenido
-                  marginTop: "10px"
-                }}>
-                  Número de Gestión: {obra.numero_gestion}
-                </p>
-
-
+                {isSimplifiedEditMode ? (
+                  <div className="form-field-inline">
+                    <label>Número de Gestión:</label>
+                    <input
+                      type="text"
+                      name="numero_gestion"
+                      value={formData.numero_gestion}
+                      onChange={handleChange}
+                      className="form-input-inline"
+                    />
+                  </div>
+                ) : (
+                  <p className="numero-gestion">
+                    Número de Gestión: {obra.numero_gestion}
+                  </p>
+                )}
               </div>
               <div className="tags">
                 <div className="status-dropdown-container">
@@ -231,13 +245,15 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                   </button>
                   {isStatusDropdownOpen && (
                     <div className="status-dropdown-menu">
-                      <button onClick={() => handleStatusChange('En ejecución')}>En Ejecución</button>
+                      <button onClick={() => handleStatusChange('Solicitud')}>Solicitud</button>
+                      <button onClick={() => handleStatusChange('Compulsa')}>Compulsa</button>
+                      <button onClick={() => handleStatusChange('En ejecución')}>En ejecución</button>
                       <button onClick={() => handleStatusChange('Finalizada')}>Finalizada</button>
                       <button onClick={() => handleStatusChange('Anulada')}>Anulada</button>
                     </div>
                   )}
                 </div>
-                {isEditing ? (
+                {isEditing ? ( // Mostrar select de categoría en cualquier modo de edición
                   <select name="categoria" value={formData.categoria} onChange={handleChange} className="form-select-inline">
                     <option value="salud">Salud</option>
                     <option value="educación">Educación</option>
@@ -253,150 +269,153 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
               </div>
             </div>
 
-            <div className={`detalle-grid ${isEditing ? 'edit-form-grid' : ''}`}>
-              {/* --- Columna Izquierda --- */}
-              <div className="detalle-col-izquierda">
-                {isEditing ? (
-                  <>
-                    <div className="info-section">
-                      <h3>Descripción</h3>
-                      <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-textarea-inline" rows="5" />
-                    </div>
-                    <div className="info-section">
-                      <h3>Detalles Económicos</h3>
-                      <div className="form-field">
-                        <label>Monto SAPEM</label>
-                        <CurrencyInput name="monto_sapem" value={formData.monto_sapem} onChange={handleChange} />
+            {!isSimplifiedView && (
+              <div className={`detalle-grid ${isEditing ? 'edit-form-grid' : ''}`}>
+                {/* --- Columna Izquierda --- */}
+                <div className="detalle-col-izquierda">
+                  {isEditing ? (
+                    <>
+                      <div className="info-section">
+                        <h3>Descripción</h3>
+                        <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-textarea-inline" rows="5" />
                       </div>
-                      <div className="form-field">
-                        <label>Monto Subcontrato</label>
-                        <CurrencyInput name="monto_sub" value={formData.monto_sub} onChange={handleChange} />
+                      <div className="info-section">
+                        <h3>Detalles Económicos</h3>
+                        <div className="form-field">
+                          <label>Monto SAPEM</label>
+                          <CurrencyInput name="monto_sapem" value={formData.monto_sapem} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                          <label>Monto Subcontrato</label>
+                          <CurrencyInput name="monto_sub" value={formData.monto_sub} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                          <label>Aporte Financiero</label>
+                          <CurrencyInput name="af" value={formData.af} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                          <label>Cantidad de Contratos</label>
+                          <input type="number" name="cantidad_contratos" value={formData.cantidad_contratos} onChange={handleChange} className="form-input-inline" />
+                        </div>
                       </div>
-                      <div className="form-field">
-                        <label>Aporte Financiero</label>
-                        <CurrencyInput name="af" value={formData.af} onChange={handleChange} />
+                      <div className="info-section">
+                        <h3>Plazos</h3>
+                        <div className="form-field">
+                          <label>Fecha de Inicio</label>
+                          <input type="date" name="fecha_inicio" value={formData.fecha_inicio ? new Date(formData.fecha_inicio).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
+                        </div>
+                        <div className="form-field">
+                          <label>Finalización Estimada</label>
+                          <input type="date" name="fecha_finalizacion_estimada" value={formData.fecha_finalizacion_estimada ? new Date(formData.fecha_finalizacion_estimada).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
+                        </div>
+                        <div className="form-field">
+                          <label>Plazo de Obra (días)</label>
+                          <input type="number" name="plazo_dias" value={formData.plazo_dias} onChange={handleChange} className="form-input-inline" />
+                        </div>
                       </div>
-                      <div className="form-field">
-                        <label>Cantidad de Contratos</label>
-                        <input type="number" name="cantidad_contratos" value={formData.cantidad_contratos} onChange={handleChange} className="form-input-inline" />
-                      </div>
-                    </div>
-                    <div className="info-section">
-                      <h3>Plazos</h3>
-                      <div className="form-field">
-                        <label>Fecha de Inicio</label>
-                        <input type="date" name="fecha_inicio" value={formData.fecha_inicio ? new Date(formData.fecha_inicio).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
-                      </div>
-                      <div className="form-field">
-                        <label>Finalización Estimada</label>
-                        <input type="date" name="fecha_finalizacion_estimada" value={formData.fecha_finalizacion_estimada ? new Date(formData.fecha_finalizacion_estimada).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
-                      </div>
-                      <div className="form-field">
-                        <label>Plazo de Obra (días)</label>
-                        <input type="number" name="plazo_dias" value={formData.plazo_dias} onChange={handleChange} className="form-input-inline" />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
+                    </>
+                  ) : (
+                    <>
 
-                    <div className="info-section">
-                      <h3>Descripción</h3>
-                      <p className="descripcion-obra">{obra.descripcion || 'No hay una descripción disponible para esta obra.'}</p>
-                    </div>
-                    <div className="info-section">
-                      <h3>Detalles Económicos</h3>
-                      <div className="info-list">
-                        <p><strong>Monto SAPEM:</strong> <span>{formatCurrency(obra.monto_sapem)}</span></p>
-                        <p><strong>Monto Subcontrato:</strong> <span>{formatCurrency(obra.monto_sub)}</span></p>
-                        <p><strong>Aporte Financiero:</strong> <span>{formatCurrency(obra.af)}</span></p>
-                        <p><strong>Cantidad de Contratos:</strong> <span>{obra.cantidad_contratos || 'No disponible'}</span></p>
+                      <div className="info-section">
+                        <h3>Descripción</h3>
+                        <p className="descripcion-obra">{obra.descripcion || 'No hay una descripción disponible para esta obra.'}</p>
                       </div>
-                    </div>
-                    <div className="info-section">
-                      <h3>Plazos</h3>
-                      <div className="info-list">
-                        <p><strong>Fecha de Inicio:</strong> <span>{formatDate(obra.fecha_inicio)}</span></p>
-                        <p><strong>Finalización Estimada:</strong> <span>{formatDate(obra.fecha_finalizacion_estimada)}</span></p>
-                        <p><strong>Finalización Estimada:</strong> <span>{formatDate(obra.fecha_finalizacion_estimada)}</span></p>
-                        <p><strong>Plazo de Obra:</strong> <span>{obra.plazo_dias ? `${obra.plazo_dias} días` : 'No disponible'}</span></p>
+                      <div className="info-section">
+                        <h3>Detalles Económicos</h3>
+                        <div className="info-list">
+                          <p><strong>Monto SAPEM:</strong> <span>{formatCurrency(obra.monto_sapem)}</span></p>
+                          <p><strong>Monto Subcontrato:</strong> <span>{formatCurrency(obra.monto_sub)}</span></p>
+                          <p><strong>Aporte Financiero:</strong> <span>{formatCurrency(obra.af)}</span></p>
+                          <p><strong>Cantidad de Contratos:</strong> <span>{obra.cantidad_contratos || 'No disponible'}</span></p>
+                        </div>
                       </div>
-                    </div>
+                      <div className="info-section">
+                        <h3>Plazos</h3>
+                        <div className="info-list">
+                          <p><strong>Fecha de Inicio:</strong> <span>{formatDate(obra.fecha_inicio)}</span></p>
+                          <p><strong>Finalización Estimada:</strong> <span>{formatDate(obra.fecha_finalizacion_estimada)}</span></p>
+                          <p><strong>Plazo de Obra:</strong> <span>{obra.plazo_dias ? `${obra.plazo_dias} días` : 'No disponible'}</span></p>
+                        </div>
+                      </div>
                   </>
                 )}
-              </div>
+                </div>
 
-              {/* --- Columna Derecha --- */}
-              <div className="detalle-col-derecha">
-                {isEditing ? (
-                  <>
-                    <div className="info-section">
-                      <h3>Responsables y Ubicación</h3>
-                      <div className="form-field">
-                        <label>Localidad</label>
-                        <CreatableAutocomplete name="localidad_nombre" value={formData.localidad_nombre} onChange={(e) => handleChange({ target: { name: 'localidad_nombre', value: e.target.value } })} apiEndpoint="/localidades" />
+                {/* --- Columna Derecha --- */}
+                <div className="detalle-col-derecha">
+                  {isEditing ? (
+                    <>
+                      <div className="info-section">
+                        <h3>Responsables y Ubicación</h3>
+                        <div className="form-field">
+                          <label>Localidad</label>
+                          <CreatableAutocomplete name="localidad_nombre" value={formData.localidad_nombre} onChange={(e) => handleChange({ target: { name: 'localidad_nombre', value: e.target.value } })} apiEndpoint="/localidades" />
+                        </div>
+                        <div className="form-field">
+                          <label>Contratista</label>
+                          <CreatableAutocomplete name="contratista_nombre" value={formData.contratista_nombre} onChange={(e) => handleChange({ target: { name: 'contratista_nombre', value: e.target.value } })} apiEndpoint="/contribuyentes" />
+                        </div>
+                        <div className="form-field">
+                          <label>Rep. Legal</label>
+                          <CreatableAutocomplete name="rep_legal_nombre" value={formData.rep_legal_nombre} onChange={(e) => handleChange({ target: { name: 'rep_legal_nombre', value: e.target.value } })} apiEndpoint="/representantes-legales" />
+                        </div>
+                        <div className="form-field">
+                          <label>Inspector</label>
+                          <select name="inspector_id" value={formData.inspector_id} onChange={handleChange} className="form-select-inline">
+                            <option value="">-- Sin Asignar --</option>
+                            {inspectores.map(insp => (
+                              <option key={insp.id} value={insp.id}>{insp.nombre}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                      <div className="form-field">
-                        <label>Contratista</label>
-                        <CreatableAutocomplete name="contratista_nombre" value={formData.contratista_nombre} onChange={(e) => handleChange({ target: { name: 'contratista_nombre', value: e.target.value } })} apiEndpoint="/contribuyentes" />
-                      </div>
-                      <div className="form-field">
-                        <label>Rep. Legal</label>
-                        <CreatableAutocomplete name="rep_legal_nombre" value={formData.rep_legal_nombre} onChange={(e) => handleChange({ target: { name: 'rep_legal_nombre', value: e.target.value } })} apiEndpoint="/representantes-legales" />
-                      </div>
-                      <div className="form-field">
-                        <label>Inspector</label>
-                        <select name="inspector_id" value={formData.inspector_id} onChange={handleChange} className="form-select-inline">
-                          <option value="">-- Sin Asignar --</option>
-                          {inspectores.map(insp => (
-                            <option key={insp.id} value={insp.id}>{insp.nombre}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    {/* Mapa para editar */}
-                    {formData.latitude && formData.longitude && (
-                      <div className="map-container-detalle">
-                        <MapContainer center={[formData.latitude, formData.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
-                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
-                          <DraggableMarker />
-                          <MapEvents />
-                        </MapContainer>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="info-section">
-                      <h3>Responsables y Ubicación</h3>
-                      <ul className="responsables-list">
-                        <li><strong>Localidad:</strong> {obra.localidad_nombre || 'No especificada'}</li>
-                        <li><strong>Contratista:</strong> {obra.contratista_nombre || 'No especificado'}</li>
-                        <li><strong>Rep. Legal:</strong> {obra.rep_legal_nombre || 'No especificado'}</li>
-                        <li><strong>Inspector:</strong> {obra.inspector_nombre || 'No asignado'}</li>
-                      </ul>
-                    </div>
-                    {/* Mapa para ver */}
-                    {obra.latitude && obra.longitude && (
-                      <a href={`https://www.google.com/maps/search/?api=1&query=${obra.latitude},${obra.longitude}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                      {/* Mapa para editar */}
+                      {formData.latitude && formData.longitude && (
                         <div className="map-container-detalle">
-                          <MapContainer center={[obra.latitude, obra.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false}>
+                          <MapContainer center={[formData.latitude, formData.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
-                            <Marker position={[obra.latitude, obra.longitude]} />
+                            <DraggableMarker />
+                            <MapEvents />
                           </MapContainer>
                         </div>
-                      </a>
-                    )}
-                  </>
-                )}
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="info-section">
+                        <h3>Responsables y Ubicación</h3>
+                        <ul className="responsables-list">
+                          <li><strong>Localidad:</strong> {obra.localidad_nombre || 'No especificada'}</li>
+                          <li><strong>Contratista:</strong> {obra.contratista_nombre || 'No especificado'}</li>
+                          <li><strong>Rep. Legal:</strong> {obra.rep_legal_nombre || 'No especificado'}</li>
+                          <li><strong>Inspector:</strong> {obra.inspector_nombre || 'No asignado'}</li>
+                        </ul>
+                      </div>
+                      {/* Mapa para ver */}
+                      {obra.latitude && obra.longitude && (
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${obra.latitude},${obra.longitude}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                          <div className="map-container-detalle">
+                            <MapContainer center={[obra.latitude, obra.longitude]} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false}>
+                              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
+                              <Marker position={[obra.latitude, obra.longitude]} />
+                            </MapContainer>
+                          </div>
+                        </a>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div> {/* Closing detalle-obra-card */}
         
+        {!isSimplifiedView && (
           <div className="info-section contratos-section-wrapper">
             <ContratoUpload obraId={obra.id} onContratoUploadSuccess={handleContratoUploadSuccess} />
           </div>
+        )}
         </>
       </div>
     </div>

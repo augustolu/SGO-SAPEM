@@ -41,7 +41,7 @@ const obraSchema = {
   plazo_dias: '', // Cambiado para coincidir con el backend
   fecha_inicio: '',
   fecha_finalizacion_estimada: '',
-  estado: 'En ejecución', // Estado inicial por defecto
+  estado: 'Solicitud', // Estado inicial por defecto
   progreso: 0,
   cantidad_contratos: '', // Nuevo campo para la cantidad de contratos
 };
@@ -101,57 +101,68 @@ const Stepper = ({ currentStep }) => (
 );
 
 // --- Componentes de cada Paso ---
-const Step1 = ({ data, handleChange, errors, selectedFile, setSelectedFile, setIsCropping }) => (
-  <div className="form-step">
-    <div className="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
-      {/* Columna 1 */}
-      <div className="form-group">
-        <label htmlFor="titulo">Título / Establecimiento <span className="mandatory-star">*</span></label>
-        <input type="text" id="establecimiento" name="establecimiento" value={data.establecimiento} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
-        {errors.establecimiento && <span className="error-message">{errors.establecimiento}</span>}
-      </div>
+const Step1 = ({ data, handleChange, errors, selectedFile, setSelectedFile, setIsCropping }) => {
+  const isSimplifiedMode = ['Solicitud', 'Compulsa'].includes(data.estado);
 
-      {/* Columna 2 */}
-      <div className="form-group">
-        <label htmlFor="numero_gestion">Número de Gestión <span className="mandatory-star">*</span></label>
-        <input type="text" id="numero_gestion" name="numero_gestion" value={data.numero_gestion} onChange={handleChange} placeholder="Ej: 2024-001-A" maxLength={12} />
-        {errors.numero_gestion && <span className="error-message">{errors.numero_gestion}</span>}
-      </div>
+  return (
+    <div className="form-step">
+      <div className="form-grid-2-cols" style={{gap: '3rem', marginBottom: '1rem'}}>
+        {/* Fila 1: Establecimiento y Número de Gestión */}
+        <div className="form-group">
+          <label htmlFor="establecimiento">Título / Establecimiento <span className="mandatory-star">*</span></label>
+          <input type="text" id="establecimiento" name="establecimiento" value={data.establecimiento} onChange={handleChange} placeholder="Nombre del lugar de la obra" />
+          {errors.establecimiento && <span className="error-message">{errors.establecimiento}</span>}
+        </div>
+        <div className="form-group">
+          <label htmlFor="numero_gestion">Número de Gestión <span className="mandatory-star">*</span></label>
+          <input type="text" id="numero_gestion" name="numero_gestion" value={data.numero_gestion} onChange={handleChange} placeholder="Ej: 2024-001-A" maxLength={12} />
+          {errors.numero_gestion && <span className="error-message">{errors.numero_gestion}</span>}
+        </div>
 
-      {/* Columna 1 */}
-      <div className="form-group">
-        <label htmlFor="categoria">Categoría <span className="mandatory-star">*</span></label>
-        <select id="categoria" name="categoria" value={data.categoria} onChange={handleChange}>
-          <option value="salud">Salud</option>
-          <option value="educación">Educación</option>
-          <option value="deporte">Deporte</option>
-          <option value="secretaría general">Secretaría General</option>
-          <option value="vialidad">Vialidad</option>
-          <option value="obra pública">Obra Pública</option>
-          <option value="varios">Varios</option>
-        </select>
-      </div>
+        {/* Fila 2: Categoría y Estado */}
+        <div className="form-group">
+          <label htmlFor="categoria">Categoría <span className="mandatory-star">*</span></label>
+          <select id="categoria" name="categoria" value={data.categoria} onChange={handleChange}>
+            <option value="salud">Salud</option>
+            <option value="educación">Educación</option>
+            <option value="deporte">Deporte</option>
+            <option value="secretaría general">Secretaría General</option>
+            <option value="vialidad">Vialidad</option>
+            <option value="obra pública">Obra Pública</option>
+            <option value="varios">Varios</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="estado">Estado <span className="mandatory-star">*</span></label>
+          <select id="estado" name="estado" value={data.estado} onChange={handleChange}>
+            <option value="Solicitud">Solicitud</option>
+            <option value="Compulsa">Compulsa</option>
+            <option value="En ejecución">En ejecución</option>
+          </select>
+        </div>
 
-      {/* Columna 2 */}
-      <div className="form-group">
-        <label htmlFor="nro">Numero de Obra</label>
-        <input type="number" id="nro" name="nro" value={data.nro} onChange={handleChange} />
-      </div>
-
-      {/* Nueva sección de 2 columnas para Descripción e Imagen */}
-      <div className="form-group grid-col-span-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
+        {/* Fila 3: Descripción (siempre visible) y Nro de Obra (solo en ejecución) */}
         <div className="form-group">
           <label htmlFor="descripcion">Descripción de la Obra</label>
           <textarea id="descripcion" name="descripcion" value={data.descripcion} onChange={handleChange} rows="10" placeholder="Descripción de los trabajos a realizar..."></textarea>
         </div>
-        <div className="form-group">
-          <label>Imagen de Portada</label>
-          <ImageUpload onFileSelect={setSelectedFile} selectedFile={selectedFile} setIsCropping={setIsCropping} />
-        </div>
+
+        {!isSimplifiedMode && (
+          <>
+            <div className="form-group">
+              <label htmlFor="nro">Numero de Obra</label>
+              <input type="number" id="nro" name="nro" value={data.nro} onChange={handleChange} />
+            </div>
+            <div className="form-group grid-col-span-2">
+              <label>Imagen de Portada</label>
+              <ImageUpload onFileSelect={setSelectedFile} selectedFile={selectedFile} setIsCropping={setIsCropping} />
+            </div>
+          </>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, errors }) => {
     const [markerPosition, setMarkerPosition] = useState({ lat: data.latitude, lng: data.longitude });
@@ -450,24 +461,29 @@ const Step3 = ({ data, handleChange, errors }) => (
 
 
 // --- Componente de Navegación ---
-const Navigation = ({ currentStep, handlePrev, handleNext, isSubmitting, isCropping }) => (
-  <>
-    {currentStep > 1 ? (
-        <button type="button" className="btn-secondary" onClick={handlePrev}>Anterior</button>
-    ) : (
-        <div></div> /* Placeholder para mantener el layout */
-    )}
-    {currentStep < STEPS.length ? (
-      <button type="button" className="btn-primary" onClick={handleNext} disabled={isCropping}>{isCropping ? 'Recortando...' : 'Siguiente'}</button>
-    ) : (
-      <button type="submit" className="btn-primary" disabled={isSubmitting || isCropping}>{isSubmitting ? 'Creando...' : 'Finalizar Creación'}</button>
-    )}
-  </>
-);
+const Navigation = ({ currentStep, handlePrev, handleNext, isSubmitting, isCropping, formData }) => {
+  const isSimplifiedMode = ['Solicitud', 'Compulsa'].includes(formData.estado);
+
+  if (isSimplifiedMode) {
+    return (
+      <button type="submit" className="btn-primary" disabled={isSubmitting || isCropping}>
+        {isSubmitting ? 'Creando...' : 'Crear Obra'}
+      </button>
+    );
+  }
+
+  return (
+    <>
+      {currentStep > 1 && <button type="button" className="btn-secondary" onClick={handlePrev}>Anterior</button>}
+      {currentStep < STEPS.length && <button type="button" className="btn-primary" onClick={handleNext} disabled={isCropping}>Siguiente</button>}
+      {currentStep === STEPS.length && <button type="submit" className="btn-primary" disabled={isSubmitting || isCropping}>{isSubmitting ? 'Creando...' : 'Finalizar Creación'}</button>}
+    </>
+  );
+};
 
 // --- Componente Principal del Wizard ---
-function ObraWizardForm({ onSubmit }) {
-  const [currentStep, setCurrentStep] = useState(1);
+function ObraWizardForm({ onSubmit, initialData }) {
+  const [currentStep, setCurrentStep] = useState(initialData ? 1 : 1); // Empezar en el paso 1
   const [formData, setFormData] = useState(obraSchema);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -480,6 +496,17 @@ function ObraWizardForm({ onSubmit }) {
   const [representantes, setRepresentantes] = useState([]); // NUEVO ESTADO
 
   useEffect(() => {
+    if (initialData) {
+      // Si recibimos datos iniciales, los fusionamos con el esquema por defecto.
+      // También forzamos el estado a "En ejecución".
+      const mergedData = {
+        ...obraSchema,
+        ...initialData,
+        estado: 'En ejecución'
+      };
+      setFormData(mergedData);
+      setCurrentStep(1); // Asegurarse de empezar en el paso 1
+    }
     const fetchDropdownData = async () => {
       try {
         // Solo necesitamos cargar los inspectores para el dropdown
@@ -494,7 +521,7 @@ function ObraWizardForm({ onSubmit }) {
       }
     };
     fetchDropdownData();
-  }, []);
+  }, [initialData]);
 
   useEffect(() => {
     const { fecha_inicio, plazo_dias } = formData;
@@ -624,7 +651,13 @@ function ObraWizardForm({ onSubmit }) {
 
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    if (await validateStep()) {
+
+    const isSimplifiedMode = ['Solicitud', 'Compulsa'].includes(formData.estado);
+
+    // Si estamos en modo simplificado, solo validamos el paso 1. Si no, validamos el paso actual.
+    const isValid = isSimplifiedMode ? await validateStep() : await validateStep();
+
+    if (isValid) {
       setIsSubmitting(true);
       try {
         let imageUrl = null;
@@ -642,10 +675,10 @@ function ObraWizardForm({ onSubmit }) {
         }
 
         // Combinar los datos del formulario con la URL de la imagen (si existe)
-        const finalFormData = { ...formData, imagen_url: imageUrl };
+        const dataToSubmit = { ...formData, imagen_url: imageUrl };
 
-        console.log('FRONTEND: Datos finales a enviar al backend:', finalFormData);
-        await onSubmit(finalFormData); // Enviar los datos finales
+        console.log('FRONTEND: Datos finales a enviar al backend:', dataToSubmit);
+        await onSubmit(dataToSubmit); // Enviar los datos finales
 
       } catch (error) {
         console.error("Error en el proceso de subida o creación:", error);
@@ -663,15 +696,15 @@ function ObraWizardForm({ onSubmit }) {
       </div>
       <div className="wizard-body">
         {currentStep === 1 && <Step1 data={formData} handleChange={handleChange} errors={errors} selectedFile={selectedFile} setSelectedFile={setSelectedFile} setIsCropping={setIsCropping} />}
-        {currentStep === 2 && <Step2 data={formData} handleChange={handleChange} setFormData={setFormData} inspectores={inspectores} errors={errors} />}
-        {currentStep === 3 && <Step3 data={formData} handleChange={handleChange} errors={errors} />}
+        {currentStep === 2 && !['Solicitud', 'Compulsa'].includes(formData.estado) && <Step2 data={formData} handleChange={handleChange} setFormData={setFormData} inspectores={inspectores} errors={errors} />}
+        {currentStep === 3 && !['Solicitud', 'Compulsa'].includes(formData.estado) && <Step3 data={formData} handleChange={handleChange} errors={errors} />}
       </div>
       <div className="wizard-footer">
         <div className="footer-notes">
           <p><span className="mandatory-star">*</span> Campos obligatorios</p>
         </div>
         <div className="navigation-buttons">
-          <Navigation currentStep={currentStep} handlePrev={handlePrev} handleNext={handleNext} isSubmitting={isSubmitting} isCropping={isCropping} />
+          <Navigation currentStep={currentStep} handlePrev={handlePrev} handleNext={handleNext} isSubmitting={isSubmitting} isCropping={isCropping} formData={formData} />
         </div>
       </div>
     </form>

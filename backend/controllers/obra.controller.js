@@ -86,7 +86,7 @@ exports.create = async (req, res) => {
       representante_legal_id: representanteId,
       monto_sapem: req.body.monto_sapem ? Number(req.body.monto_sapem) : null,
       monto_sub: req.body.monto_sub ? Number(req.body.monto_sub) : null,
-      af: req.body.af ? Number(req.body.af) : null,
+      af: req.body.af ? Number(req.body.af) : 0,
       plazo: req.body.plazo_dias ? Number(req.body.plazo_dias) : null,
       cantidad_contratos: req.body.cantidad_contratos ? Number(req.body.cantidad_contratos) : null, // Añadir cantidad_contratos
       fecha_inicio: req.body.fecha_inicio || null,
@@ -148,6 +148,7 @@ exports.uploadExcel = async (req, res) => {
 
   // 1. Obtener y deserializar el mapa de mapeo y la categoría desde el frontend
   const mapa = JSON.parse(req.body.mapa_json || '{}');
+  const colorToStatusMap = JSON.parse(req.body.color_mapa_json || '{}'); // Recibe el mapa { '#COLOR': 'Estado' }
   const categoria = req.body.categoria || 'varios'; // Categoría unificada para todo el lote
 
   const filePath = req.file.path;
@@ -171,11 +172,11 @@ exports.uploadExcel = async (req, res) => {
     }
 
     // Leer el archivo Excel
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
+    const workbook = xlsx.readFile(filePath, { cellStyles: true }); // ¡IMPORTANTE! leer con estilos
+    const sheetName = req.body.sheetName || workbook.SheetNames[0]; // Usar la hoja seleccionada
     const sheet = workbook.Sheets[sheetName];
     // Convertir la hoja a JSON. Los nombres de las columnas deben coincidir
-    const data = xlsx.utils.sheet_to_json(sheet);
+    const data = xlsx.utils.sheet_to_json(sheet, { defval: null }); // Usar defval para celdas vacías
 
     if (data.length === 0) {
       fs.unlinkSync(filePath); // Limpiar el archivo subido
@@ -186,9 +187,30 @@ exports.uploadExcel = async (req, res) => {
     const errors = [];
 
     // Procesar cada fila del Excel
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      const rowNumber = i + 2; // (fila 1 es cabecera, empezamos en la 2)
+    for (const [index, row] of data.entries()) {
+      const rowNumber = index + 2; // (fila 1 es cabecera, empezamos en la 2)
+
+      // --- LÓGICA PARA DETERMINAR EL ESTADO POR COLOR ---
+      let estado = 'En ejecución'; // Estado por defecto.
+      const headerRow = xlsx.utils.sheet_to_json(sheet, { header: 1 })[0];
+
+      // Iterar sobre las celdas de la fila actual para encontrar un color mapeado.
+      for (let c = 0; c < headerRow.length; c++) {
+        const cellAddress = xlsx.utils.encode_cell({ r: index + 1, c: c });
+        if (sheet[cellAddress]) {
+          const cell = sheet[cellAddress];
+          // El color puede estar en fgColor (patrón) o bgColor (fondo). Priorizamos bgColor.
+          const cellColor = cell?.s?.bgColor?.rgb || cell?.s?.fgColor?.rgb;
+
+          if (cellColor) {
+            const cleanColor = `#${String(cellColor).slice(-6).toUpperCase()}`;
+            if (colorToStatusMap[cleanColor] && colorToStatusMap[cleanColor] !== '') {
+              estado = colorToStatusMap[cleanColor];
+              break; // Encontramos un color, asignamos estado y salimos del bucle de columnas.
+            }
+          }
+        }
+      }
       
       try {
         // Lógica "Buscar o Crear" para tablas relacionadas usando el mapeo
@@ -247,8 +269,6 @@ exports.uploadExcel = async (req, res) => {
         }
         
         // Mapear campos al modelo 'Obras' usando el helper y valores por defecto
-        const estado = 'En ejecución';
-
         const plazoDias = getMappedValue(row, 'plazo', mapa);
         const cantidadContratos = plazoDias && Number(plazoDias) > 0 ? Math.ceil(Number(plazoDias) / 30) : null;
 
@@ -260,7 +280,7 @@ exports.uploadExcel = async (req, res) => {
           localidad_id: localidadId,
           contribuyente_id: contribuyenteId,
           categoria: categoria, // Usa la categoría del body para todas las filas
-          estado: estado, // NOT NULL
+          estado: estado, // NOT NULL, ahora determinado por el color
           plazo: plazoDias || null,
           cantidad_contratos: cantidadContratos,
           monto_sapem: getMappedValue(row, 'monto_sapem', mapa) || 0,

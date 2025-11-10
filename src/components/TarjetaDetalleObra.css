@@ -311,7 +311,7 @@ html, body {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  overflow: hidden;
+  overflow: visible; /* Cambiado para permitir que el dropdown se vea */
   box-shadow: var(--shadow);
   position: relative;
   transition: all var(--transition-normal);
@@ -421,6 +421,7 @@ html, body {
   gap: 1rem;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 1.5rem;
+  min-height: 100px; /* Altura mínima para mantener la estética en vistas simplificadas */
   margin-bottom: 2rem;
 }
 
@@ -455,6 +456,7 @@ html, body {
 
 .status-dropdown-container {
   position: relative;
+  z-index: 100;
   display: inline-block;
 }
 

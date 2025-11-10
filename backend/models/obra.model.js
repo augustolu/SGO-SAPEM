@@ -28,7 +28,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false
     },
     estado: {
-      type: Sequelize.ENUM('Solicitud', 'Proceso de compulsa', 'En ejecución', 'Finalizada', 'Anulada'),
+      type: Sequelize.ENUM('Solicitud', 'Compulsa', 'En ejecución', 'Finalizada', 'Anulada'),
       allowNull: false,
       defaultValue: 'Solicitud'
     },
