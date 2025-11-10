@@ -859,6 +859,29 @@ html, body {
   flex-shrink: 0;
 }
 
+.obra-card-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 4px; /* Un poco más pegado al borde */
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 24px; /* Más pequeño */
+  height: 24px; /* AÑADIDO: Para que sea un círculo perfecto */
+  display: flex; /* AÑADIDO: Para centrar el ícono */
+  align-items: center; /* AÑADIDO: Centrado vertical */
+  justify-content: center; /* AÑADIDO: Centrado horizontal */
+  cursor: pointer; /* AÑADIDO: Muestra el cursor de mano */
+  transition: all 0.2s ease-in-out; /* AÑADIDO: La animación suave */
+}
+
+.obra-card-delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.8); /* Fondo rojo semitransparente */
+  color: white; /* Ícono blanco sólido */
+  transform: scale(1.1);
+}
+
 .delete-reminder-btn {
   background: transparent;
   border: none;

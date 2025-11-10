@@ -19,9 +19,10 @@
 }
 
 /* Estilo para el body cuando el modal está abierto */
-.modal-open, .modal-open body {
+/* Ahora usamos una clase específica para evitar conflictos */
+.excel-modal-open, .excel-modal-open body {
   overflow: hidden;
-  /* Forzamos que no haya scroll en el elemento raíz y en el body */
+  /* Forzamos que no haya scroll en el body */
 }
 
 /* 
@@ -29,7 +30,7 @@
   Cuando un modal está abierto, deshabilitamos los eventos de puntero en el 
   contenido principal de la aplicación y los volvemos a habilitar solo para el modal.
 */
-.modal-open #root {
+.excel-modal-open #root {
   pointer-events: none;
   /* Opcional: puedes añadir un filtro para que se vea más "desactivado" */
   /* filter: blur(2px) brightness(0.8); */
@@ -52,30 +53,30 @@
 }
 
 /* Botón de cierre */
-.modal-close-button {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.5rem;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  z-index: 10;
-}
+  .modal-close-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary); /* Color del ícono */
+    font-size: 1.5rem; /* Tamaño del ícono 'x' */
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%; /* Esto lo hace redondo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: 10;
+  }
 
-.modal-close-button:hover {
-  background-color: rgba(245, 101, 101, 0.2);
-  color: var(--tag-anulada);
-  transform: scale(1.1);
-}
+  .modal-close-button:hover {
+    background-color: rgba(245, 101, 101, 0.2);
+    color: var(--tag-anulada);
+    transform: scale(1.1);
+  }
 
 /* ========================================================================== */
 /* ========================= CONTENIDO UPLOADER ============================= */

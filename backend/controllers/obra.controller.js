@@ -336,7 +336,10 @@ exports.checkNumeroGestion = async (req, res) => {
 exports.findAll = async (req, res) => {
   try {
     const titulo = req.query.titulo;
-    let condition = titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : {};
+    let condition = {
+      motivo_anulacion: { [Op.is]: null }, // No mostrar obras con motivo de anulación
+      ...(titulo ? { establecimiento: { [Op.like]: `%${titulo}%` } } : {})
+    };
 
     const user = await db.Usuarios.findByPk(req.userId, {
       include: { model: db.Roles, as: 'role' }
@@ -494,6 +497,7 @@ exports.update = async (req, res) => {
       fecha_finalizacion_estimada,
       estado,
       progreso,
+      motivo_anulacion,
       nro
     } = req.body;
 
@@ -517,6 +521,7 @@ exports.update = async (req, res) => {
       fecha_finalizacion_estimada,
       estado,
       progreso,
+      motivo_anulacion,
       nro
     };
 

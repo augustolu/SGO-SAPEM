@@ -270,10 +270,15 @@ const getPlazoStatus = (fechaFinEstimado) => {
 };
 
 // --- Obra Card --- //
-const ObraCard = ({ obra }) => {
+const ObraCard = ({ obra, isAdmin, onDeleteClick }) => {
   console.log('Obra data:', obra);
   const plazoStatus = getPlazoStatus(obra.fecha_finalizacion_estimada);
 
+  const handleDelete = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDeleteClick(obra.id);
+  };
   return (
     <Link to={`/obras/${obra.id}`} className="obra-card-link">
       <div className="obra-card">
@@ -284,6 +289,11 @@ const ObraCard = ({ obra }) => {
             className="obra-card-image"
           />
         </div>
+        {isAdmin && (
+          <button onClick={handleDelete} className="obra-card-delete-btn" title="Eliminar Obra">
+            <TrashIcon style={{ width: '14px', height: '14px' }} />
+          </button>
+        )}
         <div className="obra-card-content">
           <span className="obra-gestion-number">#{obra.numero_gestion}</span>
           <h3>{obra.establecimiento}</h3>
@@ -816,6 +826,9 @@ const ObrasPage = () => {
   const [isDeleteReminderModalOpen, setIsDeleteReminderModalOpen] = useState(false);
   const [obraToDeleteReminderId, setObraToDeleteReminderId] = useState(null);
 
+  const [isDeleteObraModalOpen, setIsDeleteObraModalOpen] = useState(false);
+  const [obraToDeleteId, setObraToDeleteId] = useState(null);
+
   useEffect(() => {
     const checkSize = () => {
       if (window.innerWidth < 992) {
@@ -851,6 +864,30 @@ const ObrasPage = () => {
   const handleCloseDeleteReminderModal = () => {
     setIsDeleteReminderModalOpen(false);
     setObraToDeleteReminderId(null);
+  };
+
+  const handleDeleteObraClick = (obraId) => {
+    setObraToDeleteId(obraId);
+    setIsDeleteObraModalOpen(true);
+  };
+
+  const handleCloseDeleteObraModal = () => {
+    setIsDeleteObraModalOpen(false);
+    setObraToDeleteId(null);
+  };
+
+  const confirmDeleteObra = async () => {
+    if (!obraToDeleteId) return;
+    try {
+      await api.put(`/obras/${obraToDeleteId}`, { motivo_anulacion: "Borrado por Admin" });
+      toast.success('Obra eliminada con éxito.');
+      fetchObras(); // Volver a cargar las obras para que desaparezca
+    } catch (error) {
+      console.error('Error al eliminar la obra:', error);
+      toast.error('No se pudo eliminar la obra.');
+    } finally {
+      handleCloseDeleteObraModal();
+    }
   };
   const fetchObras = async () => {
     try {
@@ -1014,7 +1051,7 @@ const ObrasPage = () => {
             <div className="obras-grid-container">
               <div className="obras-grid">
                 {obrasToShow.length > 0 ? (
-                  obrasToShow.map(obra => <ObraCard key={obra.id} obra={obra} />)
+                  obrasToShow.map(obra => <ObraCard key={obra.id} obra={obra} isAdmin={isAdmin} onDeleteClick={handleDeleteObraClick} />)
                 ) : (
                   <p className="no-obras-message">No hay obras para mostrar.</p>
                 )}
@@ -1054,6 +1091,15 @@ const ObrasPage = () => {
         onConfirm={confirmDeleteReminder}
         title="Eliminar Vencimiento"
         message="¿Estás seguro de que quieres eliminar el vencimiento de esta obra? Esta acción no se puede deshacer."
+        type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteObraModalOpen}
+        onClose={handleCloseDeleteObraModal}
+        onConfirm={confirmDeleteObra}
+        title="Eliminar Obra"
+        message="¿Estás seguro de que quieres eliminar esta obra? La obra se ocultará para todos los usuarios pero no se borrará de la base de datos."
         type="danger"
       />
     </div>

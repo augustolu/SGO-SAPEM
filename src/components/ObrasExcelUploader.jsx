@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import api from '../services/api'; // Importamos tu instancia de 'api'
 import * as XLSX from 'xlsx';
-import './Modal.css'; // Importamos los estilos del modal
+import './ObrasExcelUploader.css'; // Importamos los estilos específicos del uploader
 
 // Componente de ícono simple
 const UploadIcon = (props) => (
@@ -37,12 +37,14 @@ export function ObrasExcelUploader({ isOpen, onClose, onUploadSuccess }) {
 
   useEffect(() => {
     if (isOpen) {
-      document.body.classList.add('modal-open');
+      // Añadimos ambas clases: una para el pointer-events y otra para el overflow
+      document.body.classList.add('excel-modal-open', 'modal-open');
     } else {
-      document.body.classList.remove('modal-open');
+      document.body.classList.remove('excel-modal-open', 'modal-open');
     }
     return () => {
-      document.body.classList.remove('modal-open');
+      // Limpieza al desmontar el componente
+      document.body.classList.remove('excel-modal-open', 'modal-open');
     };
   }, [isOpen]);
 
