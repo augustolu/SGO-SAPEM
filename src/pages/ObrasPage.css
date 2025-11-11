@@ -483,6 +483,12 @@ html, body {
   flex-wrap: wrap;
 }
 
+.view-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .active-filter-tag {
   display: flex;
   align-items: center;
@@ -691,7 +697,7 @@ html, body {
 /* ========================================================================== */
 
 .right-column {
-  width: 410px;
+  width: 375px;
   flex-shrink: 0;
   position: relative;
   transition: all var(--transition-normal);
@@ -1052,6 +1058,124 @@ html, body {
   background-color: var(--bg-primary);
 }
 
+/* ========================================================================== */
+/* ========================= VISTA DE LISTA DE OBRAS ======================== */
+/* ========================================================================== */
+
+.obras-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.obra-list-item-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+}
+
+.obra-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-normal);
+  gap: 20px;
+}
+
+.obra-list-item:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.obra-list-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.obra-list-item-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.obra-list-item-details {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.status-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 250px;
+  justify-content: flex-start;
+}
+
+.obra-list-item-actions {
+  display: flex;
+  align-items: center;
+}
+
+.obra-list-item .obra-card-delete-btn {
+  position: static; /* Override absolute positioning */
+  transform: none;
+}
+
+/* ========================================================================== */
+/* ========================= CONTROLES DE PAGINACIÓN ======================== */
+/* ========================================================================== */
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding-bottom: 32px;
+  width: 100%;
+}
+
+.pagination-btn {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-weight: 600;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+
 .user-list-item:hover {
   background-color: var(--bg-tertiary);
 }
@@ -1103,23 +1227,29 @@ html, body {
 }
 
 .modal-close-button {
-  padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  background-color: var(--accent-primary);
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
   border: none;
-  border-radius: var(--border-radius-small);
+  color: var(--text-secondary); /* Color del ícono */
+  font-size: 1.5rem; /* Tamaño del ícono 'x' */
   cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%; /* Esto lo hace redondo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all var(--transition-normal);
-  margin-top: 20px;
-  text-decoration: none !important;
+  z-index: 10;
+  margin-top: 0; /* Reseteamos el margen superior */
 }
 
 .modal-close-button:hover {
-  background-color: #0b8ae6;
-  transform: translateY(-1px);
-  text-decoration: none !important;
+  background-color: rgba(245, 101, 101, 0.2);
+  color: var(--tag-anulada);
+  transform: scale(1.1);
 }
 
 /* --- Estilos para ObrasExcelUploader (añadir a ObrasPage.css) --- */
@@ -1607,30 +1737,6 @@ a:hover, button:hover, .btn:hover, .icon-btn:hover,
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.modal-close-button {
-  padding: 12px 30px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-small);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  margin-top: 30px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.modal-close-button:hover {
-  background-color: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
 }
 
 /* Remove alternating background color for a cleaner look */

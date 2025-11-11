@@ -28,6 +28,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
   const [currentObraProgreso, setCurrentObraProgreso] = useState(initialObra.progreso);
   const [inspectores, setInspectores] = useState([]);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [inlineEditingField, setInlineEditingField] = useState(null);
   const markerRef = React.useRef(null);
 
   const isSimplifiedView = useMemo(() => {
@@ -94,6 +95,9 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
 
   const isInspectorEditDisabled = () => {
     if (user && user.role && user.role === 'Inspector') {
+      if (!obra.fecha_inicio) {
+        return false; // Permitir editar si no hay fecha de inicio
+      }
       const now = new Date();
       // Fix for timezone issue: parse date parts manually
       const parts = obra.fecha_inicio.split('T')[0].split('-');
@@ -116,6 +120,20 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
       window.location.reload();
     } catch (error) {
       console.error("Error al actualizar la obra:", error);
+    }
+  };
+
+  const handleInlineUpdate = async (fieldName) => {
+    try {
+      const valueToUpdate = formData[fieldName];
+      const payload = { [fieldName]: valueToUpdate };
+      
+      const response = await api.put(`/obras/${obra.id}`, payload);
+      setObra(response.data);
+      setFormData(response.data);
+      setInlineEditingField(null);
+    } catch (error) {
+      console.error(`Error updating ${fieldName}:`, error);
     }
   };
 
@@ -166,9 +184,96 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
     return isEditing && isSimplifiedView;
   }, [isEditing, isSimplifiedView]);
 
+  const InlineEditField = ({ fieldName, displayValue, value, children, type = 'text' }) => {
+    const canEdit = !isInspectorEditDisabled();
+
+    if (inlineEditingField === fieldName) {
+      return (
+        <div className="inline-edit-form">
+          {children ? children : (
+            <input
+              type={type}
+              name={fieldName}
+              value={formData[fieldName] ?? ''}
+              onChange={handleChange}
+              className="form-input-inline"
+            />
+          )}
+          <button onClick={() => handleInlineUpdate(fieldName)} className="inline-confirm-button">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+          </button>
+          <button onClick={() => setInlineEditingField(null)} className="inline-cancel-button">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <span className="inline-display">
+        {displayValue}
+        {((value === null || value === undefined || value === '') && !isEditing && canEdit) && (
+          <button onClick={() => { setFormData(obra); setInlineEditingField(fieldName); }} className="inline-edit-button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          </button>
+        )}
+      </span>
+    );
+  };
 
   return (
     <div className="detalle-obra-container">
+      <style>{`
+        .inline-edit-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 8px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            color: #007bff;
+        }
+        .inline-edit-button svg {
+            transition: transform 0.2s;
+        }
+        .inline-edit-button:hover svg {
+            transform: scale(1.2);
+        }
+        .inline-display {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px; /* Alineación con campos de formulario */
+        }
+        .inline-edit-form {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .inline-confirm-button, .inline-cancel-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+        }
+        .inline-confirm-button { color: #28a745; }
+        .inline-cancel-button { color: #dc3545; }
+        .inline-confirm-button:hover, .inline-cancel-button:hover {
+            opacity: 0.7;
+        }
+        .responsables-list li, .info-list p {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .descripcion-obra {
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+        }
+      `}</style>
       <button onClick={() => navigate(-1)} className="back-button">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         Volver al Listado
@@ -189,7 +294,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
               </>
             ) : (
               <div className="edit-controls">
-                <button onClick={handleUpdateObra} className="save-button">Guardar</button>
+                <button onClick={handleUpdateObra} className="save-button">Confirmar</button>
                 <button onClick={handleCancel} className="cancel-button">Cancelar</button>
               </div>
             )}
@@ -271,25 +376,25 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                     <>
                       <div className="info-section">
                         <h3>Descripción</h3>
-                        <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="form-textarea-inline" rows="5" />
+                        <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange} className="form-textarea-inline" rows="5" />
                       </div>
                       <div className="info-section">
                         <h3>Detalles Económicos</h3>
                         <div className="form-field">
                           <label>Monto SAPEM</label>
-                          <CurrencyInput name="monto_sapem" value={formData.monto_sapem} onChange={handleChange} />
+                          <CurrencyInput name="monto_sapem" value={formData.monto_sapem || ''} onChange={handleChange} />
                         </div>
                         <div className="form-field">
                           <label>Monto Subcontrato</label>
-                          <CurrencyInput name="monto_sub" value={formData.monto_sub} onChange={handleChange} />
+                          <CurrencyInput name="monto_sub" value={formData.monto_sub || ''} onChange={handleChange} />
                         </div>
                         <div className="form-field">
                           <label>Aporte Financiero</label>
-                          <CurrencyInput name="af" value={formData.af} onChange={handleChange} />
+                          <CurrencyInput name="af" value={formData.af || ''} onChange={handleChange} />
                         </div>
                         <div className="form-field">
                           <label>Cantidad de Contratos</label>
-                          <input type="number" name="cantidad_contratos" value={formData.cantidad_contratos} onChange={handleChange} className="form-input-inline" />
+                          <input type="number" name="cantidad_contratos" value={formData.cantidad_contratos || ''} onChange={handleChange} className="form-input-inline" />
                         </div>
                       </div>
                       <div className="info-section">
@@ -304,16 +409,23 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         </div>
                         <div className="form-field">
                           <label>Plazo de Obra (días)</label>
-                          <input type="number" name="plazo_dias" value={formData.plazo_dias} onChange={handleChange} className="form-input-inline" />
+                          <input type="number" name="plazo_dias" value={formData.plazo_dias || ''} onChange={handleChange} className="form-input-inline" />
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
-
                       <div className="info-section">
                         <h3>Descripción</h3>
-                        <p className="descripcion-obra">{obra.descripcion || 'No hay una descripción disponible para esta obra.'}</p>
+                        <p className="descripcion-obra">
+                          <InlineEditField
+                            fieldName="descripcion"
+                            value={obra.descripcion}
+                            displayValue={obra.descripcion || 'No hay una descripción disponible para esta obra.'}
+                          >
+                            <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange} className="form-textarea-inline" rows="3" style={{minWidth: '300px'}}/>
+                          </InlineEditField>
+                        </p>
                       </div>
                       <div className="info-section">
                         <h3>Detalles Económicos</h3>
@@ -321,15 +433,47 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                           <p><strong>Monto SAPEM:</strong> <span>{formatCurrency(obra.monto_sapem)}</span></p>
                           <p><strong>Monto Subcontrato:</strong> <span>{formatCurrency(obra.monto_sub)}</span></p>
                           <p><strong>Aporte Financiero:</strong> <span>{formatCurrency(obra.af)}</span></p>
-                          <p><strong>Cantidad de Contratos:</strong> <span>{obra.cantidad_contratos || 'No disponible'}</span></p>
+                          <p><strong>Cantidad de Contratos:</strong>
+                            <InlineEditField
+                              fieldName="cantidad_contratos"
+                              value={obra.cantidad_contratos}
+                              displayValue={obra.cantidad_contratos || 'No disponible'}
+                              type="number"
+                            />
+                          </p>
                         </div>
                       </div>
                       <div className="info-section">
                         <h3>Plazos</h3>
                         <div className="info-list">
-                          <p><strong>Fecha de Inicio:</strong> <span>{formatDate(obra.fecha_inicio)}</span></p>
-                          <p><strong>Finalización Estimada:</strong> <span>{formatDate(obra.fecha_finalizacion_estimada)}</span></p>
-                          <p><strong>Plazo de Obra:</strong> <span>{obra.plazo_dias ? `${obra.plazo_dias} días` : 'No disponible'}</span></p>
+                          <p><strong>Fecha de Inicio:</strong>
+                            <InlineEditField
+                              fieldName="fecha_inicio"
+                              value={obra.fecha_inicio}
+                              displayValue={formatDate(obra.fecha_inicio)}
+                            >
+                              <input type="date" name="fecha_inicio" value={formData.fecha_inicio ? new Date(formData.fecha_inicio).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
+                            </InlineEditField>
+                          </p>
+                          <p><strong>Finalización Estimada:</strong>
+                            <InlineEditField
+                              fieldName="fecha_finalizacion_estimada"
+                              value={obra.fecha_finalizacion_estimada}
+                              displayValue={formatDate(obra.fecha_finalizacion_estimada)}
+                            >
+                              <input type="date" name="fecha_finalizacion_estimada" value={formData.fecha_finalizacion_estimada ? new Date(formData.fecha_finalizacion_estimada).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
+                            </InlineEditField>
+                          </p>
+                          <p><strong>Plazo de Obra:</strong>
+                            <InlineEditField
+                              fieldName="plazo_dias"
+                              value={obra.plazo_dias}
+                              displayValue={obra.plazo_dias ? `${obra.plazo_dias} días` : 'No disponible'}
+                            >
+                                <input type="number" name="plazo_dias" value={formData.plazo_dias || ''} onChange={handleChange} className="form-input-inline" style={{width: '80px', display: 'inline-block'}} />
+                                <span style={{marginLeft: '4px'}}>días</span>
+                            </InlineEditField>
+                          </p>
                         </div>
                       </div>
                   </>
@@ -344,19 +488,19 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         <h3>Responsables y Ubicación</h3>
                         <div className="form-field">
                           <label>Localidad</label>
-                          <CreatableAutocomplete name="localidad_nombre" value={formData.localidad_nombre} onChange={(e) => handleChange({ target: { name: 'localidad_nombre', value: e.target.value } })} apiEndpoint="/localidades" />
+                          <CreatableAutocomplete name="localidad_nombre" value={formData.localidad_nombre || ''} onChange={(e) => handleChange({ target: { name: 'localidad_nombre', value: e.target.value } })} apiEndpoint="/localidades" />
                         </div>
                         <div className="form-field">
                           <label>Contratista</label>
-                          <CreatableAutocomplete name="contratista_nombre" value={formData.contratista_nombre} onChange={(e) => handleChange({ target: { name: 'contratista_nombre', value: e.target.value } })} apiEndpoint="/contribuyentes" />
+                          <CreatableAutocomplete name="contratista_nombre" value={formData.contratista_nombre || ''} onChange={(e) => handleChange({ target: { name: 'contratista_nombre', value: e.target.value } })} apiEndpoint="/contribuyentes" />
                         </div>
                         <div className="form-field">
                           <label>Rep. Legal</label>
-                          <CreatableAutocomplete name="rep_legal_nombre" value={formData.rep_legal_nombre} onChange={(e) => handleChange({ target: { name: 'rep_legal_nombre', value: e.target.value } })} apiEndpoint="/representantes-legales" />
+                          <CreatableAutocomplete name="rep_legal_nombre" value={formData.rep_legal_nombre || ''} onChange={(e) => handleChange({ target: { name: 'rep_legal_nombre', value: e.target.value } })} apiEndpoint="/representantes-legales" />
                         </div>
                         <div className="form-field">
                           <label>Inspector</label>
-                          <select name="inspector_id" value={formData.inspector_id} onChange={handleChange} className="form-select-inline">
+                          <select name="inspector_id" value={formData.inspector_id || ''} onChange={handleChange} className="form-select-inline">
                             <option value="">-- Sin Asignar --</option>
                             {inspectores.map(insp => (
                               <option key={insp.id} value={insp.id}>{insp.nombre}</option>
@@ -380,10 +524,62 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                       <div className="info-section">
                         <h3>Responsables y Ubicación</h3>
                         <ul className="responsables-list">
-                          <li><strong>Localidad:</strong> {obra.localidad_nombre || 'No especificada'}</li>
-                          <li><strong>Contratista:</strong> {obra.contratista_nombre || 'No especificado'}</li>
-                          <li><strong>Rep. Legal:</strong> {obra.rep_legal_nombre || 'No especificado'}</li>
-                          <li><strong>Inspector:</strong> {obra.inspector_nombre || 'No asignado'}</li>
+                          <li><strong>Localidad:</strong>
+                            <InlineEditField
+                              fieldName="localidad_nombre"
+                              value={obra.localidad_nombre}
+                              displayValue={obra.localidad_nombre || 'No especificada'}
+                            >
+                              <CreatableAutocomplete
+                                name="localidad_nombre"
+                                value={formData.localidad_nombre || ''}
+                                onChange={(e) => handleChange({ target: { name: 'localidad_nombre', value: e.target.value } })}
+                                apiEndpoint="/localidades"
+                              />
+                            </InlineEditField>
+                          </li>
+                          <li><strong>Contratista:</strong>
+                            <InlineEditField
+                              fieldName="contratista_nombre"
+                              value={obra.contratista_nombre}
+                              displayValue={obra.contratista_nombre || 'No especificado'}
+                            >
+                              <CreatableAutocomplete
+                                name="contratista_nombre"
+                                value={formData.contratista_nombre || ''}
+                                onChange={(e) => handleChange({ target: { name: 'contratista_nombre', value: e.target.value } })}
+                                apiEndpoint="/contribuyentes"
+                              />
+                            </InlineEditField>
+                          </li>
+                          <li><strong>Rep. Legal:</strong>
+                            <InlineEditField
+                              fieldName="rep_legal_nombre"
+                              value={obra.rep_legal_nombre}
+                              displayValue={obra.rep_legal_nombre || 'No especificado'}
+                            >
+                              <CreatableAutocomplete
+                                name="rep_legal_nombre"
+                                value={formData.rep_legal_nombre || ''}
+                                onChange={(e) => handleChange({ target: { name: 'rep_legal_nombre', value: e.target.value } })}
+                                apiEndpoint="/representantes-legales"
+                              />
+                            </InlineEditField>
+                          </li>
+                          <li><strong>Inspector:</strong>
+                            <InlineEditField
+                              fieldName="inspector_id"
+                              value={obra.inspector_id}
+                              displayValue={obra.inspector_nombre || 'No asignado'}
+                            >
+                              <select name="inspector_id" value={formData.inspector_id || ''} onChange={handleChange} className="form-select-inline">
+                                <option value="">-- Sin Asignar --</option>
+                                {inspectores.map(insp => (
+                                  <option key={insp.id} value={insp.id}>{insp.nombre}</option>
+                                ))}
+                              </select>
+                            </InlineEditField>
+                          </li>
                         </ul>
                       </div>
                       {/* Mapa para ver */}

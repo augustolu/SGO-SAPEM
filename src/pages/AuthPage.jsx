@@ -6,7 +6,7 @@ import './AuthPage.css';
 
 // --- Login Form Component ---
 const LoginForm = ({ onSwitch, onForgotPassword }) => {
-  const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [error, setError] = useState('');
@@ -17,7 +17,7 @@ const LoginForm = ({ onSwitch, onForgotPassword }) => {
     e.preventDefault();
     setError('');
     try {
-      await login(email, password, keepLoggedIn);
+      await login(loginIdentifier, password, keepLoggedIn);
       navigate('/obras');
     } catch (err) {
       // Mejorar el mensaje de error usando la respuesta del servidor
@@ -40,8 +40,8 @@ const LoginForm = ({ onSwitch, onForgotPassword }) => {
       <h1>Iniciar Sesión</h1>
       <form onSubmit={handleSubmit} className="login-form">
         <div className="input-group">
-          <label htmlFor="login-email">Dirección de Email</label>
-          <input type="email" id="login-email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="email@ejemplo.com" autoComplete="email" />
+          <label htmlFor="login-identifier">Email o Nombre de Usuario</label>
+          <input type="text" id="login-identifier" value={loginIdentifier} onChange={(e) => setLoginIdentifier(e.target.value)} required placeholder="email@ejemplo.com o usuario" autoComplete="email" />
         </div>
         <div className="input-group">
           <label htmlFor="login-password">Contraseña</label>
@@ -66,6 +66,7 @@ const LoginForm = ({ onSwitch, onForgotPassword }) => {
 
 // --- Register Form Component ---
 const RegisterForm = ({ onSwitch }) => {
+  const [nombre, setNombre] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,11 +77,12 @@ const RegisterForm = ({ onSwitch }) => {
     e.preventDefault();
     setError('');
     try {
-      await register(username, email, password);
-      alert('Registro exitoso. Ahora puedes iniciar sesión.');
+      await register(nombre, username, email, password);
+      alert('Registro exitoso. Su cuenta está pendiente de aprobación por un administrador.');
       onSwitch(e); // Switch to login view on success
     } catch (err) {
-      setError('No se pudo registrar. Inténtalo de nuevo.');
+      const errorMessage = err.response?.data?.message || 'No se pudo registrar. Inténtalo de nuevo.';
+      setError(errorMessage);
     }
   };
 
@@ -98,8 +100,12 @@ const RegisterForm = ({ onSwitch }) => {
       <h1>Crear Cuenta</h1>
       <form onSubmit={handleSubmit} className="login-form">
         <div className="input-group">
+          <label htmlFor="register-nombre">Nombre Completo</label>
+          <input type="text" id="register-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Juan Perez" autoComplete="name" />
+        </div>
+        <div className="input-group">
           <label htmlFor="register-username">Nombre de Usuario</label>
-          <input type="text" id="register-username" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="nombre.apellido" autoComplete="name" />
+          <input type="text" id="register-username" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="jperez" autoComplete="username" />
         </div>
         <div className="input-group">
           <label htmlFor="register-email">Dirección de Email</label>

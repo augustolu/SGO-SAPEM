@@ -20,7 +20,7 @@ module.exports = function(app) {
   app.post(
     "/obras/upload-excel",
     [authJwt.verifyToken, authJwt.isSupervisorOrAdmin, uploadExcel.single('excel_file')], 
-    obras.uploadExcel
+    obras.uploadObras
   );
 
   // Retrieve all Obras

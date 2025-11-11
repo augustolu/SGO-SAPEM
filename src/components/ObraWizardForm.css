@@ -1,7 +1,7 @@
 :root {
   --primary-color: #0D99FF;
   --primary-hover-color: #0b8ae6;
-  --background-color: #222B3A;
+  --background-color: #3b4c6b;
   --surface-color: #798fb9;
   --border-color: #3A475C;
   --text-primary-color: #FFFFFF;
@@ -37,7 +37,7 @@
   flex-grow: 1;
   overflow-y: auto;
   padding: 2rem 3rem;
-  background: var(--background-color);
+  background: #191f2b;
 }
 
 .wizard-footer {

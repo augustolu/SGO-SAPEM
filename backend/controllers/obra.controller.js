@@ -72,6 +72,13 @@ exports.create = async (req, res) => {
       }
     }
 
+    const plazoDias = req.body.plazo_dias ? Number(req.body.plazo_dias) : null;
+    let cantidadContratos = req.body.cantidad_contratos ? Number(req.body.cantidad_contratos) : null;
+
+    if (plazoDias && plazoDias > 0) {
+      cantidadContratos = Math.ceil(plazoDias / 30);
+    }
+
     // Mapeo final para la creación de la obra
     const obra = {
       establecimiento: req.body.establecimiento,
@@ -87,8 +94,8 @@ exports.create = async (req, res) => {
       monto_sapem: req.body.monto_sapem ? Number(req.body.monto_sapem) : null,
       monto_sub: req.body.monto_sub ? Number(req.body.monto_sub) : null,
       af: req.body.af ? Number(req.body.af) : 0,
-      plazo: req.body.plazo_dias ? Number(req.body.plazo_dias) : null,
-      cantidad_contratos: req.body.cantidad_contratos ? Number(req.body.cantidad_contratos) : null, // Añadir cantidad_contratos
+      plazo: plazoDias,
+      cantidad_contratos: cantidadContratos, // Añadir cantidad_contratos
       fecha_inicio: req.body.fecha_inicio || null,
       fecha_finalizacion_estimada: req.body.fecha_finalizacion_estimada || null,
       estado: req.body.estado,
@@ -141,81 +148,64 @@ exports.create = async (req, res) => {
 
 // --- AÑADE ESTA FUNCIÓN COMPLETA AL FINAL DEL ARCHIVO ---
 
-exports.uploadExcel = async (req, res) => {
+exports.uploadObras = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No se subió ningún archivo.' });
   }
 
-  // 1. Obtener y deserializar el mapa de mapeo y la categoría desde el frontend
   const mapa = JSON.parse(req.body.mapa_json || '{}');
-  const colorToStatusMap = JSON.parse(req.body.color_mapa_json || '{}'); // Recibe el mapa { '#COLOR': 'Estado' }
-  const categoria = req.body.categoria || 'varios'; // Categoría unificada para todo el lote
-
+  const colorToStatusMap = JSON.parse(req.body.color_mapa_json || '{}');
+  const categoria = req.body.categoria || 'varios';
   const filePath = req.file.path;
-  // Usamos una transacción de Sequelize para asegurar que todo o nada se importe
-  const transaction = await db.sequelize.transaction(); 
+  const transaction = await db.sequelize.transaction();
+  const newlyCreatedUsers = [];
 
-  // Función helper para obtener valores usando el mapa dinámico
   const getMappedValue = (row, dbFieldName, mapa) => {
     const excelHeader = mapa[dbFieldName];
-    if (excelHeader && row[excelHeader] !== undefined) {
-      return row[excelHeader];
-    }
-    return null; // Retorna null si no hay mapeo o valor
+    return excelHeader && row[excelHeader] !== undefined ? row[excelHeader] : null;
   };
 
   try {
     const inspectorRole = await db.Roles.findOne({ where: { nombre: 'Inspector' } });
     if (!inspectorRole) {
       await transaction.rollback();
-      return res.status(500).json({ message: "El rol 'Inspector' no fue encontrado en la base de datos. No se puede continuar." });
+      return res.status(500).json({ message: "El rol 'Inspector' no fue encontrado." });
     }
 
-    // Leer el archivo Excel
-    const workbook = xlsx.readFile(filePath, { cellStyles: true }); // ¡IMPORTANTE! leer con estilos
-    const sheetName = req.body.sheetName || workbook.SheetNames[0]; // Usar la hoja seleccionada
+    const workbook = xlsx.readFile(filePath, { cellStyles: true });
+    const sheetName = req.body.sheetName || workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    // Convertir la hoja a JSON. Los nombres de las columnas deben coincidir
-    const data = xlsx.utils.sheet_to_json(sheet, { defval: null }); // Usar defval para celdas vacías
+    const data = xlsx.utils.sheet_to_json(sheet, { defval: null });
 
     if (data.length === 0) {
-      fs.unlinkSync(filePath); // Limpiar el archivo subido
+      fs.unlinkSync(filePath);
       return res.status(400).json({ message: 'El archivo Excel está vacío.' });
     }
 
     let importedCount = 0;
     const errors = [];
 
-    // Procesar cada fila del Excel
     for (const [index, row] of data.entries()) {
-      const rowNumber = index + 2; // (fila 1 es cabecera, empezamos en la 2)
-
-      // --- LÓGICA PARA DETERMINAR EL ESTADO POR COLOR ---
-      let estado = 'En ejecución'; // Estado por defecto.
+      const rowNumber = index + 2;
+      let estado = 'En ejecución';
       const headerRow = xlsx.utils.sheet_to_json(sheet, { header: 1 })[0];
 
-      // Iterar sobre las celdas de la fila actual para encontrar un color mapeado.
       for (let c = 0; c < headerRow.length; c++) {
         const cellAddress = xlsx.utils.encode_cell({ r: index + 1, c: c });
         if (sheet[cellAddress]) {
           const cell = sheet[cellAddress];
-          // El color puede estar en fgColor (patrón) o bgColor (fondo). Priorizamos bgColor.
           const cellColor = cell?.s?.bgColor?.rgb || cell?.s?.fgColor?.rgb;
-
           if (cellColor) {
             const cleanColor = `#${String(cellColor).slice(-6).toUpperCase()}`;
             if (colorToStatusMap[cleanColor] && colorToStatusMap[cleanColor] !== '') {
               estado = colorToStatusMap[cleanColor];
-              break; // Encontramos un color, asignamos estado y salimos del bucle de columnas.
+              break;
             }
           }
         }
       }
-      
+
       try {
-        // Lógica "Buscar o Crear" para tablas relacionadas usando el mapeo
-        
-        // LOCALIDAD
         let localidadId = null;
         const localidadNombre = getMappedValue(row, 'localidad', mapa);
         if (localidadNombre && String(localidadNombre).trim() !== '') {
@@ -227,7 +217,6 @@ exports.uploadExcel = async (req, res) => {
           localidadId = localidad.id;
         }
 
-        // CONTRATISTA (CONTRIBUYENTE)
         let contribuyenteId = null;
         const contratistaNombre = getMappedValue(row, 'contratista', mapa);
         if (contratistaNombre && String(contratistaNombre).trim() !== '') {
@@ -239,7 +228,6 @@ exports.uploadExcel = async (req, res) => {
           contribuyenteId = contribuyente.id;
         }
 
-        // REPRESENTANTE LEGAL
         let representanteId = null;
         const repLegalNombre = getMappedValue(row, 'rep_legal', mapa);
         if (repLegalNombre && String(repLegalNombre).trim() !== '') {
@@ -251,36 +239,52 @@ exports.uploadExcel = async (req, res) => {
           representanteId = representante.id;
         }
 
-        // INSPECTOR (Buscar o Crear)
         let inspectorId = null;
         const inspectorNombre = getMappedValue(row, 'inspector_id', mapa);
         if (inspectorNombre && String(inspectorNombre).trim() !== '') {
-          const [inspector] = await db.Usuarios.findOrCreate({
-            where: { nombre: String(inspectorNombre).trim() },
-            defaults: {
-              nombre: String(inspectorNombre).trim(),
-              email: `${String(inspectorNombre).trim().replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}_${Date.now()}@sapem-placeholder.com`,
-              password: bcrypt.hashSync(Math.random().toString(36).slice(-8), 8),
-              rol_id: inspectorRole.id
-            },
-            transaction
-          });
+          const nombreCompleto = String(inspectorNombre).trim();
+          let inspector = await db.Usuarios.findOne({ where: { nombre: nombreCompleto }, transaction });
+
+          if (!inspector) {
+            const newPassword = Math.random().toString(36).slice(-8);
+            const username = nombreCompleto.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() + Math.floor(1000 + Math.random() * 9000);
+
+            try {
+              inspector = await db.Usuarios.create({
+                nombre: nombreCompleto,
+                username: username,
+                email: `${username}@sapem-placeholder.com`,
+                password: bcrypt.hashSync(newPassword, 8),
+                rol_id: inspectorRole.id
+              }, { transaction });
+
+              newlyCreatedUsers.push({
+                'Nombre Completo': nombreCompleto,
+                'Usuario': username,
+                'Contraseña': newPassword
+              });
+            } catch (error) {
+              if (error.name === 'SequelizeUniqueConstraintError') {
+                throw new Error(`No se pudo crear un nombre de usuario único para el inspector '${nombreCompleto}'. Por favor, intente de nuevo.`);
+              }
+              throw error;
+            }
+          }
           inspectorId = inspector.id;
         }
-        
-        // Mapear campos al modelo 'Obras' usando el helper y valores por defecto
+
         const plazoDias = getMappedValue(row, 'plazo', mapa);
         const cantidadContratos = plazoDias && Number(plazoDias) > 0 ? Math.ceil(Number(plazoDias) / 30) : null;
 
         const obraData = {
           nro: getMappedValue(row, 'nro', mapa) || null,
-          establecimiento: getMappedValue(row, 'establecimiento', mapa) || 'Sin especificar', // NOT NULL
+          establecimiento: getMappedValue(row, 'establecimiento', mapa) || 'Sin especificar',
           numero_gestion: getMappedValue(row, 'numero_gestion', mapa),
           detalle: getMappedValue(row, 'detalle', mapa) || null,
           localidad_id: localidadId,
           contribuyente_id: contribuyenteId,
-          categoria: categoria, // Usa la categoría del body para todas las filas
-          estado: estado, // NOT NULL, ahora determinado por el color
+          categoria: categoria,
+          estado: estado,
           plazo: plazoDias || null,
           cantidad_contratos: cantidadContratos,
           monto_sapem: getMappedValue(row, 'monto_sapem', mapa) || 0,
@@ -289,45 +293,48 @@ exports.uploadExcel = async (req, res) => {
           representante_legal_id: representanteId,
           inspector_id: inspectorId,
           progreso: getMappedValue(row, 'progreso', mapa) || 0,
-          // 'can' no parece estar en tu modelo `obra.model.js`
         };
 
-        // Crear la Obra dentro de la transacción
         await Obra.create(obraData, { transaction });
         importedCount++;
-
       } catch (rowError) {
         errors.push(`Error en fila ${rowNumber}: ${rowError.message}`);
       }
     }
 
-    // Finalizar la transacción
     if (errors.length > 0) {
-      // Si hubo errores en algunas filas, deshacemos *todo*
       await transaction.rollback();
-      res.status(400).json({ 
-        message: 'Ocurrieron errores al procesar las filas. No se importó ninguna obra.', 
+      return res.status(400).json({
+        message: 'Ocurrieron errores al procesar las filas. No se importó ninguna obra.',
         errors,
-        importedCount: 0 
+        importedCount: 0
       });
+    }
+
+    await transaction.commit();
+
+    if (newlyCreatedUsers.length > 0) {
+      const worksheet = xlsx.utils.json_to_sheet(newlyCreatedUsers);
+      const workbook = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(workbook, worksheet, 'Nuevas Cuentas');
+      const buffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+
+      res.setHeader('Content-Disposition', 'attachment; filename="Cuentas de inspectores.xlsx"');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.send(buffer);
     } else {
-      // Si todo salió bien, confirmamos los cambios
-      await transaction.commit();
-      res.status(201).json({ 
-        message: `¡Éxito! Se importaron ${importedCount} obras.`, 
+      res.status(200).json({
+        message: `¡Éxito! Se importaron ${importedCount} obras. No se crearon nuevos usuarios.`,
         importedCount,
-        errors: []
+        newlyCreatedUsers: []
       });
     }
 
   } catch (error) {
-    // Error general (ej. no se pudo leer el archivo)
     await transaction.rollback();
     console.error('Error en la importación de Excel:', error);
-    res.status(500).json({ message: 'Error en el servidor al procesar el archivo.', errors: [error.message], importedCount: 0 });
-  
+    res.status(500).json({ message: 'Error en el servidor al procesar el archivo.', errors: [error.message] });
   } finally {
-    // Siempre eliminar el archivo temporal
     fs.unlinkSync(filePath);
   }
 };
@@ -512,7 +519,6 @@ exports.update = async (req, res) => {
       monto_sub,
       af,
       plazo_dias,
-      cantidad_contratos,
       fecha_inicio,
       fecha_finalizacion_estimada,
       estado,
@@ -520,6 +526,17 @@ exports.update = async (req, res) => {
       motivo_anulacion,
       nro
     } = req.body;
+
+    let { cantidad_contratos } = req.body;
+
+    if (req.body.hasOwnProperty('plazo_dias')) {
+        const plazoNum = Number(plazo_dias);
+        if (plazoNum > 0) {
+            cantidad_contratos = Math.ceil(plazoNum / 30);
+        } else {
+            cantidad_contratos = null;
+        }
+    }
 
     const updateData = {
       establecimiento,
@@ -563,19 +580,23 @@ exports.update = async (req, res) => {
         return res.status(404).send({ message: "Obra not found." });
       }
 
-      const now = new Date();
-      const parts = obra.fecha_inicio.split('T')[0].split('-');
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const fechaInicio = new Date(year, month, day);
-      const oneWeekAfterStartDate = new Date(fechaInicio.getTime() + (7 * 24 * 60 * 60 * 1000));
+      // Solo aplicar la restricción de tiempo si la fecha de inicio existe
+      if (obra.fecha_inicio) {
+        const now = new Date();
+        const parts = obra.fecha_inicio.split('T')[0].split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const fechaInicio = new Date(year, month, day);
+        const oneWeekAfterStartDate = new Date(fechaInicio.getTime() + (7 * 24 * 60 * 60 * 1000));
 
-      if (now > oneWeekAfterStartDate) {
-        return res.status(403).send({
-          message: "No tiene permiso para editar esta obra. Han transcurrido más de una semana desde la fecha de inicio."
-        });
+        if (now > oneWeekAfterStartDate) {
+          return res.status(403).send({
+            message: "No tiene permiso para editar esta obra. Han transcurrido más de una semana desde la fecha de inicio."
+          });
+        }
       }
+      // Si no hay fecha de inicio, el inspector puede editar libremente.
     }
 
     const [num] = await Obra.update(updateData, {

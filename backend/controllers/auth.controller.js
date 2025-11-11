@@ -18,7 +18,8 @@ exports.signup = async (req, res) => {
     }
 
     await User.create({
-      nombre: req.body.username,
+      nombre: req.body.nombre,
+      username: req.body.username,
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 8),
       rol_id: role.id
@@ -34,7 +35,7 @@ exports.signup = async (req, res) => {
 exports.me = async (req, res) => {
   try {
     const user = await User.findByPk(req.userId, {
-      attributes: ['id', 'nombre', 'email'], // No enviar la contraseña
+      attributes: ['id', 'nombre', 'username', 'email'], // No enviar la contraseña
       include: {
         model: Role,
         as: 'role',
@@ -54,7 +55,12 @@ exports.signin = async (req, res) => {
   try {
     console.log("signin request body:", req.body);
     const user = await User.findOne({
-      where: { email: req.body.email },
+      where: {
+        [Op.or]: [
+          { username: req.body.loginIdentifier },
+          { email: req.body.loginIdentifier }
+        ]
+      },
       include: {
       model: Role,
       as: 'role',
@@ -92,6 +98,7 @@ exports.signin = async (req, res) => {
     res.status(200).send({
       id: user.id,
       nombre: user.nombre,
+      username: user.username,
       email: user.email,
       role: user.role ? user.role.nombre : null,
       accessToken: token

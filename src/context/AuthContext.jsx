@@ -53,10 +53,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, [resetSessionTimeout]);
 
-  const login = useCallback(async (email, password, keepLoggedIn = true) => {
+  const login = useCallback(async (loginIdentifier, password, keepLoggedIn = true) => {
     try {
       const response = await api.post('/auth/signin', {
-        email,
+        loginIdentifier,
         password,
         keepLoggedIn,
       });
@@ -77,9 +77,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, [resetSessionTimeout]);
 
-  const register = useCallback(async (username, email, password) => {
+  const register = useCallback(async (nombre, username, email, password) => {
     try {
       await api.post('/auth/signup', {
+        nombre,
         username,
         email,
         password,

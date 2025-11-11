@@ -41,13 +41,11 @@ export function ObrasExcelUploader({ isOpen, onClose, onUploadSuccess }) {
 
   useEffect(() => {
     if (isOpen) {
-      // Añadimos ambas clases: una para el pointer-events y otra para el overflow
       document.body.classList.add('excel-modal-open', 'modal-open');
     } else {
       document.body.classList.remove('excel-modal-open', 'modal-open');
     }
     return () => {
-      // Limpieza al desmontar el componente
       document.body.classList.remove('excel-modal-open', 'modal-open');
     };
   }, [isOpen]);
@@ -58,62 +56,49 @@ export function ObrasExcelUploader({ isOpen, onClose, onUploadSuccess }) {
 
   const detectColorsAndProceed = (worksheet) => {
     const detectedColors = new Set();
-    // Iterar sobre todas las celdas para encontrar colores de fondo
     for (const cellAddress in worksheet) {
-      // Ignorar las celdas especiales como !ref, !merges, etc.
       if (cellAddress[0] === '!') continue;
-
       const cell = worksheet[cellAddress];
       const cellColor = cell?.s?.fgColor?.rgb;
-
       if (cellColor) {
-        // El color puede tener un prefijo de alfa (ej. 'FFFF0000'), lo quitamos.
         const cleanColor = `#${cellColor.slice(-6).toUpperCase()}`;
         detectedColors.add(cleanColor);
       }
     }
-    // Inicializar el mapeo de colores con los colores detectados
     setColorMapping(Array.from(detectedColors).reduce((acc, color) => ({ ...acc, [color]: '' }), {}));
   };
 
   const processSheet = (sheetName) => {
     if (!workbook) return;
-
     const worksheet = workbook.Sheets[sheetName];
     if (!worksheet) {
       setMessage('La hoja seleccionada no se pudo encontrar en el archivo.');
       setErrors(['Por favor, selecciona otra hoja o sube un archivo diferente.']);
       return;
     }
-    // Primero, detectamos los colores y preparamos el mapeo
     detectColorsAndProceed(worksheet);
     const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] || [];
     setExcelHeaders(headers);
-    setStep(3); // Avanzar al paso de mapeo de colores
+    setStep(3);
   };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
-
     setFile(selectedFile);
     setMessage('');
     setErrors([]);
-
     const reader = new FileReader();
     reader.onload = (event) => {
       const data = new Uint8Array(event.target.result);
-      // ¡IMPORTANTE! Añadir { cellStyles: true } para leer los colores de las celdas.
       const workbook = XLSX.read(data, { type: 'array', cellStyles: true });
       setWorkbook(workbook);
       const sheets = workbook.SheetNames;
       setSheetNames(sheets);
-
       if (sheets.length === 1) {
-        // Si solo hay una hoja, la procesamos directamente
         processSheet(sheets[0]);
       } else {
-        setStep(2); // Si hay varias, vamos al paso de selección de hoja
+        setStep(2);
       }
     };
     reader.readAsArrayBuffer(selectedFile);
@@ -132,38 +117,66 @@ export function ObrasExcelUploader({ isOpen, onClose, onUploadSuccess }) {
 
     setIsLoading(true);
     const formData = new FormData();
-    formData.append('excel_file', file); // Coincide con el backend
-    // Adjuntar el objeto de mapeo serializado como una cadena JSON
+    formData.append('excel_file', file);
     formData.append('mapa_json', JSON.stringify(columnMapping));
-    formData.append('color_mapa_json', JSON.stringify(colorMapping)); // Mapa de colores actualizado
-    formData.append('categoria', selectedCategory); // Enviar categoría seleccionada
+    formData.append('color_mapa_json', JSON.stringify(colorMapping));
+    formData.append('categoria', selectedCategory);
 
     try {
       const response = await api.post('/obras/upload-excel', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
+        responseType: 'blob', // Pedimos la respuesta como un blob para manejar el archivo
       });
 
-      setMessage(`¡Éxito! Se importaron ${response.data.importedCount} obras.`);
-      setErrors([]);
-      setFile(null); // Limpiar el input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = null;
+      // Si la respuesta es un archivo de Excel, lo descargamos
+      if (response.headers['content-type'] === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        
+        const contentDisposition = response.headers['content-disposition'];
+        let filename = 'Cuentas de inspectores.xlsx'; // Nombre por defecto
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch && filenameMatch.length > 1) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+
+        // Asumimos éxito y cerramos el modal, notificando al padre
+        onUploadSuccess({ message: `¡Éxito! Obras importadas y archivo de cuentas descargado.` });
+
+      } else {
+        // Si no es un archivo, es un JSON (éxito sin usuarios nuevos, o error)
+        const responseText = await response.data.text();
+        const jsonData = JSON.parse(responseText);
+        onUploadSuccess(jsonData);
       }
-      // Resetear estados al estado inicial
-      setStep(1); // Volver al paso inicial
-      setWorkbook(null);
-      setSheetNames([]);
-      setExcelHeaders([]);
-      setColumnMapping({});
-      setColorMapping({});
-      onUploadSuccess(); // Llamar a la función para refrescar la lista de obras
-      onClose(); // Cerramos el modal en caso de éxito
+
     } catch (error) {
       console.error('Error al subir el archivo:', error);
-      const errorMsg = error.response?.data?.message || 'Error en el servidor.';
-      const errorsList = error.response?.data?.errors || [];
+      let errorMsg = 'Error en el servidor.';
+      let errorsList = [];
+
+      if (error.response && error.response.data) {
+        try {
+          // El error también puede ser un blob, hay que leerlo
+          const errorText = await error.response.data.text();
+          const errorJson = JSON.parse(errorText);
+          errorMsg = errorJson.message || 'Error al procesar el archivo.';
+          errorsList = errorJson.errors || [];
+        } catch (e) {
+          // Si no se puede parsear como JSON, mostramos el texto plano
+          errorMsg = await error.response.data.text();
+        }
+      }
+      
       setMessage(errorMsg);
       setErrors(errorsList);
     } finally {
@@ -180,12 +193,11 @@ export function ObrasExcelUploader({ isOpen, onClose, onUploadSuccess }) {
     setColorMapping({});
     setMessage('');
     setErrors([]);
-    setStep(1); // Siempre volver al paso 1
+    setStep(1);
     if (fileInputRef.current) {
       fileInputRef.current.value = null;
-    } else {
-      onClose();
     }
+    onClose();
   };
 
   const handleColorMapChange = (color, status) => {
@@ -240,28 +252,41 @@ export function ObrasExcelUploader({ isOpen, onClose, onUploadSuccess }) {
               <h4>Asignar Estado por Color</h4>
               <p>Hemos detectado estos colores en tu archivo. Asigna un estado a cada uno.</p>
 
-              <div className="excel-mapping-grid">
-                {Object.keys(colorMapping).length > 0 ? Object.keys(colorMapping).map(color => (
-                  <div key={color} className="mapping-row color-map-row">
-                    <div className="color-swatch" style={{ backgroundColor: color }}></div>
-                    <label htmlFor={`color-map-${color}`}>{color}</label>
-                    <select
-                      id={`color-map-${color}`}
-                      value={colorMapping[color]}
-                      onChange={(e) => handleColorMapChange(color, e.target.value)}
-                    >
-                      <option value="">-- Ignorar este color --</option>
-                      <option value="En ejecución">En ejecución</option>
-                      <option value="Finalizada">Finalizada</option>
-                      <option value="Anulada">Anulada</option>
-                      <option value="Compulsa">Compulsa</option>
-                      <option value="Solicitud">Solicitud</option>
+              <div className="excel-mapping-content-wrapper">
+                <div className="excel-mapping-grid">
+                  {Object.keys(colorMapping).length > 0 ? Object.keys(colorMapping).map(color => (
+                    <div key={color} className="mapping-row color-map-row">
+                      <div className="color-swatch" style={{ backgroundColor: color }}></div>
+                      <label htmlFor={`color-map-${color}`}>{color}</label>
+                      <select
+                        id={`color-map-${color}`}
+                        value={colorMapping[color]}
+                        onChange={(e) => handleColorMapChange(color, e.target.value)}
+                      >
+                        <option value="">-- Ignorar este color --</option>
+                        <option value="En ejecución">En ejecución</option>
+                        <option value="Finalizada">Finalizada</option>
+                        <option value="Anulada">Anulada</option>
+                        <option value="Compulsa">Compulsa</option>
+                        <option value="Solicitud">Solicitud</option>
 
-                    </select>
-                  </div>
-                )) : (
-                  <p className="no-colors-found">No se detectaron colores de fondo en las celdas de esta hoja.</p>
-                )}
+                      </select>
+                    </div>
+                  )) : (
+                    <p className="no-colors-found">No se detectaron colores de fondo en las celdas de esta hoja.</p>
+                  )}
+                </div>
+
+                <div className="color-reminder">
+                  <h5>Recordatorio</h5>
+                  <ul>
+                    <li><span className="color-dot" style={{backgroundColor: 'white'}}></span>Solicitud</li>
+                    <li><span className="color-dot" style={{backgroundColor: 'yellow'}}></span>Compulsa</li>
+                    <li><span className="color-dot" style={{backgroundColor: 'green'}}></span>En ejecución</li>
+                    <li><span className="color-dot" style={{backgroundColor: 'blue'}}></span>Finalizada</li>
+                    <li><span className="color-dot" style={{backgroundColor: 'red'}}></span>Anulada</li>
+                  </ul>
+                </div>
               </div>
 
               <div className="excel-mapping-actions">

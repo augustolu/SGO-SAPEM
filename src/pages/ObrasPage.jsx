@@ -48,6 +48,26 @@ const CloseIcon = (props) => (
   </svg>
 );
 
+const ListIcon = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </svg>
+);
+
+const GridIcon = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+    </svg>
+);
+
 
 const capitalize = (s) => {
   if (typeof s !== 'string' || !s) return '';
@@ -192,7 +212,7 @@ const UserManagementModal = ({ onClose }) => {
             ))}
           </ul>
         )}
-        <button className="modal-close-button" onClick={onClose}>Cerrar</button>
+        <button className="modal-close-button" onClick={onClose}>x</button>
       </div>
     </div>
   );
@@ -338,6 +358,68 @@ const ObraCard = ({ obra, isAdmin, onDeleteClick, onStatusChange }) => {
   );
 };
 
+const ObraListItem = ({ obra, isAdmin, onDeleteClick, onStatusChange }) => {
+    const plazoStatus = getPlazoStatus(obra.fecha_finalizacion_estimada);
+  
+    const handleDelete = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onDeleteClick(obra.id);
+    };
+  
+    const handleStatusChange = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onStatusChange(obra.id, e.target.value);
+    };
+  
+    return (
+      <Link to={`/obras/${obra.id}`} className="obra-list-item-link">
+        <div className="obra-list-item">
+          <div className="obra-list-item-main">
+              <span className="obra-gestion-number">#{obra.numero_gestion}</span>
+              <h3 className="obra-list-item-title">{obra.establecimiento}</h3>
+          </div>
+          <div className="obra-list-item-details">
+              <div className="progress-display" style={{ width: '150px' }}>
+                <div className="progress-bar-container">
+                  <div className="progress-bar" style={{ width: `${obra.progreso || 0}%`, height: '100%', backgroundColor: '#84bef5ff' }}></div>
+                </div>
+                <span className="progress-text">{obra.progreso || 0}%</span>
+              </div>
+              <div className="status-tags">
+                  {isAdmin ? (
+                    <select
+                      className={`status-badge status-select status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}
+                      value={obra.estado}
+                      onChange={handleStatusChange}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    >
+                      <option value="Solicitud">Solicitud</option>
+                      <option value="Compulsa">Compulsa</option>
+                      <option value="En ejecución">En ejecución</option>
+                      <option value="Finalizada">Finalizada</option>
+                      <option value="Anulada">Anulada</option>
+                    </select>
+                  ) : (
+                    <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado}</span>
+                  )}
+                  {obra.categoria && <span className="status-badge status-categoria">{obra.categoria.toUpperCase()}</span>}
+                  {plazoStatus && <span className={`status-badge ${plazoStatus.className}`}>{plazoStatus.text}</span>}
+              </div>
+          </div>
+          {isAdmin && (
+            <div className="obra-list-item-actions">
+              <button onClick={handleDelete} className="obra-card-delete-btn" title="Eliminar Obra">
+                <TrashIcon style={{ width: '14px', height: '14px' }} />
+              </button>
+            </div>
+          )}
+        </div>
+      </Link>
+    );
+  };
+
 // --- Filter Components --- //
 const FilterDropdown = ({ obras, applyFilters, currentStatus, currentSortBy, currentCategory }) => {
     const [status, setStatus] = useState(currentStatus);
@@ -437,7 +519,7 @@ const SearchTypeDropdown = ({ searchType, setSearchType }) => {
     );
 }
 
-const FilterBar = ({ obras, filterConfig, setFilterConfig, isAdmin }) => {
+const FilterBar = ({ obras, filterConfig, setFilterConfig, isAdmin, viewMode, setViewMode }) => {
     const [localSearch, setLocalSearch] = useState(filterConfig.searchTerm);
     const [isDropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -530,6 +612,14 @@ const FilterBar = ({ obras, filterConfig, setFilterConfig, isAdmin }) => {
                         <SearchIcon />
                     </button>
                     <SearchTypeDropdown searchType={filterConfig.searchType} setSearchType={setSearchType} />
+                </div>
+                <div className="view-mode-toggle">
+                    <button title="Mostrar como grilla" className={`icon-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
+                        <GridIcon />
+                    </button>
+                    <button title="Mostrar como lista" className={`icon-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
+                        <ListIcon />
+                    </button>
                 </div>
             </div>
 
@@ -769,6 +859,7 @@ const CreateObraModal = ({ onClose, onObraCreated, initialData }) => {
     >
       <div 
         className={`modal-content-form ${isClosing ? 'closing' : ''}`} 
+        style={{ backgroundColor: '#e6f7ff' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="modal-header">
@@ -836,6 +927,7 @@ const ObrasPage = () => {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 30;
+  const [viewMode, setViewMode] = useState('grid');
   const [filterConfig, setFilterConfig] = useState({
     status: null,
     sortBy: 'fecha_inicio_desc',
@@ -963,8 +1055,9 @@ const ObrasPage = () => {
 
   // --- AÑADE ESTA NUEVA FUNCIÓN ---
   // Esta función se pasará al uploader para refrescar la lista
-  const handleExcelUploadSuccess = () => {
-    toast.success("¡Obras importadas con éxito! Actualizando lista...");
+  const handleExcelUploadSuccess = (data) => {
+    const message = data?.message || "¡Obras importadas con éxito! Actualizando lista...";
+    toast.success(message);
     fetchObras(); // Re-utiliza tu función de carga
     setIsExcelModalOpen(false); // Cierra el modal después de la subida exitosa
   };
@@ -1078,6 +1171,8 @@ const ObrasPage = () => {
               filterConfig={filterConfig}
               setFilterConfig={setFilterConfig}
               isAdmin={isAdmin}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
             />
             {canCreateObra && (
               <div style={{ display: 'flex', gap: '10px' }}> {/* Agrupador */}
@@ -1104,9 +1199,15 @@ const ObrasPage = () => {
           </div>
           <div className="obras-content-area">
             <div className="obras-grid-container">
-              <div className="obras-grid">
+              <div className={viewMode === 'grid' ? "obras-grid" : "obras-list"}>
                 {obrasToShow.length > 0 ? (
-                  obrasToShow.map(obra => <ObraCard key={obra.id} obra={obra} isAdmin={isAdmin} onDeleteClick={handleDeleteObraClick} onStatusChange={handleStatusChange} />)
+                  obrasToShow.map(obra =>
+                    viewMode === 'grid' ? (
+                      <ObraCard key={obra.id} obra={obra} isAdmin={isAdmin} onDeleteClick={handleDeleteObraClick} onStatusChange={handleStatusChange} />
+                    ) : (
+                      <ObraListItem key={obra.id} obra={obra} isAdmin={isAdmin} onDeleteClick={handleDeleteObraClick} onStatusChange={handleStatusChange} />
+                    )
+                  )
                 ) : (
                   <p className="no-obras-message">No hay obras para mostrar.</p>
                 )}

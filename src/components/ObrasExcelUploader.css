@@ -361,6 +361,57 @@
   background: var(--accent-primary);
 }
 
+/* --- Nuevos estilos para el recordatorio de colores --- */
+.excel-mapping-content-wrapper {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.excel-mapping-grid {
+  flex: 1;
+  min-width: 0; /* Para que el flexbox funcione correctamente */
+}
+
+.color-reminder {
+  flex-shrink: 0;
+  width: 220px;
+  padding: 1rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.color-reminder h5 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--accent-primary);
+  font-weight: 600;
+  text-align: center;
+}
+
+.color-reminder ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.color-reminder li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.color-reminder .color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* ---------------------------------------------------- */
+
 /* ========================================================================== */
 /* ========================= ANIMACIONES ==================================== */
 /* ========================================================================== */
