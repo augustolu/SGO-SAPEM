@@ -312,3 +312,44 @@
     font-size: 0.8rem;
   }
 }
+
+/* --- NUEVO: Estilos para las sugerencias de dirección --- */
+.suggestions-container {
+  position: relative;
+}
+
+.suggestions-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  list-style: none;
+  margin: 4px 0 0 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000; /* Asegurarse de que esté por encima de otros elementos */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.suggestions-list li {
+  padding: 0.8rem 1.2rem;
+  cursor: pointer;
+  color: var(--text-primary-color);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.suggestions-list li:last-child {
+  border-bottom: none;
+}
+
+.suggestions-list li:hover {
+  background-color: var(--primary-color);
+  color: white;
+}

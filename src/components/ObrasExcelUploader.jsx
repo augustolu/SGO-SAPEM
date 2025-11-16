@@ -16,7 +16,7 @@ const UploadIcon = (props) => (
 const TARGET_FIELDS = [
   'numero_gestion', 'nro', 'establecimiento', 'localidad', 'contratista', 'detalle', 'monto_sapem',
   'monto_sub', 'af', 'plazo', 'inspector_id',
-  'rep_legal', 'progreso'
+  'rep_legal', 'progreso', 'fecha_inicio', 'fecha_finalizacion_estimada'
 ];
 
 const CATEGORIAS = [

@@ -13,7 +13,7 @@ exports.search = async (req, res) => {
   try {
     console.log('Backend: Received geocode search request from frontend.');
     console.log('Backend: Frontend query parameters for search:', req.query);
-    const { q, state, country, limit } = req.query;
+    const { q, state, country, limit, viewbox, bounded } = req.query;
 
     // Construir los parámetros dinámicamente para evitar enviar 'undefined'
     const nominatimParams = {
@@ -30,6 +30,8 @@ exports.search = async (req, res) => {
 
     if (state) nominatimParams.state = state;
     if (countryCode) nominatimParams.countrycodes = countryCode;
+    if (viewbox) nominatimParams.viewbox = viewbox;
+    if (bounded) nominatimParams.bounded = bounded;
 
     const response = await axios.get(`${NOMINATIM_BASE_URL}/search`, {
       params: nominatimParams,

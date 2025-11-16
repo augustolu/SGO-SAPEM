@@ -28,8 +28,8 @@ const obraSchema = {
   categoria: 'varios',
   descripcion: '', // Cambiado para coincidir con el backend
   nro: '',
-  latitude: -33.2986, // San Luis, Argentina
-  longitude: -66.3377, // San Luis, Argentina
+  latitude: null,
+  longitude: null,
   localidad_id: '', // Cambiado para coincidir con el backend
   ubicacion: '', // Campo para la dirección textual
   contratista: '',
@@ -164,44 +164,26 @@ const Step1 = ({ data, handleChange, errors, selectedFile, setSelectedFile, setI
   );
 };
 
-const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, errors }) => {
-    const [markerPosition, setMarkerPosition] = useState({ lat: data.latitude, lng: data.longitude });
+const Step2 = ({ data, handleChange, setFormData, inspectores, errors }) => {
+    // El centro del mapa por defecto si no hay coordenadas
+    const mapCenter = [data.latitude || -33.2986, data.longitude || -66.3377];
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const searchTimeoutRef = useRef(null);
-    const ignoreReverseGeocodeRef = useRef(false); // Flag para evitar que la geocodificación inversa sobrescriba la entrada del usuario
-    const suggestionsRef = useRef(null); // Ref para el contenedor de sugerencias
+    const suggestionsRef = useRef(null);
 
-    useEffect(() => {
-        console.log('Frontend: markerPosition changed:', markerPosition);
-        setFormData(prev => ({ ...prev, latitude: markerPosition.lat, longitude: markerPosition.lng }));
-
-        // Evitar que la geocodificación inversa sobrescriba la entrada del usuario
-        if (ignoreReverseGeocodeRef.current) {
-            ignoreReverseGeocodeRef.current = false; // Resetear el flag
-            return;
-        }
-
-        // Geocodificación inversa: Coordenadas -> Dirección
-        const fetchAddress = async () => {
-            const reverseGeocodeUrl = `/geocode/reverse?lat=${markerPosition.lat}&lon=${markerPosition.lng}`;
-            console.log('Frontend: Initiating reverse geocode for lat:', markerPosition.lat, 'lon:', markerPosition.lng);
-            console.log('Frontend: Sending reverse geocode request to backend:', reverseGeocodeUrl);
-            try {
-                const response = await api.get(reverseGeocodeUrl);
-                const result = response.data;
-                console.log('Frontend: Reverse geocode successful, result:', result);
-                if (result && result.display_name) {
-                    setFormData(prev => ({ ...prev, ubicacion: result.display_name }));
-                }
-            } catch (error) {
-                console.error("Error en geocodificación inversa:", error);
-                console.error('Frontend: Reverse geocode error response status:', error.response?.status);
-                console.error('Frontend: Reverse geocode error response data:', error.response?.data);
+    // Función para obtener la dirección a partir de las coordenadas (Geocodificación Inversa)
+    const fetchAddress = async (lat, lng) => {
+        try {
+            const reverseGeocodeUrl = `/geocode/reverse?lat=${lat}&lon=${lng}`;
+            const response = await api.get(reverseGeocodeUrl);
+            if (response.data && response.data.display_name) {
+                // Actualiza la ubicación y las coordenadas en el formulario
+                setFormData(prev => ({ ...prev, ubicacion: response.data.display_name, latitude: lat, longitude: lng }));
             }
-        };
-        fetchAddress();
-    }, [markerPosition, setFormData]);
+        } catch (error) {
+            console.error("Error en geocodificación inversa:", error);
+        }
+    };
 
     // Manejador para ocultar sugerencias al hacer clic fuera
     useEffect(() => {
@@ -211,9 +193,7 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, e
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     // Componente para el marcador arrastrable
@@ -222,97 +202,74 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, e
         const eventHandlers = useMemo(() => ({
             dragend() {
                 const marker = markerRef.current;
-                if (marker != null) setMarkerPosition(marker.getLatLng());
+                if (marker != null) {
+                    const newPos = marker.getLatLng();
+                    fetchAddress(newPos.lat, newPos.lng); // Actualiza todo al arrastrar
+                }
             },
-        }), [setMarkerPosition]);
-        return <Marker draggable={true} eventHandlers={eventHandlers} position={markerPosition} ref={markerRef} />;
+        }), []);
+        
+        // El marcador solo se renderiza si hay latitud y longitud
+        if (!data.latitude || !data.longitude) return null;
+
+        return <Marker draggable={true} eventHandlers={eventHandlers} position={[data.latitude, data.longitude]} ref={markerRef} />;
     }
 
     // Componente para manejar eventos del mapa (clic)
     function MapEvents() {
-        useMapEvents({ click(e) { setMarkerPosition(e.latlng); } });
+        useMapEvents({
+            click(e) {
+                fetchAddress(e.latlng.lat, e.latlng.lng); // Actualiza todo al hacer clic
+            }
+        });
         return null;
     }
 
-    // Función de búsqueda debounced para sugerencias
+    // Búsqueda de sugerencias de direcciones (Geocodificación)
     const debouncedSearch = useMemo(() => {
         let timeoutId;
-        return async (query) => {
+        return (query) => {
             clearTimeout(timeoutId);
-            if (query.length < 3) { // Solo buscar si la consulta tiene al menos 3 caracteres
+            if (query.length < 3) {
                 setSuggestions([]);
                 setShowSuggestions(false);
                 return;
             }
             timeoutId = setTimeout(async () => {
-                console.log('Frontend: Debounced search initiated for query:', query);
                 try {
-                    const searchUrl = `/geocode/search?q=${encodeURIComponent(query)}&country=Argentina&limit=5`;
-                    console.log('Frontend: Sending debounced search request to backend:', searchUrl);
+                    const sanLuisViewbox = '-67.72,-36.16,-64.55,-31.69';
+                    const searchUrl = `/geocode/search?q=${encodeURIComponent(query)}&country=Argentina&limit=10&viewbox=${sanLuisViewbox}&bounded=1`;
                     const response = await api.get(searchUrl);
-                    const result = response.data;
-                    console.log('Frontend: Nominatim raw suggestions result:', result);
-                    
-                    // Filtramos las sugerencias para mostrar solo las de San Luis
-                    const filteredSuggestions = result.filter(s => 
-                        s.display_name.toLowerCase().includes('san luis')
-                    );
-                    setSuggestions(filteredSuggestions);
+                    setSuggestions(response.data || []);
                     setShowSuggestions(true);
                 } catch (error) {
                     console.error("Error en geocodificación (sugerencias):", error);
-                    console.error('Frontend: Suggestions error response status:', error.response?.status);
-                    console.error('Frontend: Suggestions error response data:', error.response?.data);
                     setSuggestions([]);
                     setShowSuggestions(false);
                 }
-            }, 500); // Debounce de 500ms
+            }, 500);
         };
     }, []);
 
-    // Manejador para el cambio en el input de ubicación (con autocompletado)
     const handleUbicacionChange = (e) => {
         const { value } = e.target;
-        console.log('Frontend: ubicacion input changed to:', value);
-        handleChange(e); // Actualiza el formData.ubicacion
-        debouncedSearch(value); // Inicia la búsqueda debounced
-    };
-
-    // Manejador para cuando se selecciona una sugerencia
-    const handleSuggestionClick = (suggestion) => {
-        ignoreReverseGeocodeRef.current = true; // Establece el flag para evitar sobrescritura
-        console.log('Frontend: Suggestion selected:', suggestion);
-        setFormData(prev => ({ ...prev, ubicacion: suggestion.display_name }));
-        setMarkerPosition({ lat: parseFloat(suggestion.lat), lng: parseFloat(suggestion.lon) });
-        setSuggestions([]);
-        setShowSuggestions(false);
-    };
-
-    // Manejador para el botón "Buscar" (búsqueda explícita)
-    const handleAddressSearch = async () => {
-        if (!data.ubicacion) return;
-        try {
-            console.log('Frontend: Explicit search for address:', data.ubicacion);
-            const searchUrl = `/geocode/search?q=${encodeURIComponent(data.ubicacion)}&country=Argentina&limit=1`;
-            console.log('Frontend: Sending explicit search request to backend:', searchUrl);
-            const response = await api.get(searchUrl);
-            const result = response.data;
-            console.log('Frontend: Nominatim explicit search result:', result);
-            if (result && result.length > 0) {
-                const { lat, lon } = result[0];
-                const newPos = { lat: parseFloat(lat), lng: parseFloat(lon) };
-                ignoreReverseGeocodeRef.current = true; // Establece el flag
-                setMarkerPosition(newPos);
-                setSuggestions([]); // Limpiar sugerencias
-                setShowSuggestions(false);
-            } else {
-                alert("Dirección no encontrada.");
-            }
-        } catch (error) {
-            console.error("Error en geocodificación:", error);
-            console.error('Frontend: Explicit search error response status:', error.response?.status);
-            console.error('Frontend: Explicit search error response data:', error.response?.data);
+        handleChange(e);
+        if (value === '') {
+            // Si el usuario borra el campo, reseteamos las coordenadas
+            setFormData(prev => ({ ...prev, latitude: null, longitude: null }));
         }
+        debouncedSearch(value);
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        // Al seleccionar una sugerencia, actualizamos todo
+        setFormData(prev => ({
+            ...prev,
+            ubicacion: suggestion.display_name,
+            latitude: parseFloat(suggestion.lat),
+            longitude: parseFloat(suggestion.lon)
+        }));
+        setShowSuggestions(false);
     };
 
     return (
@@ -321,7 +278,7 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, e
                 {/* Columna 1: Mapa */}
                 <div>
                     <div className="map-container-wizard">
-                        <MapContainer center={markerPosition} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+                        <MapContainer center={mapCenter} zoom={data.latitude ? 15 : 9} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
                             <LayersControl position="topright">
                                 <LayersControl.BaseLayer checked name="Mapa">
                                     <TileLayer
@@ -340,7 +297,9 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, e
                             <MapEvents />
                         </MapContainer>
                     </div>
-                    <p className="map-helper-text">Haga clic o arrastre el marcador para fijar la ubicación.</p>
+                    <p className="map-helper-text">
+                        {data.latitude ? 'Haga clic o arrastre el marcador para ajustar la ubicación.' : 'Busque una dirección o haga clic en el mapa para fijar la ubicación.'}
+                    </p>
                 </div>
 
                 {/* Columna 2: Campos apilados */}
@@ -353,27 +312,26 @@ const Step2 = ({ data, handleChange, setFormData, inspectores, representantes, e
                             onChange={handleChange}
                             placeholder="Buscar o crear localidad..."
                             apiEndpoint="/localidades"
+                            disallowNumbers={true}
                         />
                         {errors.localidad_id && <span className="error-message">{errors.localidad_id}</span>}
                     </div>
                     <div className="form-group">
-                        <label htmlFor="ubicacion">Dirección (para el mapa)</label>
+                        <label htmlFor="ubicacion">Dirección (Opcional)</label>
                         <div className="suggestions-container" ref={suggestionsRef}>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input
-                                    type="text"
-                                    id="ubicacion"
-                                    name="ubicacion"
-                                    value={data.ubicacion}
-                                    onChange={handleUbicacionChange} // Usar el nuevo manejador
-                                    placeholder="Calle Falsa 123, Barrio..." style={{ flexGrow: 1 }}
-                                />
-                            <button type="button" className="btn-secondary" onClick={handleAddressSearch} style={{ flexShrink: 0, padding: '0 1rem' }}>Buscar</button>
-                            </div>
+                            <input
+                                type="text"
+                                id="ubicacion"
+                                name="ubicacion"
+                                value={data.ubicacion || ''}
+                                onChange={handleUbicacionChange}
+                                placeholder="Buscar dirección para el mapa..."
+                                autoComplete="off"
+                            />
                             {showSuggestions && suggestions.length > 0 && (
                                 <ul className="suggestions-list">
-                                    {suggestions.map((sug, index) => (
-                                        <li key={index} onClick={() => handleSuggestionClick(sug)}>
+                                    {suggestions.map((sug) => (
+                                        <li key={sug.place_id} onClick={() => handleSuggestionClick(sug)}>
                                             {sug.display_name}
                                         </li>
                                     ))}

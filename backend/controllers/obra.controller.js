@@ -274,7 +274,33 @@ exports.uploadObras = async (req, res) => {
         }
 
         const plazoDias = getMappedValue(row, 'plazo', mapa);
-        const cantidadContratos = plazoDias && Number(plazoDias) > 0 ? Math.ceil(Number(plazoDias) / 30) : null;
+        const cantidadContratos = plazoDias && Number(plazoDias) > 0 ? Math.ceil(Number(plazoDias) / 30) : 1;
+
+        let fechaInicio = getMappedValue(row, 'fecha_inicio', mapa);
+        if (!fechaInicio) {
+          fechaInicio = new Date();
+        } else {
+          // Convertir la fecha de Excel (número de serie) a una fecha de JavaScript
+          if (typeof fechaInicio === 'number') {
+            fechaInicio = new Date(Math.round((fechaInicio - 25569) * 86400 * 1000));
+          } else {
+            fechaInicio = new Date(fechaInicio);
+          }
+        }
+        
+        let fechaFinalizacionEstimada = getMappedValue(row, 'fecha_finalizacion_estimada', mapa);
+        if (fechaFinalizacionEstimada) {
+          if (typeof fechaFinalizacionEstimada === 'number') {
+            fechaFinalizacionEstimada = new Date(Math.round((fechaFinalizacionEstimada - 25569) * 86400 * 1000));
+          } else {
+            fechaFinalizacionEstimada = new Date(fechaFinalizacionEstimada);
+          }
+        }
+        
+        if (plazoDias && fechaInicio && !isNaN(new Date(fechaInicio).getTime())) {
+          const fechaInicioDate = new Date(fechaInicio);
+          fechaFinalizacionEstimada = new Date(fechaInicioDate.setDate(fechaInicioDate.getDate() + parseInt(plazoDias, 10)));
+        }
 
         const obraData = {
           nro: getMappedValue(row, 'nro', mapa) || null,
@@ -287,6 +313,8 @@ exports.uploadObras = async (req, res) => {
           estado: estado,
           plazo: plazoDias || null,
           cantidad_contratos: cantidadContratos,
+          fecha_inicio: fechaInicio,
+          fecha_finalizacion_estimada: fechaFinalizacionEstimada,
           monto_sapem: getMappedValue(row, 'monto_sapem', mapa) || 0,
           monto_sub: getMappedValue(row, 'monto_sub', mapa) || 0,
           af: getMappedValue(row, 'af', mapa) || 0,

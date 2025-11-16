@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 import './CreatableAutocomplete.css';
 
-const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint }) => {
+const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint, disallowNumbers }) => {
   const [inputValue, setInputValue] = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -36,11 +36,10 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
     }
     setIsLoading(true);
     try {
-      const response = await api.get(apiEndpoint);
-      const filtered = response.data.filter(item =>
-        item.nombre.toLowerCase().includes(query.toLowerCase())
-      );
-      setSuggestions(filtered);
+      // Pasamos la consulta directamente como un parámetro de consulta 'nombre'
+      const response = await api.get(apiEndpoint, { params: { nombre: query } });
+      // La API ya devuelve los datos filtrados, así que los usamos directamente
+      setSuggestions(response.data);
       setShowSuggestions(true);
     } catch (error) {
       console.error(`Error fetching suggestions from ${apiEndpoint}:`, error);
@@ -58,7 +57,10 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
   }, [fetchSuggestions]);
 
   const handleInputChange = (e) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    if (disallowNumbers) {
+      newValue = newValue.replace(/[0-9]/g, '');
+    }
     setInputValue(newValue);
     setSelectedValue(null); // Resetea el ID seleccionado si el usuario escribe
     onChange({ target: { name, value: newValue } });
