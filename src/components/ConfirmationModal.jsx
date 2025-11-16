@@ -16,7 +16,7 @@ const ConfirmationModal = ({
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && !isProcessing) {
+      if (isOpen && event.key === 'Escape' && !isProcessing) {
         handleClose();
       }
     };

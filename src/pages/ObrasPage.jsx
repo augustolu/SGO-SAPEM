@@ -375,38 +375,55 @@ const ObraListItem = ({ obra, isAdmin, onDeleteClick, onStatusChange }) => {
   
     return (
       <Link to={`/obras/${obra.id}`} className="obra-list-item-link">
-        <div className="obra-list-item">
-          <div className="obra-list-item-main">
-              <span className="obra-gestion-number">#{obra.numero_gestion}</span>
-              <h3 className="obra-list-item-title">{obra.establecimiento}</h3>
+        <div className="obra-list-item" style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+          <div className="obra-list-item-main" style={{ flex: '0 0 33.33%', minWidth: 0, paddingRight: '1rem' }}>
+            <span className="obra-gestion-number">#{obra.numero_gestion}</span>
+            <h3 
+              className="obra-list-item-title"
+              style={{
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                margin: 0
+              }}
+            >
+              {obra.establecimiento}
+            </h3>
           </div>
-          <div className="obra-list-item-details">
-              <div className="progress-display" style={{ width: '150px' }}>
-                <div className="progress-bar-container">
-                  <div className="progress-bar" style={{ width: `${obra.progreso || 0}%`, height: '100%', backgroundColor: '#84bef5ff' }}></div>
-                </div>
-                <span className="progress-text">{obra.progreso || 0}%</span>
-              </div>
-              <div className="status-tags">
-                  {isAdmin ? (
-                    <select
-                      className={`status-badge status-select status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}
-                      value={obra.estado}
-                      onChange={handleStatusChange}
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    >
-                      <option value="Solicitud">Solicitud</option>
-                      <option value="Compulsa">Compulsa</option>
-                      <option value="En ejecución">En ejecución</option>
-                      <option value="Finalizada">Finalizada</option>
-                      <option value="Anulada">Anulada</option>
-                    </select>
-                  ) : (
-                    <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado}</span>
-                  )}
-                  {obra.categoria && <span className="status-badge status-categoria">{obra.categoria.toUpperCase()}</span>}
-                  {plazoStatus && <span className={`status-badge ${plazoStatus.className}`}>{plazoStatus.text}</span>}
-              </div>
+          <div className="progress-display" style={{ flex: '0 0 33.33%', paddingRight: '1rem' }}>
+            <div className="progress-bar-container">
+              <div className="progress-bar" style={{ width: `${obra.progreso || 0}%`, height: '100%', backgroundColor: '#84bef5ff' }}></div>
+            </div>
+            <span className="progress-text">{obra.progreso || 0}%</span>
+          </div>
+          <div 
+            className="status-tags" 
+            style={{ 
+              flex: '0 0 33.33%', 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '0.5rem', 
+              justifyContent: 'flex-start' 
+            }}
+          >
+            {isAdmin ? (
+              <select
+                className={`status-badge status-select status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}
+                value={obra.estado}
+                onChange={handleStatusChange}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              >
+                <option value="Solicitud">Solicitud</option>
+                <option value="Compulsa">Compulsa</option>
+                <option value="En ejecución">En ejecución</option>
+                <option value="Finalizada">Finalizada</option>
+                <option value="Anulada">Anulada</option>
+              </select>
+            ) : (
+              <span className={`status-badge status-${obra.estado?.toLowerCase().replace(/\s+/g, '-')}`}>{obra.estado}</span>
+            )}
+            {obra.categoria && <span className="status-badge status-categoria">{obra.categoria.toUpperCase()}</span>}
+            {plazoStatus && <span className={`status-badge ${plazoStatus.className}`}>{plazoStatus.text}</span>}
           </div>
           {isAdmin && (
             <div className="obra-list-item-actions">
