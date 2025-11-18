@@ -19,6 +19,44 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
+const InlineEditField = ({ fieldName, displayValue, value, children, type = 'text', isInspectorEditDisabled, isEditing, inlineEditingField, setInlineEditingField, formData, handleChange, handleInlineUpdate, obra, setFormData }) => {
+  const canEdit = !isInspectorEditDisabled();
+
+  if (inlineEditingField === fieldName) {
+    return (
+      <div className="inline-edit-form">
+        {children ? children : (
+          <input
+            type={type}
+            name={fieldName}
+            value={formData[fieldName] ?? ''}
+            onChange={handleChange}
+            className="form-input-inline"
+            autoFocus
+          />
+        )}
+        <button onClick={() => handleInlineUpdate(fieldName)} className="inline-confirm-button">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+        </button>
+        <button onClick={() => { setInlineEditingField(null); setFormData(obra); }} className="inline-cancel-button">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <span className="inline-display">
+      {displayValue}
+      {((value === null || value === undefined || value === '') && !isEditing && canEdit) && (
+        <button onClick={() => { setInlineEditingField(fieldName); }} className="inline-edit-button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+        </button>
+      )}
+    </span>
+  );
+};
+
 const TarjetaDetalleObra = ({ obra: initialObra }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -116,8 +154,8 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
     try {
       const response = await api.put(`/obras/${obra.id}`, formData);
       setObra(response.data);
+      setFormData(response.data);
       setIsEditing(false);
-      window.location.reload();
     } catch (error) {
       console.error("Error al actualizar la obra:", error);
     }
@@ -184,41 +222,16 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
     return isEditing && isSimplifiedView;
   }, [isEditing, isSimplifiedView]);
 
-  const InlineEditField = ({ fieldName, displayValue, value, children, type = 'text' }) => {
-    const canEdit = !isInspectorEditDisabled();
-
-    if (inlineEditingField === fieldName) {
-      return (
-        <div className="inline-edit-form">
-          {children ? children : (
-            <input
-              type={type}
-              name={fieldName}
-              value={formData[fieldName] ?? ''}
-              onChange={handleChange}
-              className="form-input-inline"
-            />
-          )}
-          <button onClick={() => handleInlineUpdate(fieldName)} className="inline-confirm-button">
-            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
-          </button>
-          <button onClick={() => setInlineEditingField(null)} className="inline-cancel-button">
-            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <span className="inline-display">
-        {displayValue}
-        {((value === null || value === undefined || value === '') && !isEditing && canEdit) && (
-          <button onClick={() => { setFormData(obra); setInlineEditingField(fieldName); }} className="inline-edit-button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-          </button>
-        )}
-      </span>
-    );
+  const inlineEditFieldProps = {
+    isInspectorEditDisabled: isInspectorEditDisabled,
+    isEditing: isEditing,
+    inlineEditingField: inlineEditingField,
+    setInlineEditingField: setInlineEditingField,
+    formData: formData,
+    handleChange: handleChange,
+    handleInlineUpdate: handleInlineUpdate,
+    obra: obra,
+    setFormData: setFormData
   };
 
   return (
@@ -263,10 +276,11 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
         .inline-confirm-button:hover, .inline-cancel-button:hover {
             opacity: 0.7;
         }
-        .responsables-list li, .info-list p {
+        .responsables-list li, .info-list > div {
           display: flex;
           align-items: center;
           gap: 6px;
+          margin: 1em 0;
         }
         .descripcion-obra {
           display: flex;
@@ -417,55 +431,60 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                     <>
                       <div className="info-section">
                         <h3>Descripción</h3>
-                        <p className="descripcion-obra">
+                        <div className="descripcion-obra">
                           <InlineEditField
+                            {...inlineEditFieldProps}
                             fieldName="descripcion"
                             value={obra.descripcion}
                             displayValue={obra.descripcion || 'No hay una descripción disponible para esta obra.'}
                           >
                             <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange} className="form-textarea-inline" rows="3" style={{minWidth: '300px'}}/>
                           </InlineEditField>
-                        </p>
+                        </div>
                       </div>
                       <div className="info-section">
                         <h3>Detalles Económicos</h3>
                         <div className="info-list">
-                          <p><strong>Monto SAPEM:</strong> <span>{formatCurrency(obra.monto_sapem)}</span></p>
-                          <p><strong>Monto Subcontrato:</strong> <span>{formatCurrency(obra.monto_sub)}</span></p>
-                          <p><strong>Aporte Financiero:</strong> <span>{formatCurrency(obra.af)}</span></p>
-                          <p><strong>Cantidad de Contratos:</strong>
+                          <div><strong>Monto SAPEM:</strong> <span>{formatCurrency(obra.monto_sapem)}</span></div>
+                          <div><strong>Monto Subcontrato:</strong> <span>{formatCurrency(obra.monto_sub)}</span></div>
+                          <div><strong>Aporte Financiero:</strong> <span>{formatCurrency(obra.af)}</span></div>
+                          <div><strong>Cantidad de Contratos:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="cantidad_contratos"
                               value={obra.cantidad_contratos}
                               displayValue={obra.cantidad_contratos || 'No disponible'}
                               type="number"
                             />
-                          </p>
+                          </div>
                         </div>
                       </div>
                       <div className="info-section">
                         <h3>Plazos</h3>
                         <div className="info-list">
-                          <p><strong>Fecha de Inicio:</strong>
+                          <div><strong>Fecha de Inicio:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="fecha_inicio"
                               value={obra.fecha_inicio}
                               displayValue={formatDate(obra.fecha_inicio)}
                             >
                               <input type="date" name="fecha_inicio" value={formData.fecha_inicio ? new Date(formData.fecha_inicio).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
                             </InlineEditField>
-                          </p>
-                          <p><strong>Finalización Estimada:</strong>
+                          </div>
+                          <div><strong>Finalización Estimada:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="fecha_finalizacion_estimada"
                               value={obra.fecha_finalizacion_estimada}
                               displayValue={formatDate(obra.fecha_finalizacion_estimada)}
                             >
                               <input type="date" name="fecha_finalizacion_estimada" value={formData.fecha_finalizacion_estimada ? new Date(formData.fecha_finalizacion_estimada).toISOString().split('T')[0] : ''} onChange={handleChange} className="form-input-inline" />
                             </InlineEditField>
-                          </p>
-                          <p><strong>Plazo de Obra:</strong>
+                          </div>
+                          <div><strong>Plazo de Obra:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="plazo_dias"
                               value={obra.plazo_dias}
                               displayValue={obra.plazo_dias ? `${obra.plazo_dias} días` : 'No disponible'}
@@ -473,7 +492,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                                 <input type="number" name="plazo_dias" value={formData.plazo_dias || ''} onChange={handleChange} className="form-input-inline" style={{width: '80px', display: 'inline-block'}} />
                                 <span style={{marginLeft: '4px'}}>días</span>
                             </InlineEditField>
-                          </p>
+                          </div>
                         </div>
                       </div>
                   </>
@@ -526,6 +545,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         <ul className="responsables-list">
                           <li><strong>Localidad:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="localidad_nombre"
                               value={obra.localidad_nombre}
                               displayValue={obra.localidad_nombre || 'No especificada'}
@@ -540,6 +560,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                           </li>
                           <li><strong>Contratista:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="contratista_nombre"
                               value={obra.contratista_nombre}
                               displayValue={obra.contratista_nombre || 'No especificado'}
@@ -554,6 +575,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                           </li>
                           <li><strong>Rep. Legal:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="rep_legal_nombre"
                               value={obra.rep_legal_nombre}
                               displayValue={obra.rep_legal_nombre || 'No especificado'}
@@ -568,6 +590,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                           </li>
                           <li><strong>Inspector:</strong>
                             <InlineEditField
+                              {...inlineEditFieldProps}
                               fieldName="inspector_id"
                               value={obra.inspector_id}
                               displayValue={obra.inspector_nombre || 'No asignado'}

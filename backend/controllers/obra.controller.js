@@ -507,6 +507,10 @@ exports.update = async (req, res) => {
   // console.log('UPDATE /obras/:id req.body:', req.body);
 
   try {
+    const existingObra = await Obra.findByPk(id);
+    if (!existingObra) {
+      return res.status(404).send({ message: `Obra with id=${id} not found.` });
+    }
     // Resolver IDs de campos de autocompletado
     let localidadId = req.body.localidad_id;
     if (req.body.localidad_nombre && isNaN(req.body.localidad_nombre)) {
@@ -557,7 +561,7 @@ exports.update = async (req, res) => {
 
     let { cantidad_contratos } = req.body;
 
-    if (req.body.hasOwnProperty('plazo_dias')) {
+    if (req.body.hasOwnProperty('plazo_dias') && req.body.plazo_dias != existingObra.plazo) {
         const plazoNum = Number(plazo_dias);
         if (plazoNum > 0) {
             cantidad_contratos = Math.ceil(plazoNum / 30);
@@ -631,35 +635,31 @@ exports.update = async (req, res) => {
       where: { id: id }
     });
 
-    if (num == 1) {
-      const updatedObra = await Obra.findByPk(id, {
-        include: [
-          { model: db.Contribuyentes, as: 'Contribuyente', attributes: ['nombre'], required: false },
-          { model: db.Localidades, as: 'Localidad', attributes: ['nombre'], required: false },
-          { model: db.RepresentantesLegales, as: 'RepresentanteLegal', attributes: ['nombre'], required: false },
-          { model: db.Usuarios, as: 'Usuario', attributes: ['nombre'], required: false }
-        ]
-      });
+    const updatedObra = await Obra.findByPk(id, {
+      include: [
+        { model: db.Contribuyentes, as: 'Contribuyente', attributes: ['nombre'], required: false },
+        { model: db.Localidades, as: 'Localidad', attributes: ['nombre'], required: false },
+        { model: db.RepresentantesLegales, as: 'RepresentanteLegal', attributes: ['nombre'], required: false },
+        { model: db.Usuarios, as: 'Usuario', attributes: ['nombre'], required: false }
+      ]
+    });
 
-      if (updatedObra) {
-        const obraData = updatedObra.toJSON();
-        const obraMapeada = {
-          ...obraData,
-          progreso: obraData.progreso, // Asegurarse de que el progreso se incluya
-          contratista_nombre: obraData.Contribuyente?.nombre,
-          localidad_nombre: obraData.Localidad?.nombre,
-          descripcion: obraData.detalle,
-          plazo_dias: obraData.plazo,
-          rep_legal_nombre: obraData.RepresentanteLegal?.nombre,
-          inspector_nombre: obraData.Usuario?.nombre,
-        };
-        res.send(obraMapeada);
-      } else {
-        res.status(404).send({ message: `Obra with id=${id} not found after update.` });
-      }
+    if (updatedObra) {
+      const obraData = updatedObra.toJSON();
+      const obraMapeada = {
+        ...obraData,
+        progreso: obraData.progreso, // Asegurarse de que el progreso se incluya
+        contratista_nombre: obraData.Contribuyente?.nombre,
+        localidad_nombre: obraData.Localidad?.nombre,
+        descripcion: obraData.detalle,
+        plazo_dias: obraData.plazo,
+        rep_legal_nombre: obraData.RepresentanteLegal?.nombre,
+        inspector_nombre: obraData.Usuario?.nombre,
+      };
+      res.send(obraMapeada);
     } else {
-      res.status(400).send({
-        message: `Cannot update Obra with id=${id}. Maybe Obra was not found or req.body is empty!`
+      res.status(404).send({
+        message: `Cannot update Obra with id=${id}. Maybe Obra was not found.`
       });
     }
   } catch (err) {

@@ -1097,7 +1097,7 @@ const ObrasPage = () => {
   }, [filterConfig]);
 
   const filteredAndSortedObras = useMemo(() => {
-    let filteredObras = isAdmin ? obras : obras.filter(obra => obra.inspector_id === user.id);
+    let filteredObras = (isAdmin || user.role === 'Supervisor') ? obras : obras.filter(obra => obra.inspector_id === user.id);
 
     if (filterConfig.searchTerm) {
         if (filterConfig.searchType === 'establecimiento') {
