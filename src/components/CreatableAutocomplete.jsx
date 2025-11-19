@@ -63,14 +63,14 @@ const CreatableAutocomplete = ({ name, value, onChange, placeholder, apiEndpoint
     }
     setInputValue(newValue);
     setSelectedValue(null); // Resetea el ID seleccionado si el usuario escribe
-    onChange({ target: { name, value: newValue } });
+    onChange(name, newValue); // Cambiado para pasar nombre y valor directamente
     debouncedFetch(newValue);
   };
 
   const handleSuggestionClick = (suggestion) => {
     setInputValue(suggestion.nombre);
     setSelectedValue(suggestion.id);
-    onChange({ target: { name, value: suggestion.id } });
+    onChange(name, suggestion.id); // Cambiado para pasar nombre y valor directamente
     setShowSuggestions(false);
   };
 

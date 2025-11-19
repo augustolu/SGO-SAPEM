@@ -217,6 +217,7 @@ const FileManager = ({ obra_id }) => {
               value={inlineName}
               onChange={(e) => setInlineName(e.target.value)}
               autoFocus
+              maxLength="15"
               onKeyDown={(e) => e.key === 'Enter' && handleSaveRename()}
             />
           </div>
@@ -231,8 +232,13 @@ const FileManager = ({ obra_id }) => {
     return (
       <div key={node.id} className="fm-list-item" onDoubleClick={() => node.tipo === 'folder' && handleFolderSelect(node)}>
         <div className="fm-item-name">
-          {node.tipo === 'folder' ? <FolderIcon className="fm-item-icon folder" /> : getFileIcon(node.nombre_original)}
-          <a href={node.tipo !== 'folder' ? api.defaults.baseURL + node.ruta_archivo : undefined} target="_blank" rel="noopener noreferrer" download={node.nombre_original} onClick={(e) => e.stopPropagation()}>
+          {node.tipo === 'folder' ? <FolderIcon className="fm-item-icon folder" /> : getFileIcon(node.nombre_original)}          
+          <a 
+            href={node.tipo !== 'folder' ? `${import.meta.env.VITE_API_URL || ''}${node.ruta_archivo}` : undefined} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            onClick={(e) => { if (node.tipo === 'folder') e.preventDefault(); else e.stopPropagation(); }}
+          >
             {node.nombre_original}
           </a>
         </div>
@@ -246,13 +252,6 @@ const FileManager = ({ obra_id }) => {
 
   return (
     <div className="file-manager-container">
-      <button 
-        onClick={() => setIsSidebarVisible(!isSidebarVisible)} 
-        className={`fm-sidebar-toggle ${isSidebarVisible ? 'open' : ''}`}
-        title={isSidebarVisible ? 'Ocultar árbol' : 'Mostrar árbol'}
-      >
-        <div className="fm-sidebar-toggle-arrow"></div>
-      </button>
       <div className="fm-body">
         {isSidebarVisible && (
           <div className="fm-sidebar">
@@ -266,6 +265,14 @@ const FileManager = ({ obra_id }) => {
         )}
 
         <div className={`fm-main-content ${!isSidebarVisible ? 'full-width' : ''}`} {...getRootProps()}>
+          <button 
+            onClick={() => setIsSidebarVisible(!isSidebarVisible)} 
+            className={`fm-sidebar-toggle ${isSidebarVisible ? 'open' : ''}`}
+            title={isSidebarVisible ? 'Ocultar árbol' : 'Mostrar árbol'}
+          >
+            <div className="fm-sidebar-toggle-arrow"></div>
+          </button>
+
           <input {...getInputProps()} />
           
           <div className="fm-top-bar">
@@ -322,6 +329,7 @@ const FileManager = ({ obra_id }) => {
                     value={inlineName}
                     onChange={(e) => setInlineName(e.target.value)}
                     autoFocus
+                    maxLength="15"
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveNewFolder()}
                   />
                 </div>

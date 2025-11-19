@@ -39,7 +39,12 @@ const InlineEditField = ({ fieldName, displayValue, value, children, type = 'tex
         <button onClick={() => handleInlineUpdate(fieldName)} className="inline-confirm-button">
           <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
         </button>
-        <button onClick={() => { setInlineEditingField(null); setFormData(obra); }} className="inline-cancel-button">
+        <button onClick={() => {
+          setInlineEditingField(null);
+          // Al cancelar, solo revertimos el campo actual, no todo el formulario.
+          // Esto evita que se borren otros cambios en línea pendientes.
+          setFormData(prev => ({ ...prev, [fieldName]: obra[fieldName] }));
+        }} className="inline-cancel-button">
           <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
         </button>
       </div>
@@ -50,7 +55,14 @@ const InlineEditField = ({ fieldName, displayValue, value, children, type = 'tex
     <span className="inline-display">
       {displayValue}
       {((value === null || value === undefined || value === '') && !isEditing && canEdit) && (
-        <button onClick={() => { setInlineEditingField(fieldName); }} className="inline-edit-button">
+        <button onClick={() => {
+          console.log(`--- MODO EDICIÓN EN LÍNEA PARA: ${fieldName} ---`);
+          console.log('Estado de `obra` (original):', obra);
+          console.log('Estado de `formData` ANTES de setear:', formData);
+          setFormData(obra); // CLAVE: Sincronizar formData con el estado real de la obra antes de editar.
+          console.log('Estado de `formData` DESPUÉS de setear:', obra);
+          setInlineEditingField(fieldName);
+        }} className="inline-edit-button">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
         </button>
       )}
@@ -124,7 +136,11 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
   };
 
   const handleEdit = () => {
+    console.log('--- MODO EDICIÓN GENERAL ACTIVADO ---');
+    console.log('Estado de `obra` (original):', obra);
+    console.log('Estado de `formData` ANTES de setear:', formData);
     setIsEditing(true);
+    console.log('Estado de `formData` DESPUÉS de setear:', obra);
   };
 
   const handleCancel = () => {
@@ -168,17 +184,32 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
       const payload = { [fieldName]: valueToUpdate };
       
       const response = await api.put(`/obras/${obra.id}`, payload);
-      setObra(response.data);
-      setFormData(response.data);
+      // Fusionar la respuesta (que puede ser parcial) con el estado existente
+      // para no perder los demás datos de la obra.
+      setObra(prev => ({ ...prev, ...response.data }));
+      setFormData(prev => ({ ...prev, ...response.data }));
       setInlineEditingField(null);
     } catch (error) {
       console.error(`Error updating ${fieldName}:`, error);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleChange = (nameOrEvent, value) => {
+    let name, val;
+    if (typeof nameOrEvent === 'string') {
+      name = nameOrEvent;
+      val = value;
+    } else {
+      name = nameOrEvent.target.name;
+      val = nameOrEvent.target.value;
+    }
+
+    console.log(`--- CAMBIO EN FORMULARIO --- Campo: ${name}, Nuevo Valor: ${val}`);
+    setFormData(prev => {
+      const newState = { ...prev, [name]: val };
+      console.log('Nuevo estado de `formData`:', newState);
+      return newState;
+    });
   };
 
   const handleMapChange = (latlng) => {
@@ -397,15 +428,15 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         <h3>Detalles Económicos</h3>
                         <div className="form-field">
                           <label>Monto SAPEM</label>
-                          <CurrencyInput name="monto_sapem" value={formData.monto_sapem || ''} onChange={handleChange} />
+                          <CurrencyInput name="monto_sapem" value={formData.monto_sapem || ''} onChange={(e) => handleChange(e.target.name, e.target.value)} />
                         </div>
                         <div className="form-field">
                           <label>Monto Subcontrato</label>
-                          <CurrencyInput name="monto_sub" value={formData.monto_sub || ''} onChange={handleChange} />
+                          <CurrencyInput name="monto_sub" value={formData.monto_sub || ''} onChange={(e) => handleChange(e.target.name, e.target.value)} />
                         </div>
                         <div className="form-field">
                           <label>Aporte Financiero</label>
-                          <CurrencyInput name="af" value={formData.af || ''} onChange={handleChange} />
+                          <CurrencyInput name="af" value={formData.af || ''} onChange={(e) => handleChange(e.target.name, e.target.value)} />
                         </div>
                         <div className="form-field">
                           <label>Cantidad de Contratos</label>
@@ -508,15 +539,15 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                         <h3>Responsables y Ubicación</h3>
                         <div className="form-field">
                           <label>Localidad</label>
-                          <CreatableAutocomplete name="localidad_nombre" value={formData.localidad_nombre || ''} onChange={(e) => handleChange({ target: { name: 'localidad_nombre', value: e.target.value } })} apiEndpoint="/localidades" />
+                          <CreatableAutocomplete name="localidad_nombre" value={formData.localidad_nombre || ''} onChange={(name, value) => handleChange(name, value)} apiEndpoint="/localidades" />
                         </div>
                         <div className="form-field">
                           <label>Contratista</label>
-                          <CreatableAutocomplete name="contratista_nombre" value={formData.contratista_nombre || ''} onChange={(e) => handleChange({ target: { name: 'contratista_nombre', value: e.target.value } })} apiEndpoint="/contribuyentes" />
+                          <CreatableAutocomplete name="contratista_nombre" value={formData.contratista_nombre || ''} onChange={(name, value) => handleChange(name, value)} apiEndpoint="/contribuyentes" />
                         </div>
                         <div className="form-field">
                           <label>Rep. Legal</label>
-                          <CreatableAutocomplete name="rep_legal_nombre" value={formData.rep_legal_nombre || ''} onChange={(e) => handleChange({ target: { name: 'rep_legal_nombre', value: e.target.value } })} apiEndpoint="/representantes-legales" />
+                          <CreatableAutocomplete name="rep_legal_nombre" value={formData.rep_legal_nombre || ''} onChange={(name, value) => handleChange(name, value)} apiEndpoint="/representantes-legales" />
                         </div>
                         <div className="form-field">
                           <label>Inspector</label>
@@ -554,7 +585,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                               <CreatableAutocomplete
                                 name="localidad_nombre"
                                 value={formData.localidad_nombre || ''}
-                                onChange={(e) => handleChange({ target: { name: 'localidad_nombre', value: e.target.value } })}
+                                onChange={(name, value) => handleChange(name, value)}
                                 apiEndpoint="/localidades"
                               />
                             </InlineEditField>
@@ -569,7 +600,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                               <CreatableAutocomplete
                                 name="contratista_nombre"
                                 value={formData.contratista_nombre || ''}
-                                onChange={(e) => handleChange({ target: { name: 'contratista_nombre', value: e.target.value } })}
+                                onChange={(name, value) => handleChange(name, value)}
                                 apiEndpoint="/contribuyentes"
                               />
                             </InlineEditField>
@@ -584,7 +615,7 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
                               <CreatableAutocomplete
                                 name="rep_legal_nombre"
                                 value={formData.rep_legal_nombre || ''}
-                                onChange={(e) => handleChange({ target: { name: 'rep_legal_nombre', value: e.target.value } })}
+                                onChange={(name, value) => handleChange(name, value)}
                                 apiEndpoint="/representantes-legales"
                               />
                             </InlineEditField>

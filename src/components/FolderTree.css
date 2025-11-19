@@ -66,3 +66,23 @@
 .tree-children {
   /* Los hijos ya tienen su propio padding-left en línea, no se necesita mucho aquí */
 }
+
+/* --- Estilos para el botón de toggle del sidebar --- */
+/* Asegurarse de que el contenedor principal sea el contexto de posicionamiento */
+.fm-main-content {
+  position: relative;
+}
+
+.fm-sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  /* Otros estilos que ya tengas para el botón (tamaño, color, etc.) */
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
