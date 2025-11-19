@@ -341,7 +341,7 @@ export function ObrasExcelUploader({ isOpen, onClose, onUploadSuccess }) {
               </div>
               <div className="excel-mapping-actions">
                 <button onClick={() => setStep(3)} className="excel-uploader-button secondary" disabled={isLoading}>
-                  Cancelar
+                  Volver
                 </button>
                 <button onClick={handleSubmit} className="excel-uploader-button" disabled={isLoading}>
                   {isLoading ? 'Importando...' : 'Confirmar Subida'}

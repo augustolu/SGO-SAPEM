@@ -1,0 +1,166 @@
+.profile-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  padding: 2rem;
+}
+
+.profile-form-wrapper {
+  background-color: var(--bg-secondary);
+  padding: 2.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+  min-height: 3rem;
+}
+
+.profile-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  text-align: center;
+  flex-grow: 1;
+  font-weight: 600;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.back-button {
+  /* Reinicio y Estructura */
+  display: inline-flex; /* Asegura que el botón se ajuste al contenido y permite alinear ítems */
+  align-items: center; /* Centra el ícono y el texto verticalmente */
+  justify-content: center; /* Centra el contenido horizontalmente */
+  gap: 0.5rem; /* Espacio entre el ícono y el texto */
+  white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+
+  /* Apariencia (estilo "ghost button") */
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  
+  /* Tipografía y Espaciado */
+  padding: 0.65rem 2.5rem; /* Relleno interno equilibrado */
+  font-size: 0.9rem;
+  font-weight: 500;
+  
+  /* Interacción */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 1;
+}
+
+.back-button:hover {
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+  background-color: rgba(13, 153, 255, 0.1);
+}
+
+.profile-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.profile-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.profile-form input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.profile-form input::placeholder {
+  color: var(--text-secondary);
+}
+
+.profile-form input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(13, 153, 255, 0.2);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.875rem;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: var(--primary-hover-color);
+  transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.error-message {
+  color: var(--danger-color);
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 0.75rem;
+  background-color: rgba(245, 101, 101, 0.1);
+  border: 1px solid rgba(245, 101, 101, 0.3);
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .profile-page-container {
+    padding: 1rem;
+    align-items: center;
+  }
+  
+  .profile-form-wrapper {
+    padding: 2rem 1.5rem;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .back-button {
+    align-self: flex-start;
+    margin-bottom: 1rem;
+  }
+  
+  .profile-header h2 {
+    position: static;
+    transform: none;
+  }
+}

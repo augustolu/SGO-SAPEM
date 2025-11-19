@@ -56,11 +56,6 @@ const InlineEditField = ({ fieldName, displayValue, value, children, type = 'tex
       {displayValue}
       {((value === null || value === undefined || value === '') && !isEditing && canEdit) && (
         <button onClick={() => {
-          console.log(`--- MODO EDICIÓN EN LÍNEA PARA: ${fieldName} ---`);
-          console.log('Estado de `obra` (original):', obra);
-          console.log('Estado de `formData` ANTES de setear:', formData);
-          setFormData(obra); // CLAVE: Sincronizar formData con el estado real de la obra antes de editar.
-          console.log('Estado de `formData` DESPUÉS de setear:', obra);
           setInlineEditingField(fieldName);
         }} className="inline-edit-button">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
@@ -122,14 +117,16 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
 
 
   const handleContratoUploadSuccess = async (newProgreso) => {
-    console.log('TarjetaDetalleObra: handleContratoUploadSuccess received newProgreso:', newProgreso);
     setCurrentObraProgreso(newProgreso);
     // Re-fetch the entire obra to ensure all details are up-to-date
     try {
       const response = await api.get(`/obras/${obra.id}`);
-      console.log('TarjetaDetalleObra: Re-fetched obra data:', response.data);
       setObra(response.data);
-      setFormData(response.data);
+      // Only update formData if not in the middle of a general edit session.
+      // This prevents overwriting unsaved user changes.
+      if (!isEditing) {
+        setFormData(response.data);
+      }
     } catch (error) {
       console.error('Error re-fetching obra after contract update:', error);
     }

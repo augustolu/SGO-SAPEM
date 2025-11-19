@@ -504,97 +504,81 @@ exports.findOne = (req, res) => {
 // Update a Obra by the id in the request
 exports.update = async (req, res) => {
   const id = req.params.id;
-  // console.log('UPDATE /obras/:id req.body:', req.body);
 
   try {
     const existingObra = await Obra.findByPk(id);
     if (!existingObra) {
       return res.status(404).send({ message: `Obra with id=${id} not found.` });
     }
+
     // Resolver IDs de campos de autocompletado
-    let localidadId = req.body.localidad_id;
+    let localidadId;
     if (req.body.localidad_nombre && isNaN(req.body.localidad_nombre)) {
         const [localidad] = await Localidad.findOrCreate({
             where: { nombre: req.body.localidad_nombre },
             defaults: { nombre: req.body.localidad_nombre }
         });
         localidadId = localidad.id;
+    } else if (req.body.localidad_id) {
+        localidadId = req.body.localidad_id;
     }
 
-    let contribuyenteId = req.body.contribuyente_id;
+    let contribuyenteId;
     if (req.body.contratista_nombre && isNaN(req.body.contratista_nombre)) {
         const [contribuyente] = await Contribuyente.findOrCreate({
             where: { nombre: req.body.contratista_nombre },
             defaults: { nombre: req.body.contratista_nombre }
         });
         contribuyenteId = contribuyente.id;
+    } else if (req.body.contribuyente_id) {
+        contribuyenteId = req.body.contribuyente_id;
     }
 
-    let representanteId = req.body.representante_legal_id;
+    let representanteId;
     if (req.body.rep_legal_nombre && isNaN(req.body.rep_legal_nombre)) {
         const [representante] = await RepresentanteLegal.findOrCreate({
             where: { nombre: req.body.rep_legal_nombre },
             defaults: { nombre: req.body.rep_legal_nombre }
         });
         representanteId = representante.id;
+    } else if (req.body.representante_legal_id) {
+        representanteId = req.body.representante_legal_id;
     }
 
-    const {
-      establecimiento,
-      numero_gestion,
-      categoria,
-      descripcion,
-      latitude,
-      longitude,
-      inspector_id,
-      monto_sapem,
-      monto_sub,
-      af,
-      plazo_dias,
-      fecha_inicio,
-      fecha_finalizacion_estimada,
-      estado,
-      progreso,
-      motivo_anulacion,
-      nro
-    } = req.body;
+    const updateData = {};
+    const body = req.body;
 
-    let { cantidad_contratos } = req.body;
+    if (body.hasOwnProperty('establecimiento')) updateData.establecimiento = body.establecimiento;
+    if (body.hasOwnProperty('numero_gestion')) updateData.numero_gestion = body.numero_gestion;
+    if (body.hasOwnProperty('categoria')) updateData.categoria = body.categoria;
+    if (body.hasOwnProperty('descripcion')) updateData.detalle = body.descripcion;
+    if (body.hasOwnProperty('latitude')) updateData.latitude = body.latitude;
+    if (body.hasOwnProperty('longitude')) updateData.longitude = body.longitude;
+    if (localidadId !== undefined) updateData.localidad_id = localidadId;
+    if (contribuyenteId !== undefined) updateData.contribuyente_id = contribuyenteId;
+    if (body.hasOwnProperty('inspector_id')) updateData.inspector_id = body.inspector_id;
+    if (representanteId !== undefined) updateData.representante_legal_id = representanteId;
+    if (body.hasOwnProperty('monto_sapem')) updateData.monto_sapem = body.monto_sapem ? Number(String(body.monto_sapem).replace(/[^0-9.-]+/g,"")) : null;
+    if (body.hasOwnProperty('monto_sub')) updateData.monto_sub = body.monto_sub ? Number(String(body.monto_sub).replace(/[^0-9.-]+/g,"")) : null;
+    if (body.hasOwnProperty('af')) updateData.af = body.af ? Number(String(body.af).replace(/[^0-9.-]+/g,"")) : null;
+    if (body.hasOwnProperty('fecha_inicio')) updateData.fecha_inicio = body.fecha_inicio;
+    if (body.hasOwnProperty('fecha_finalizacion_estimada')) updateData.fecha_finalizacion_estimada = body.fecha_finalizacion_estimada;
+    if (body.hasOwnProperty('estado')) updateData.estado = body.estado;
+    if (body.hasOwnProperty('progreso')) updateData.progreso = body.progreso;
+    if (body.hasOwnProperty('motivo_anulacion')) updateData.motivo_anulacion = body.motivo_anulacion;
+    if (body.hasOwnProperty('nro')) updateData.nro = body.nro;
 
-    if (req.body.hasOwnProperty('plazo_dias') && req.body.plazo_dias != existingObra.plazo) {
-        const plazoNum = Number(plazo_dias);
+    if (body.hasOwnProperty('plazo_dias')) {
+        const plazoNum = Number(body.plazo_dias);
+        updateData.plazo = plazoNum || null;
         if (plazoNum > 0) {
-            cantidad_contratos = Math.ceil(plazoNum / 30);
+            updateData.cantidad_contratos = Math.ceil(plazoNum / 30);
         } else {
-            cantidad_contratos = null;
+            updateData.cantidad_contratos = null;
         }
+    } else if (body.hasOwnProperty('cantidad_contratos')) {
+        updateData.cantidad_contratos = body.cantidad_contratos ? Number(body.cantidad_contratos) : null;
     }
-
-    const updateData = {
-      establecimiento,
-      numero_gestion,
-      categoria,
-      detalle: descripcion,
-      latitude,
-      longitude,
-      localidad_id: localidadId,
-      contribuyente_id: contribuyenteId,
-      inspector_id,
-      representante_legal_id: representanteId,
-      monto_sapem: monto_sapem ? Number(String(monto_sapem).replace(/[^0-9.-]+/g,"")) : null,
-      monto_sub: monto_sub ? Number(String(monto_sub).replace(/[^0-9.-]+/g,"")) : null,
-      af: af ? Number(String(af).replace(/[^0-9.-]+/g,"")) : null,
-      plazo: plazo_dias ? Number(plazo_dias) : null,
-      cantidad_contratos: cantidad_contratos ? Number(cantidad_contratos) : null,
-      fecha_inicio,
-      fecha_finalizacion_estimada,
-      estado,
-      progreso,
-      motivo_anulacion,
-      nro
-    };
-
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
     const user = await Usuario.findByPk(req.userId, {
       include: { model: Role, as: 'role' }
@@ -612,7 +596,6 @@ exports.update = async (req, res) => {
         return res.status(404).send({ message: "Obra not found." });
       }
 
-      // Solo aplicar la restricción de tiempo si la fecha de inicio existe
       if (obra.fecha_inicio) {
         const now = new Date();
         const parts = obra.fecha_inicio.split('T')[0].split('-');
@@ -628,12 +611,13 @@ exports.update = async (req, res) => {
           });
         }
       }
-      // Si no hay fecha de inicio, el inspector puede editar libremente.
     }
 
-    const [num] = await Obra.update(updateData, {
-      where: { id: id }
-    });
+    if (Object.keys(updateData).length > 0) {
+        await Obra.update(updateData, {
+            where: { id: id }
+        });
+    }
 
     const updatedObra = await Obra.findByPk(id, {
       include: [
@@ -648,7 +632,7 @@ exports.update = async (req, res) => {
       const obraData = updatedObra.toJSON();
       const obraMapeada = {
         ...obraData,
-        progreso: obraData.progreso, // Asegurarse de que el progreso se incluya
+        progreso: obraData.progreso,
         contratista_nombre: obraData.Contribuyente?.nombre,
         localidad_nombre: obraData.Localidad?.nombre,
         descripcion: obraData.detalle,

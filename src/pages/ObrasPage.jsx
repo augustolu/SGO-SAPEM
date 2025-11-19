@@ -231,6 +231,11 @@ const DashboardHeader = ({ user, isAdmin, onManageRolesClick }) => {
     navigate('/login');
   };
 
+  const handleEditProfile = () => {
+    setMenuOpen(false);
+    navigate('/perfil');
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -263,7 +268,7 @@ const DashboardHeader = ({ user, isAdmin, onManageRolesClick }) => {
         {menuOpen && (
           <div className="dropdown-menu">
             <ul>
-              <li><button>Editar Perfil</button></li>
+              <li><button onClick={handleEditProfile}>Editar Perfil</button></li>
               {isAdmin && <li><button onClick={() => { setMenuOpen(false); onManageRolesClick(); }}>Administrar Usuarios</button></li>}
               <li><button onClick={handleLogout}>Cerrar Sesión</button></li>
             </ul>
@@ -1179,7 +1184,10 @@ const ObrasPage = () => {
         draggable
         pauseOnHover
       />
-      <DashboardHeader user={user} isAdmin={isAdmin} onManageRolesClick={() => setUserModalOpen(true)} />
+      <DashboardHeader 
+        user={user} 
+        isAdmin={isAdmin} 
+        onManageRolesClick={() => setUserModalOpen(true)} />
       <main className={`dashboard-main-content ${isRightPanelCollapsed ? 'right-panel-collapsed' : ''}`}>
         <div className="obras-main-view">
           <div className="main-controls-bar">
