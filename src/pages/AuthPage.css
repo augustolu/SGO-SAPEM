@@ -1,108 +1,93 @@
-/* --- General Container --- */
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   background-color: #0a192f;
-  font-family: 'Poppins', sans-serif;
-  padding: 20px;
+  overflow: hidden;
 }
 
-/* --- Form Wrapper for Animation --- */
 .auth-form-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 550px;
-  height: 620px;
+  position: relative; /* Contenedor para la ventana de visualización */
+  width: 600px; /* Más ancho */
+  height: 700px; /* Aumentado */
+  overflow: hidden; /* Oculta los formularios que están fuera de la vista */
 }
 
 .forms-inner-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-/* --- Individual Form Containers (Absolute Positioning) --- */
-.login-form-container-inner,
-.register-form-container-inner {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
+  width: calc(300% + 160px); /* Ancho para 3 formularios + 2 gaps de 80px */
   height: 100%;
-  background-color: #1e2a47;
-  padding: 25px;
+  display: flex; /* Usamos flexbox para alinear los formularios */
+  gap: 80px; /* Aumentamos la separación entre formularios */
+  transition: transform 0.7s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.login-form-container-inner,
+.register-form-container-inner,
+.forgot-password-form-container-inner,
+.form-container /* Para ResetPasswordPage */ {
+  width: 600px; /* Ancho fijo igual al del wrapper */
+  height: 100%;
+  background-color: #112240;
+  padding: 2.5rem;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  text-align: left;
-  transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.5s ease-in-out;
+  box-shadow: 0 10px 30px -15px rgba(2, 12, 27, 0.7);
+  color: #ccd6f6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   box-sizing: border-box;
 }
 
-/* --- Animation States --- */
-.auth-form-wrapper.show-login .login-form-container-inner {
-  transform: translateX(0);
-  opacity: 1;
-  z-index: 2;
-}
-.auth-form-wrapper.show-login .register-form-container-inner {
-  transform: translateX(100%);
-  opacity: 0;
-  z-index: 1;
+.auth-form-wrapper.show-login .forms-inner-wrapper {
+  transform: translateX(0); /* Muestra el primer formulario (Login) */
 }
 
-.auth-form-wrapper.show-register .login-form-container-inner {
-  transform: translateX(-100%);
-  opacity: 0;
-  z-index: 1;
-}
-.auth-form-wrapper.show-register .register-form-container-inner {
-  transform: translateX(0);
-  opacity: 1;
-  z-index: 2;
+.auth-form-wrapper.show-register .forms-inner-wrapper {
+  transform: translateX(calc(-600px - 80px)); /* Mueve un formulario + un gap */
 }
 
-/* --- General Form Styling --- */
+.auth-form-wrapper.show-forgot .forms-inner-wrapper {
+  transform: translateX(calc(-1200px - 160px)); /* Mueve dos formularios + dos gaps */
+}
+
 .login-header {
   display: flex;
-  flex-direction: column; /* Apilar logo y texto verticalmente */
   align-items: center;
-  justify-content: center;
-  gap: 10px; /* Espacio entre logo y texto */
-  margin-bottom: 30px; /* Aumentar espacio hasta "Iniciar Sesión" */
+  gap: 15px;
+  margin-bottom: 2rem;
 }
 
 .header-logo {
   height: 45px;
   width: auto;
 }
-
-.login-header h2 { 
-  font-size: 1.8rem; 
-  margin: 0; 
-  letter-spacing: 0.5px;
-  text-align: center;
-  font-weight: 600;
-  color: #ccd6f6;
-}
-
 .header-text {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.header-text h2 {
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 700;
+  color: #ccd6f6;
 }
 
 .header-text .subtitle {
-  font-size: 0.9rem;
-  font-weight: 400;
+  font-size: 1.2rem;
+  font-weight: 300;
   color: #8892b0;
 }
+
 .form-container h1 {
   font-size: 2rem;
   color: #ccd6f6;
-  margin-bottom: 25px;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
@@ -112,14 +97,14 @@
 
 .input-group label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #8892b0;
   margin-bottom: 8px;
 }
 
 .input-group input {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   border-radius: 6px;
   border: 1px solid #303c55;
   background-color: #0a192f;
@@ -143,7 +128,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  margin-bottom: 25px;
+  margin-bottom: 1.5rem;
   color: #8892b0;
 }
 
@@ -174,7 +159,7 @@
 
 .login-button {
   width: 100%;
-  padding: 14px;
+  padding: 15px;
   font-size: 1rem;
   font-weight: 600;
   color: #0a192f;
@@ -203,7 +188,7 @@
 
 .login-footer {
   text-align: center;
-  margin-top: 25px;
+  margin-top: 1.5rem;
   font-size: 0.9rem;
   color: #8892b0;
 }
@@ -211,53 +196,15 @@
 /* --- Modal Styles --- */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideIn { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.modal-content {
-  background-color: #1e2a47;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+.form-description {
+  font-size: 0.9rem;
+  color: #8892b0;
   text-align: center;
-  color: #ccd6f6;
-  animation: slideIn 0.4s ease-out;
-  max-width: 90%;
-  width: 480px;
+  margin-bottom: 1.5rem;
 }
 
-.modal-content p {
-  margin: 0 0 20px 0;
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
-.modal-content strong {
-  color: #64ffda;
-  font-weight: 600;
-}
-
-.modal-close-button {
-  padding: 10px 25px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #0a192f;
-  background-color: #64ffda;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.modal-close-button:hover {
-  background-color: #52d3b4;
+.success-message {
+  color: #64ffda; /* Verde menta */
+  text-align: center;
+  margin-top: 1rem;
 }

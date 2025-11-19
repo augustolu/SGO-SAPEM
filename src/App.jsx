@@ -1,7 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 import AuthPage from './pages/AuthPage';
-import ObrasPage from './pages/ObrasPage';
+import ObrasPage from './pages/ObrasPage'; 
 import DetalleObraPage from './pages/DetalleObraPage';
 import ProfilePage from './pages/ProfilePage';
 import RutaProtegida from './components/RutaProtegida';
@@ -37,6 +37,7 @@ function App() {
 
       {/* Rutas de autenticación */}
       <Route path="/login" element={<AuthPage />} />
+      <Route path="/forgot-password" element={<AuthPage />} />
       <Route path="/register" element={<AuthPage />} />
 
       <Route element={<RutaProtegida />}>

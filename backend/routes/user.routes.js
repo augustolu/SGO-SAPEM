@@ -23,6 +23,11 @@ module.exports = function(app) {
     controller.requestEmailChange
   );
 
+  // Rutas para recuperación de contraseña
+  app.post("/users/request-password-reset", controller.requestPasswordReset);
+  app.post("/users/verify-password-reset", controller.verifyPasswordResetCode);
+  app.post("/users/reset-password", controller.resetPassword);
+
   app.put("/users/:id/role", [authJwt.verifyToken, authJwt.isAdmin], controller.updateRole);
   app.delete("/users/:id", [authJwt.verifyToken, authJwt.isAdmin], controller.delete);
 };

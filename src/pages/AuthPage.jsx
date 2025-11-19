@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom'; // Importar useLocation
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import logo from '/uploads/logo.png'; // Importar el logo desde la subcarpeta
 import './AuthPage.css';
+
 
 // --- Login Form Component ---
 const LoginForm = ({ onSwitch, onForgotPassword }) => {
@@ -125,42 +126,131 @@ const RegisterForm = ({ onSwitch }) => {
   );
 };
 
+// --- Forgot Password Form Component ---
+const ForgotPasswordForm = ({ onSwitch }) => {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [code, setCode] = useState('');
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { requestPasswordReset, verifyPasswordResetCode } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRequestCode = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    setLoading(true);
+    try {
+      const response = await requestPasswordReset(email);
+      setMessage(response.message);
+      setShowCodeInput(true); // Mostrar campo para el código
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Error al enviar el correo. Inténtalo de nuevo.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    setLoading(true);
+    try {
+      await verifyPasswordResetCode(email, code);
+      // El AuthContext maneja el inicio de sesión.
+      // Navegamos al perfil para que el usuario cambie su contraseña.
+      navigate('/perfil');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Error al verificar el código.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="form-container forgot-password-form-container-inner">
+      <div className="login-header">
+        <img src={logo} alt="SGO Sapem Logo" className="header-logo" />
+        <div className="header-text">
+          <h2>SGO</h2>
+          <span className="subtitle">Sapem</span>
+        </div>
+      </div>
+      <h1>Recuperar Contraseña</h1>
+      <p className="form-description">Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</p>
+      <form onSubmit={showCodeInput ? handleVerifyCode : handleRequestCode} className="login-form">
+        {!showCodeInput ? (
+          <div className="input-group">
+            <label htmlFor="forgot-email">Dirección de Email</label>
+            <input type="email" id="forgot-email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="email@ejemplo.com" autoComplete="email" />
+          </div>
+        ) : (
+          <div className="input-group">
+            <label htmlFor="reset-code">Código de Verificación</label>
+            <input type="text" id="reset-code" value={code} onChange={(e) => setCode(e.target.value)} required placeholder="123456" autoComplete="one-time-code" />
+          </div>
+        )}
+
+        {error && <p className="error-message">{error}</p>}
+        {message && <p className="success-message">{message}</p>}
+
+        <button type="submit" className="login-button" disabled={loading}>
+          {loading 
+            ? (showCodeInput ? 'Verificando...' : 'Enviando...') 
+            : (showCodeInput ? 'Verificar y Continuar' : 'Enviar Código')}
+        </button>
+      </form>
+      <div className="login-footer">
+        <p>¿Recordaste tu contraseña? <a href="#" onClick={onSwitch}>Inicia Sesión</a></p>
+      </div>
+    </div>
+  );
+};
+
 // --- Main Auth Page Component ---
 const AuthPage = () => {
   const location = useLocation(); // Usar el hook useLocation
-  const [isLoginView, setIsLoginView] = useState(location.pathname === '/login');
-  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+  const [currentView, setCurrentView] = useState('login'); // 'login', 'register', 'forgot'
 
   useEffect(() => {
     // Actualizar la vista si la ruta cambia (ej. usando atrás/adelante del navegador)
-    setIsLoginView(location.pathname === '/login');
+    if (location.pathname === '/register') {
+      setCurrentView('register');
+    } else if (location.pathname === '/forgot-password') {
+      setCurrentView('forgot');
+    } else {
+      setCurrentView('login');
+    }
   }, [location.pathname]);
 
-  const handleSwitch = (e) => {
+  const handleSwitchToRegister = (e) => {
     e.preventDefault();
-    setIsLoginView(!isLoginView);
+    navigate('/register');
   };
 
-  const handleForgotPassword = (e) => {
+  const handleSwitchToLogin = (e) => {
     e.preventDefault();
-    setShowModal(true);
+    navigate('/login', { replace: true });
+  };
+
+  const handleSwitchToForgot = (e) => {
+    e.preventDefault();
+    navigate('/forgot-password');
   };
 
   return (
     <div className="auth-container">
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <p>Contactarse con administrador, <strong>Maria Pia Pollio</strong></p>
-            <button onClick={() => setShowModal(false)} className="modal-close-button">Cerrar</button>
-          </div>
-        </div>
-      )}
-
-      <div className={`auth-form-wrapper ${isLoginView ? 'show-login' : 'show-register'}`}>
+      <div className={`auth-form-wrapper show-${currentView}`}>
         <div className="forms-inner-wrapper">
-          <LoginForm onSwitch={handleSwitch} onForgotPassword={handleForgotPassword} />
-          <RegisterForm onSwitch={handleSwitch} />
+          <LoginForm onSwitch={handleSwitchToRegister} onForgotPassword={handleSwitchToForgot} />
+          <RegisterForm onSwitch={handleSwitchToLogin} />
+          <ForgotPasswordForm onSwitch={handleSwitchToLogin} />
         </div>
       </div>
     </div>

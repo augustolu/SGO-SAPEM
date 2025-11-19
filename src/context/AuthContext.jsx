@@ -91,6 +91,46 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const requestPasswordReset = useCallback(async (email) => {
+    try {
+      const response = await api.post('/users/request-password-reset', { email });
+      return response.data;
+    } catch (error) {
+      console.error('Error during password reset request:', error);
+      throw error;
+    }
+  }, []);
+
+  const verifyPasswordResetCode = useCallback(async (email, code) => {
+    try {
+      const response = await api.post('/users/verify-password-reset', { email, code });
+      const { accessToken, user: userData } = response.data;
+
+      // Iniciar una sesión temporal para el usuario
+      // Usamos sessionStorage para que no persista si cierra el navegador
+      sessionStorage.setItem('token', accessToken);
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      api.defaults.headers.common['x-access-token'] = accessToken;
+      setUser(userData);
+      resetSessionTimeout(); // Iniciar el temporizador de sesión
+
+      return response.data;
+    } catch (error) {
+      console.error('Error during password reset verification:', error);
+      throw error;
+    }
+  }, [resetSessionTimeout]);
+
+  const resetPassword = useCallback(async (token, email, password) => {
+    try {
+      const response = await api.post('/users/reset-password', { token, email, password });
+      return response.data;
+    } catch (error) {
+      console.error('Error during password reset:', error);
+      throw error;
+    }
+  }, []);
+
   const value = {
     user,
     setUser,
@@ -98,6 +138,9 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    requestPasswordReset,
+    verifyPasswordResetCode,
+    resetPassword,
     resetSessionTimeout,
   };
 

@@ -1,9 +1,11 @@
 const db = require("../models");
 const User = db.Usuarios;
 const Role = db.Roles;
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const config = require("../config/auth.config");
 
 // --- Configuración de Nodemailer ---
 // Configura el transportador de correo usando las credenciales de Gmail.
@@ -20,6 +22,7 @@ const transporter = nodemailer.createTransport({
 // En una aplicación real, esto debería estar en la base de datos (una tabla `email_verifications`)
 // con una fecha de expiración. Para simplificar, usaremos un objeto en memoria.
 const verificationCodes = {}; // { userId: { code: '123456', newEmail: 'new@email.com', expires: timestamp } }
+const passwordResetTokens = {}; // { email: { code: '123456', expires: timestamp } }
 
 
 exports.findAll = (req, res) => {
@@ -177,6 +180,121 @@ exports.requestEmailChange = async (req, res) => {
   } catch (error) {
     console.error("Error en requestEmailChange:", error);
     res.status(500).send({ message: "Error al procesar la solicitud." });
+  }
+};
+
+// --- NUEVA FUNCIÓN PARA SOLICITAR RESETEO DE CONTRASEÑA ---
+exports.requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).send({ message: "El correo electrónico es requerido." });
+  }
+
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      // No revelamos si el email existe o no por seguridad
+      return res.status(200).send({ message: "Si existe una cuenta con ese correo, se ha enviado un código de recuperación." });
+    }
+
+    const code = crypto.randomInt(100000, 999999).toString(); // Código de 6 dígitos
+    const expiration = Date.now() + 600000; // 10 minutos de validez
+
+    passwordResetTokens[email] = { code, expires: expiration };
+
+    const mailOptions = {
+      from: '"SAPEM SGO" <sapemsgo@gmail.com>',
+      to: email,
+      subject: 'Recuperación de Contraseña',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h2>Recuperación de Contraseña</h2>
+          <p>Hola ${user.nombre},</p>
+          <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta. Usa el siguiente código para continuar. Este código es válido por 10 minutos.</p>
+          <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px; margin: 20px 0; text-align: center;">${code}</p>
+          <p>Si no solicitaste esto, puedes ignorar este correo de forma segura.</p>
+          <br>
+          <p>Saludos,<br>El equipo de SAPEM SGO</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).send({ message: "Si existe una cuenta con ese correo, se ha enviado un código de recuperación." });
+
+  } catch (error) {
+    console.error("Error en requestPasswordReset:", error);
+    res.status(500).send({ message: "Error al procesar la solicitud de reseteo." });
+  }
+};
+
+// --- NUEVA FUNCIÓN PARA VERIFICAR EL CÓDIGO DE RESETEO ---
+exports.verifyPasswordResetCode = async (req, res) => {
+  const { email, code } = req.body;
+
+  const storedData = passwordResetTokens[email];
+
+  if (!storedData || storedData.code !== code || Date.now() > storedData.expires) {
+    return res.status(400).send({ message: "El código de recuperación es inválido o ha expirado." });
+  }
+
+  try {
+    const user = await User.findOne({ 
+      where: { email },
+      include: [{ model: Role, as: 'role', attributes: ['nombre'] }]
+    });
+    if (!user) {
+      return res.status(404).send({ message: "Usuario no encontrado." });
+    }
+
+    // Generar un token de sesión temporal (JWT) para permitir la edición del perfil
+    const token = jwt.sign({ id: user.id }, config.secret, {
+      expiresIn: 300 // El token es válido por 5 minutos
+    });
+
+    delete passwordResetTokens[email]; // Invalidar el código después de su uso
+
+    res.status(200).send({
+      message: "Código verificado. Redirigiendo a tu perfil...",
+      accessToken: token,
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        role: user.role.nombre
+      }
+    });
+  } catch (error) {
+    console.error("Error en verifyPasswordResetCode:", error);
+    res.status(500).send({ message: "Error al verificar el código." });
+  }
+};
+
+// --- NUEVA FUNCIÓN PARA RESETEAR LA CONTRASEÑA ---
+exports.resetPassword = async (req, res) => {
+  const { token, email, password } = req.body;
+
+  const storedToken = passwordResetTokens[email];
+
+  if (!storedToken || storedToken.token !== token || Date.now() > storedToken.expires) {
+    return res.status(400).send({ message: "El token de recuperación es inválido o ha expirado." });
+  }
+
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).send({ message: "Usuario no encontrado." });
+    }
+
+    user.password = bcrypt.hashSync(password, 8);
+    await user.save();
+
+    delete passwordResetTokens[email]; // Invalidar el token después de su uso
+
+    res.status(200).send({ message: "Contraseña actualizada con éxito." });
+  } catch (error) {
+    console.error("Error en resetPassword:", error);
+    res.status(500).send({ message: "Error al actualizar la contraseña." });
   }
 };
 
