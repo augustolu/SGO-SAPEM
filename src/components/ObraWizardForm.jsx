@@ -523,11 +523,19 @@ function ObraWizardForm({ onSubmit, initialData }) {
     }
   }, [formData.fecha_inicio, formData.plazo_dias, isContractCountManuallyEdited, setFormData]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (nameOrEvent, value) => {
+    let name, val;
+    // Si el primer argumento es un string, es una llamada desde un componente custom como CreatableAutocomplete
+    if (typeof nameOrEvent === 'string') {
+      name = nameOrEvent;
+      val = value;
+    } else { // De lo contrario, es un evento de un input estándar
+      name = nameOrEvent.target.name;
+      val = nameOrEvent.target.value;
+    }
 
     if (name === 'numero_gestion') {
-      const rawValue = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const rawValue = val.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
       let formattedValue = rawValue;
 
       if (rawValue.length > 3) {
@@ -535,10 +543,9 @@ function ObraWizardForm({ onSubmit, initialData }) {
       } else if (rawValue.length > 2) {
         formattedValue = `${rawValue.slice(0, 2)}-${rawValue.slice(2, 3)}`;
       }
-
       setFormData(prev => ({ ...prev, [name]: formattedValue }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: val }));
     }
 
     if (name === 'cantidad_contratos') {

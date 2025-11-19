@@ -23,27 +23,37 @@ const verificationCodes = {}; // { userId: { code: '123456', newEmail: 'new@emai
 
 
 exports.findAll = (req, res) => {
-  console.log("Fetching all users...");
+  console.log("[LOG] Iniciando findAll de usuarios.");
   User.findAll({
-    // Ordenar para mostrar los usuarios pendientes primero
-    order: [
-      [db.Sequelize.literal("CASE WHEN \"role\".\"nombre\" = 'Pendiente' THEN 0 ELSE 1 END"), 'ASC'],
-      ['nombre', 'ASC']
-    ],
-    attributes: ['id', 'nombre', 'email', 'rol_id'],
-    include: {
+    attributes: ['id', 'nombre', 'email', 'username', 'rol_id'],
+    include: [{
       model: Role,
       as: 'role',
       attributes: ['nombre']
-    }
+    }],
+    // Ordenar para mostrar los usuarios pendientes primero
+    order: [
+      // CORRECCIÓN PARA MYSQL/MARIADB: Usar comillas invertidas (`) en lugar de comillas dobles (").
+      [db.sequelize.literal("CASE WHEN `role`.`nombre` = 'Pendiente' THEN 0 ELSE 1 END"), 'ASC'],
+      ['nombre', 'ASC']
+    ]
   })
     .then(users => {
-      console.log("Users found:", users);
+      console.log(`[LOG] Se encontraron ${users.length} usuarios.`);
       res.status(200).send(users);
     })
     .catch(err => {
-      console.error("Error fetching users:", err);
-      res.status(500).send({ message: err.message });
+      // --- LOGS MEJORADOS ---
+      console.error("--- ERROR DETALLADO AL BUSCAR USUARIOS ---");
+      console.error("Mensaje:", err.message);
+      console.error("Stack Trace:", err.stack);
+      if (err.original) {
+        console.error("Error Original (de la BD):", err.original);
+        console.error("Código de Error de BD:", err.original.code);
+      }
+      console.error("--- FIN DEL ERROR DETALLADO ---");
+      // -------------------------
+      res.status(500).send({ message: `Error al obtener usuarios: ${err.message}` });
     });
 };
 
@@ -180,7 +190,7 @@ exports.findAllInspectores = (req, res) => {
       }
       // Luego, buscamos todos los usuarios con ese rol_id
       User.findAll({
-        where: { rol_id: role.id },
+        where: { rol_id: role.id, nombre: { [db.Sequelize.Op.ne]: null } },
         attributes: ['id', 'nombre'], // Solo enviamos los datos que el formulario necesita
         order: [['nombre', 'ASC']] // Opcional: ordenar alfabéticamente
       })
