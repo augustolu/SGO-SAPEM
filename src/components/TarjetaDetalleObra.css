@@ -323,12 +323,9 @@ html, body {
 
 .detalle-obra-sidebar {
   flex: 2;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  padding: 1.5rem;
-  box-shadow: var(--shadow);
-  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 /* Botones de Acción */
@@ -690,7 +687,6 @@ input[type="date"].form-input-inline::-webkit-calendar-picker-indicator {
 
 /* Sección de Contratos */
 .contratos-section-wrapper {
-  flex: 2;
 }
 
 .contrato-upload-container {

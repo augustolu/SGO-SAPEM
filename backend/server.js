@@ -74,6 +74,7 @@ require('./routes/localidad.routes')(apiRouter);
 
 require('./routes/contrato.routes')(apiRouter);
 require('./routes/upload.routes')(apiRouter);
+require('./routes/archivo.routes')(apiRouter);
 app.use('/api', apiRouter);
 
 // set port, listen for requests

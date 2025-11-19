@@ -11,7 +11,7 @@ module.exports = function(app) {
     next();
   });
 
-  app.post("/obras/:obraId/contratos/upload", [authJwt.verifyToken, (req, res, next) => { console.log("Route: /api/obras/:obraId/contratos/upload reached."); next(); }, upload], controller.uploadContrato);
+  app.post("/obras/:obraId/contratos/upload", [authJwt.verifyToken, (req, res, next) => { console.log("Route: /obras/:obraId/contratos/upload reached."); next(); }, upload], controller.uploadContrato);
   app.get("/obras/:obraId/contratos", [authJwt.verifyToken], controller.getContratosByObra);
   app.delete("/contratos/:id", [authJwt.verifyToken], controller.deleteContrato);
 };

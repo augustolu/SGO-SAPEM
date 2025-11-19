@@ -1,0 +1,68 @@
+.folder-tree-container {
+  width: 100%; /* Ocupar el ancho del contenedor padre */
+  padding: 10px;
+  background-color: rgba(34, 43, 58, 0.9);; /* Un azul claro */
+  border-right: 1px solid #dee2e6; /* Borde sutil */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+}
+
+.tree-node-container {
+  /* Contenedor para cada nodo y sus hijos */
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tree-node:hover {
+  background-color: #e9ecef; /* Un hover sutil */
+}
+
+.tree-node.active {
+  background-color: #007bff; /* Color primario de Bootstrap */
+  color: white;
+  font-weight: 600;
+}
+
+.tree-node.active .tree-icon,
+.tree-node.active .tree-arrow {
+  color: white; /* Asegura que los iconos también sean blancos */
+}
+
+.tree-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px; /* Ancho fijo para el icono de flecha */
+  height: 20px;
+  margin-right: 4px;
+  color: #6c757d; /* Color secundario para la flecha */
+}
+
+.tree-arrow-placeholder {
+  display: inline-block;
+  width: 20px; /* Espacio vacío para alinear nodos sin hijos */
+  height: 20px;
+}
+
+.tree-icon {
+  margin-right: 8px;
+  color: #6c757d; /* Iconos con color secundario */
+}
+
+.tree-label {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-children {
+  /* Los hijos ya tienen su propio padding-left en línea, no se necesita mucho aquí */
+}

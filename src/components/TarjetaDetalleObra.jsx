@@ -9,6 +9,7 @@ import CreatableAutocomplete from './CreatableAutocomplete';
 import CurrencyInput from './CurrencyInput';
 import ContratoUpload from './ContratoUpload'; // Importar el nuevo componente
 import AnimatedProgressNumber from './AnimatedProgressNumber'; // Importar el nuevo componente
+import FileManager from './FileManager'; // Importar el gestor de archivos
 import api from '../services/api';
 
 // Fix for default marker icon issue with webpack
@@ -624,11 +625,19 @@ const TarjetaDetalleObra = ({ obra: initialObra }) => {
           </div>
         </div> {/* Closing detalle-obra-card */}
         
-        {!isSimplifiedView && (
-          <div className="info-section contratos-section-wrapper">
-            <ContratoUpload obraId={obra.id} onContratoUploadSuccess={handleContratoUploadSuccess} />
-          </div>
-        )}
+        <div className="detalle-obra-sidebar">
+          {!isSimplifiedView && (
+            <div className="info-section contratos-section-wrapper">
+              <ContratoUpload obraId={obra.id} onContratoUploadSuccess={handleContratoUploadSuccess} />
+            </div>
+          )}
+          
+          {!isSimplifiedView && (
+            <div className="info-section file-manager-section-wrapper">
+              <FileManager obra_id={obra.id} />
+            </div>
+          )}
+        </div>
         </>
       </div>
     </div>
